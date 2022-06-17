@@ -84,13 +84,13 @@ int nsAtomic::Get() const noexcept
 // ============================================================================================================================================ //
 // PLATFORM
 // ============================================================================================================================================ //
-void nsPlatform::Initialize(int argc, char* argv[]) noexcept
+void nsPlatform::Initialize() noexcept
 {
-	NS_Assert(argc > 0);
+	GetModuleFileName(NULL, PlatformDirectoryPath, NS_PLATFORM_MAX_PATH);
 
 	// Get directory path
 	{
-		String_Copy(PlatformDirectoryPath, argv[0]);
+		//String_Copy(PlatformDirectoryPath, argv[0]);
 		int len = String_Length(PlatformDirectoryPath);
 		int tokenIndex = -1;
 
@@ -483,6 +483,10 @@ nsFileHandle nsPlatform::File_Open(const char* filePath, nsEPlatformFileOpenMode
 		if (error == ERROR_SHARING_VIOLATION)
 		{
 			OutputFormatColored(FOREGROUND_RED, "\nOpen file [%s] failed. Error sharing violation!\n", filePath);
+		}
+		else if (error == ERROR_PATH_NOT_FOUND)
+		{
+			OutputFormatColored(FOREGROUND_RED, "\nOpen file [%s] failed. Error path not found!\n", filePath);
 		}
 	}
 

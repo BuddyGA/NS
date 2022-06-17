@@ -168,7 +168,7 @@ void nsSharedMaterialAsset::Release() noexcept
 	Material = nsMaterialID::INVALID;
 }
 
-
+/*
 void nsSharedMaterialAsset::SetTextureParameterValue(nsName paramName, nsSharedTextureAsset texture) noexcept
 {
 	if (!IsValid())
@@ -229,7 +229,7 @@ nsVector4 nsSharedMaterialAsset::GetVectorParameterValue(nsName paramName) const
 		return vector;
 	}
 }
-
+*/
 
 
 

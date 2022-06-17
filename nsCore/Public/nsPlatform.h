@@ -279,7 +279,7 @@ struct nsKeyboardButtonEventArgs
 
 namespace nsPlatform
 {
-	extern NS_CORE_API void Initialize(int argc, char* argv[]) noexcept;
+	extern NS_CORE_API void Initialize() noexcept;
 	extern NS_CORE_API void Shutdown() noexcept;
 	NS_NODISCARD extern const char* GetDirectoryPath() noexcept;
 	extern NS_CORE_API void Output(const char* message, nsPlatformConsoleTextColorMasks colorMasks = 0) noexcept;

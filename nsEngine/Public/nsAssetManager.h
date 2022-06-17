@@ -15,68 +15,10 @@ class NS_ENGINE_API nsAssetManager
 		AssetFlag_Unloaded			= (1 << 3),
 	};
 
-
-	struct TextureAssetData
-	{
-		nsTArray<nsName> Names;
-		nsTArray<nsString> Paths;
-		nsTArray<uint8> Flags;
-		nsTArray<int> RefCounts;
-		nsTArray<nsTextureID> Handles;
-	};
-
-
-	struct MaterialParameterTable
-	{
-		nsTMap<nsName, nsSharedTextureAsset> TextureParameterValues;
-		nsTMap<nsName, float> ScalarParameterValues;
-		nsTMap<nsName, nsVector4> VectorParameterValues;
-	};
-	
-	struct MaterialAssetData
-	{
-		nsTArray<nsName> Names;
-		nsTArray<nsString> Paths;
-		nsTArray<uint8> Flags;
-		nsTArray<int> RefCounts;
-		nsTArray<MaterialParameterTable> ParameterTables;
-		nsTArray<nsMaterialID> Handles;
-	};
-
-
-	struct ModelAssetData
-	{
-		nsTArray<nsName> Names;
-		nsTArray<nsString> Paths;
-		nsTArray<uint8> Flags;
-		nsTArray<int> RefCounts;
-		nsTArray<nsAssetModelMeshes> Meshes;
-	};
-
-
 private:
 	bool bInitialized;
-
 	nsString EngineAssetsPath;
 	nsString GameAssetsPath;
-
-	nsTArray<nsName> TextureAssetNames;
-	nsTArray<nsString> TextureAssetPaths;
-	nsTArray<uint8> TextureAssetFlags;
-	nsTArray<int> TextureAssetRefs;
-	nsTArray<nsTextureID> TextureAssets;
-
-	nsTArray<nsName> MaterialAssetNames;
-	nsTArray<nsString> MaterialAssetPaths;
-	nsTArray<uint8> MaterialAssetFlags;
-	nsTArray<int> MaterialAssetRefs;
-	nsTArray<nsMaterialID> MaterialAssets;
-
-	nsTArray<nsName> ModelAssetNames;
-	nsTArray<nsString> ModelAssetPaths;
-	nsTArray<uint8> ModelAssetFlags;
-	nsTArray<int> ModelAssetRefs;
-	nsTArray<nsAssetModelMeshes> ModelAssetMeshes;
 
 
 public:
@@ -108,6 +50,28 @@ public:
 // ================================================================================================ //
 // TEXTURE
 // ================================================================================================ //
+private:
+	struct TextureAssetData
+	{
+		nsTArray<nsName> Names;
+		nsTArray<nsString> Paths;
+		nsTArray<uint8> Flags;
+		nsTArray<int> RefCounts;
+		nsTArray<nsTextureID> Handles;
+
+		TextureAssetData()
+		{
+			Names.Reserve(64);
+			Paths.Reserve(64);
+			Flags.Reserve(64);
+			RefCounts.Reserve(64);
+			Handles.Reserve(64);
+		}
+	};
+
+	TextureAssetData TextureAsset;
+
+
 public:
 	void SaveTextureAsset(nsName name, nsTextureID texture, const nsString& folderPath, bool bIsEngineAsset);
 	nsSharedTextureAsset LoadTextureAsset(const nsName& name);
@@ -122,11 +86,51 @@ private:
 // ================================================================================================ //
 // MATERIAL
 // ================================================================================================ //
+private:
+	struct MaterialAssetData
+	{
+		struct ParameterTable
+		{
+			nsTMap<nsName, nsSharedTextureAsset> TextureParameterValues;
+			nsTMap<nsName, float> ScalarParameterValues;
+			nsTMap<nsName, nsVector4> VectorParameterValues;
+		};
+
+		nsTArray<nsName> Names;
+		nsTArray<nsString> Paths;
+		nsTArray<uint8> Flags;
+		nsTArray<int> RefCounts;
+		nsTArray<ParameterTable> ParameterTables;
+		nsTArray<nsMaterialID> Handles;
+
+		MaterialAssetData()
+		{
+			Names.Reserve(64);
+			Paths.Reserve(64);
+			Flags.Reserve(64);
+			RefCounts.Reserve(64);
+			ParameterTables.Reserve(64);
+			Handles.Reserve(64);
+		}
+	};
+
+	MaterialAssetData MaterialAsset;
+
+
 public:
 	void SaveMaterialAsset(nsName name, nsMaterialID material, const nsString& folderPath, bool bIsEngineAsset);
 	nsSharedMaterialAsset LoadMaterialAsset(const nsName& name);
 	void Internal_AddMaterialAssetReference(int index, nsMaterialID material);
 	void Internal_RemoveMaterialAssetReference(int index, nsMaterialID material);
+
+	/*
+	void Internal_SetMaterialTextureParameterValue(int index, nsMaterialID material, nsName paramName, const nsSharedTextureAsset& sharedTextureAsset);
+	nsSharedTextureAsset Internal_GetMaterialTextureParamaterValue(int index, nsMaterialID material, nsName paramName) const;
+	void Internal_SetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName, float scalar);
+	float Internal_GetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName) const;
+	void Internal_SetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName, nsVector4 vector);
+	nsVector4 Internal_GetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName) const;
+	*/
 
 private:
 	void UpdateMaterialAssets();
@@ -136,6 +140,28 @@ private:
 // ================================================================================================ //
 // MODEL
 // ================================================================================================ //
+private:
+	struct ModelAssetData
+	{
+		nsTArray<nsName> Names;
+		nsTArray<nsString> Paths;
+		nsTArray<uint8> Flags;
+		nsTArray<int> RefCounts;
+		nsTArray<nsAssetModelMeshes> Meshes;
+
+		ModelAssetData()
+		{
+			Names.Reserve(64);
+			Paths.Reserve(64);
+			Flags.Reserve(64);
+			RefCounts.Reserve(64);
+			Meshes.Reserve(64);
+		}
+	};
+
+	ModelAssetData ModelAsset;
+
+
 public:
 	void SaveModelAsset(nsName name, const nsAssetModelMeshes& meshes, const nsString& folderPath, bool bIsEngineAsset);
 	nsSharedModelAsset LoadModelAsset(const nsName& name);

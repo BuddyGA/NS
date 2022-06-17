@@ -6,11 +6,23 @@
 
 
 
+#ifdef NS_PLATFORM_WINDOWS
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	nsCommandLines::Get().Initialize(GetCommandLineA());
+
+	nsPlatform::Initialize();
+
+
+#else
 int main(int argc, char* argv[])
 {
-	nsPlatform::Initialize(argc, argv);
-
 	nsCommandLines::Get().Initialize(argc, argv);
+
+	nsPlatform::Initialize();
+
+#endif // NS_PLATFORM_WINDOWS
+
 
 	nsLogger::Get().Initialize(nsELogVerbosity::LV_DEBUG, "Log.txt");
 

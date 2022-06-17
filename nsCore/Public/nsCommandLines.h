@@ -15,6 +15,7 @@ private:
 
 public:
 	void Initialize(int argc, char* argv[]) noexcept;
+	void Initialize(const char* commandLine) noexcept;
 	bool HasCommand(nsName command) const noexcept;
 	nsName GetValue(nsName command) const noexcept;
 

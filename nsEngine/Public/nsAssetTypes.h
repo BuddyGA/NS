@@ -174,13 +174,15 @@ private:
 
 public:
 	void Release() noexcept;
+
+	/*
 	void SetTextureParameterValue(nsName paramName, nsSharedTextureAsset texture) noexcept;
 	NS_NODISCARD nsSharedTextureAsset GetTextureParamaterValue(nsName paramName) const noexcept;
 	void SetScalarParameterValue(nsName paramName, float value) noexcept;
 	NS_NODISCARD float GetScalarParameterValue(nsName paramName) const noexcept;
 	void SetVectorParameterValue(nsName paramName, nsVector4 value) noexcept;
 	NS_NODISCARD nsVector4 GetVectorParameterValue(nsName paramName) const noexcept;
-
+	*/
 
 	NS_NODISCARD_INLINE bool IsValid() const noexcept
 	{
