@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b1daf3ce-b9ab-41f0-8783-fb6a9d38ea2e}</ProjectGuid>
+    <RootNamespace>nsEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Build\Bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)Build\Bin\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)Build\Intermediate\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__;__NS_ENGINE_BUILD__</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(SolutionDir)nsCore\Public;$(SolutionDir)nsRenderer\Public;$(SolutionDir)Externals\Vulkan\Include;$(SolutionDir)Externals\shaderc\Include;$(SolutionDir)Externals\Compressonator\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4251;26451;26495;26812</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\shaderc\Lib;$(SolutionDir)Externals\Compressonator\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>nsCore.lib;shaderc_shared.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y "$(SolutionDir)Externals\shaderc\Lib\shaderc_shared.dll" $(OutDir)shaderc_shared.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__;__NS_ENGINE_BUILD__</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <ExceptionHandling>false</ExceptionHandling>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <AdditionalIncludeDirectories>$(ProjectDir)Public;$(SolutionDir)nsCore\Public;$(SolutionDir)nsRenderer\Public;$(SolutionDir)Externals\Vulkan\Include;$(SolutionDir)Externals\shaderc\Include;$(SolutionDir)Externals\Compressonator\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4251;26451;26495;26812</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\shaderc\Lib;$(SolutionDir)Externals\Compressonator\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>nsCore.lib;shaderc_shared.lib;CMP_Framework_MD.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y "$(SolutionDir)Externals\shaderc\Lib\shaderc_shared.dll" $(OutDir)shaderc_shared.dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Build_Engine.cpp" />
+    <ClCompile Include="Private\nsActor.cpp" />
+    <ClCompile Include="Private\nsActorComponents.cpp" />
+    <ClCompile Include="Private\nsAnimation.cpp" />
+    <ClCompile Include="Private\nsAssetImporter.cpp" />
+    <ClCompile Include="Private\nsAssetManager.cpp" />
+    <ClCompile Include="Private\nsAssetTypes.cpp" />
+    <ClCompile Include="Private\nsConsole.cpp" />
+    <ClCompile Include="Private\nsEngine.cpp" />
+    <ClCompile Include="Private\nsFont.cpp" />
+    <ClCompile Include="Private\nsGameApplication.cpp" />
+    <ClCompile Include="Private\nsGeometryFactory.cpp" />
+    <ClCompile Include="Private\nsGUICore.cpp" />
+    <ClCompile Include="Private\nsGUIFramework.cpp" />
+    <ClCompile Include="Private\nsLevel.cpp" />
+    <ClCompile Include="Private\nsMaterial.cpp" />
+    <ClCompile Include="Private\nsMesh.cpp" />
+    <ClCompile Include="Private\nsPhysics.cpp" />
+    <ClCompile Include="Private\nsRenderContextWorld.cpp" />
+    <ClCompile Include="Private\nsRenderer.cpp" />
+    <ClCompile Include="Private\nsRenderManager.cpp" />
+    <ClCompile Include="Private\nsShaderManager.cpp" />
+    <ClCompile Include="Private\nsTexture.cpp" />
+    <ClCompile Include="Private\nsViewport.cpp" />
+    <ClCompile Include="Private\nsWorld.cpp" />
+    <ClCompile Include="Private\ThirdParty\spirv_reflect.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Private\ThirdParty\json.hpp" />
+    <ClInclude Include="Private\ThirdParty\spirv.h" />
+    <ClInclude Include="Private\ThirdParty\spirv_reflect.h" />
+    <ClInclude Include="Private\ThirdParty\stb_image.h" />
+    <ClInclude Include="Private\ThirdParty\stb_rect_pack.h" />
+    <ClInclude Include="Private\ThirdParty\stb_truetype.h" />
+    <ClInclude Include="Public\nsActorComponents.h" />
+    <ClInclude Include="Public\nsActor.h" />
+    <ClInclude Include="Public\nsAnimation.h" />
+    <ClInclude Include="Public\nsAssetImporter.h" />
+    <ClInclude Include="Public\nsAssetManager.h" />
+    <ClInclude Include="Public\nsAssetTypes.h" />
+    <ClInclude Include="Public\nsConsole.h" />
+    <ClInclude Include="Public\nsEngine.h" />
+    <ClInclude Include="Public\nsEngineTypes.h" />
+    <ClInclude Include="Public\nsFont.h" />
+    <ClInclude Include="Public\nsGameApplication.h" />
+    <ClInclude Include="Public\nsGeometryFactory.h" />
+    <ClInclude Include="Public\nsGUICore.h" />
+    <ClInclude Include="Public\nsGUIFramework.h" />
+    <ClInclude Include="Public\nsLevel.h" />
+    <ClInclude Include="Public\nsMaterial.h" />
+    <ClInclude Include="Public\nsMesh.h" />
+    <ClInclude Include="Public\nsPhysics.h" />
+    <ClInclude Include="Public\nsRenderer.h" />
+    <ClInclude Include="Public\nsRenderManager.h" />
+    <ClInclude Include="Public\nsViewport.h" />
+    <ClInclude Include="Public\nsShaderManager.h" />
+    <ClInclude Include="Public\nsTexture.h" />
+    <ClInclude Include="Public\nsVulkan.h" />
+    <ClInclude Include="Public\nsWorld.h" />
+    <ClInclude Include="Public\nsRenderContextWorld.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,137 @@
+#pragma once
+
+#include "nsEngineTypes.h"
+
+
+#define NS_VK_DECLARE_FUNCTION(func) extern PFN_##func func
+
+
+// Global functions
+NS_VK_DECLARE_FUNCTION(vkGetInstanceProcAddr);
+NS_VK_DECLARE_FUNCTION(vkEnumerateInstanceLayerProperties);
+NS_VK_DECLARE_FUNCTION(vkEnumerateInstanceExtensionProperties);
+NS_VK_DECLARE_FUNCTION(vkCreateInstance);
+NS_VK_DECLARE_FUNCTION(vkDestroyInstance);
+
+
+// Instance functions
+NS_VK_DECLARE_FUNCTION(vkEnumeratePhysicalDevices);
+NS_VK_DECLARE_FUNCTION(vkEnumerateDeviceExtensionProperties);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceProperties);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceFeatures);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceFeatures2);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceMemoryProperties);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceMemoryProperties2KHR);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceQueueFamilyProperties);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceSurfaceSupportKHR);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceSurfaceFormatsKHR);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceSurfacePresentModesKHR);
+NS_VK_DECLARE_FUNCTION(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
+NS_VK_DECLARE_FUNCTION(vkDestroySurfaceKHR);
+NS_VK_DECLARE_FUNCTION(vkCreateDevice);
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+NS_VK_DECLARE_FUNCTION(vkCreateWin32SurfaceKHR);
+#endif // VK_USE_PLATFORM_WIN32_KHR
+
+
+// Device functions
+NS_VK_DECLARE_FUNCTION(vkGetDeviceProcAddr);
+NS_VK_DECLARE_FUNCTION(vkDestroyDevice);
+NS_VK_DECLARE_FUNCTION(vkDeviceWaitIdle);
+NS_VK_DECLARE_FUNCTION(vkGetDeviceQueue);
+NS_VK_DECLARE_FUNCTION(vkQueueWaitIdle);
+NS_VK_DECLARE_FUNCTION(vkQueueSubmit);
+NS_VK_DECLARE_FUNCTION(vkQueuePresentKHR);
+NS_VK_DECLARE_FUNCTION(vkCreateFence);
+NS_VK_DECLARE_FUNCTION(vkDestroyFence);
+NS_VK_DECLARE_FUNCTION(vkWaitForFences);
+NS_VK_DECLARE_FUNCTION(vkResetFences);
+NS_VK_DECLARE_FUNCTION(vkCreateSemaphore);
+NS_VK_DECLARE_FUNCTION(vkDestroySemaphore);
+NS_VK_DECLARE_FUNCTION(vkAllocateMemory);
+NS_VK_DECLARE_FUNCTION(vkFreeMemory);
+NS_VK_DECLARE_FUNCTION(vkMapMemory);
+NS_VK_DECLARE_FUNCTION(vkUnmapMemory);
+NS_VK_DECLARE_FUNCTION(vkFlushMappedMemoryRanges);
+NS_VK_DECLARE_FUNCTION(vkInvalidateMappedMemoryRanges);
+NS_VK_DECLARE_FUNCTION(vkGetBufferMemoryRequirements);
+NS_VK_DECLARE_FUNCTION(vkGetBufferMemoryRequirements2KHR);
+NS_VK_DECLARE_FUNCTION(vkCreateBuffer);
+NS_VK_DECLARE_FUNCTION(vkDestroyBuffer);
+NS_VK_DECLARE_FUNCTION(vkBindBufferMemory);
+NS_VK_DECLARE_FUNCTION(vkBindBufferMemory2KHR);
+NS_VK_DECLARE_FUNCTION(vkGetImageMemoryRequirements);
+NS_VK_DECLARE_FUNCTION(vkGetImageMemoryRequirements2KHR);
+NS_VK_DECLARE_FUNCTION(vkCreateImage);
+NS_VK_DECLARE_FUNCTION(vkDestroyImage);
+NS_VK_DECLARE_FUNCTION(vkBindImageMemory);
+NS_VK_DECLARE_FUNCTION(vkBindImageMemory2KHR);
+NS_VK_DECLARE_FUNCTION(vkCreateImageView);
+NS_VK_DECLARE_FUNCTION(vkDestroyImageView);
+NS_VK_DECLARE_FUNCTION(vkCreateSampler);
+NS_VK_DECLARE_FUNCTION(vkDestroySampler);
+NS_VK_DECLARE_FUNCTION(vkCreateRenderPass);
+NS_VK_DECLARE_FUNCTION(vkDestroyRenderPass);
+NS_VK_DECLARE_FUNCTION(vkCreateFramebuffer);
+NS_VK_DECLARE_FUNCTION(vkDestroyFramebuffer);
+NS_VK_DECLARE_FUNCTION(vkCreateShaderModule);
+NS_VK_DECLARE_FUNCTION(vkDestroyShaderModule);
+NS_VK_DECLARE_FUNCTION(vkCreateDescriptorPool);
+NS_VK_DECLARE_FUNCTION(vkDestroyDescriptorPool);
+NS_VK_DECLARE_FUNCTION(vkCreateDescriptorSetLayout);
+NS_VK_DECLARE_FUNCTION(vkDestroyDescriptorSetLayout);
+NS_VK_DECLARE_FUNCTION(vkAllocateDescriptorSets);
+NS_VK_DECLARE_FUNCTION(vkFreeDescriptorSets);
+NS_VK_DECLARE_FUNCTION(vkUpdateDescriptorSets);
+NS_VK_DECLARE_FUNCTION(vkCreatePipelineLayout);
+NS_VK_DECLARE_FUNCTION(vkDestroyPipelineLayout);
+NS_VK_DECLARE_FUNCTION(vkCreateGraphicsPipelines);
+NS_VK_DECLARE_FUNCTION(vkDestroyPipeline);
+NS_VK_DECLARE_FUNCTION(vkCreateSwapchainKHR);
+NS_VK_DECLARE_FUNCTION(vkDestroySwapchainKHR);
+NS_VK_DECLARE_FUNCTION(vkGetSwapchainImagesKHR);
+NS_VK_DECLARE_FUNCTION(vkAcquireNextImageKHR);
+NS_VK_DECLARE_FUNCTION(vkCreateCommandPool);
+NS_VK_DECLARE_FUNCTION(vkDestroyCommandPool);
+NS_VK_DECLARE_FUNCTION(vkResetCommandPool);
+NS_VK_DECLARE_FUNCTION(vkAllocateCommandBuffers);
+NS_VK_DECLARE_FUNCTION(vkFreeCommandBuffers);
+NS_VK_DECLARE_FUNCTION(vkBeginCommandBuffer);
+NS_VK_DECLARE_FUNCTION(vkEndCommandBuffer);
+NS_VK_DECLARE_FUNCTION(vkCmdBeginRenderPass);
+NS_VK_DECLARE_FUNCTION(vkCmdEndRenderPass);
+NS_VK_DECLARE_FUNCTION(vkCmdCopyBuffer);
+NS_VK_DECLARE_FUNCTION(vkCmdCopyBufferToImage);
+NS_VK_DECLARE_FUNCTION(vkCmdPipelineBarrier);
+NS_VK_DECLARE_FUNCTION(vkCmdBindVertexBuffers);
+NS_VK_DECLARE_FUNCTION(vkCmdBindIndexBuffer);
+NS_VK_DECLARE_FUNCTION(vkCmdSetViewport);
+NS_VK_DECLARE_FUNCTION(vkCmdSetScissor);
+NS_VK_DECLARE_FUNCTION(vkCmdBindPipeline);
+NS_VK_DECLARE_FUNCTION(vkCmdPushConstants);
+NS_VK_DECLARE_FUNCTION(vkCmdBindDescriptorSets);
+NS_VK_DECLARE_FUNCTION(vkCmdDraw);
+NS_VK_DECLARE_FUNCTION(vkCmdDrawIndexed);
+NS_VK_DECLARE_FUNCTION(vkCreatePipelineCache);
+NS_VK_DECLARE_FUNCTION(vkDestroyPipelineCache);
+
+NS_VK_DECLARE_FUNCTION(vkCreateDebugUtilsMessengerEXT);
+NS_VK_DECLARE_FUNCTION(vkDestroyDebugUtilsMessengerEXT);
+NS_VK_DECLARE_FUNCTION(vkSetDebugUtilsObjectNameEXT);
+NS_VK_DECLARE_FUNCTION(vkSetDebugUtilsObjectTagEXT);
+NS_VK_DECLARE_FUNCTION(vkQueueBeginDebugUtilsLabelEXT);
+NS_VK_DECLARE_FUNCTION(vkQueueEndDebugUtilsLabelEXT);
+NS_VK_DECLARE_FUNCTION(vkQueueInsertDebugUtilsLabelEXT);
+NS_VK_DECLARE_FUNCTION(vkCmdBeginDebugUtilsLabelEXT);
+NS_VK_DECLARE_FUNCTION(vkCmdEndDebugUtilsLabelEXT);
+NS_VK_DECLARE_FUNCTION(vkCmdInsertDebugUtilsLabelEXT);
+
+
+#define NS_VK_BeginCommand(commandBuffer) \
+{ \
+	VkCommandBufferBeginInfo beginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO }; \
+	vkBeginCommandBuffer(commandBuffer, &beginInfo); \
+}
+
+#define NS_VK_EndCommand(commandBuffer) vkEndCommandBuffer(commandBuffer)
