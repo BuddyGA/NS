@@ -23,27 +23,39 @@ void nsLevel::Destroy()
 }
 
 
-void nsLevel::AddActor(nsActor* actor) noexcept
+bool nsLevel::AddActor(nsActor* actor) noexcept
 {
 	if (actor == nullptr)
 	{
-		return;
+		return false;
 	}
 
-	Actors.AddUnique(actor);
-	actor->OnAddedToLevel();
+	bool bAdded = Actors.AddUnique(actor);
+
+	if (bAdded)
+	{
+		actor->OnAddedToLevel();
+	}
+
+	return bAdded;
 }
 
 
-void nsLevel::RemoveActor(nsActor* actor) noexcept
+bool nsLevel::RemoveActor(nsActor* actor) noexcept
 {
 	if (actor == nullptr)
 	{
-		return;
+		return false;
 	}
 
 	NS_CONSOLE_Debug(LevelLog, "Remove actor [%s] from level [%s]", *actor->Name, *Name);
 
-	Actors.Remove(actor);
-	actor->OnRemovedFromLevel();
+	bool bRemoved = Actors.Remove(actor);
+
+	if (bRemoved)
+	{
+		actor->OnRemovedFromLevel();
+	}
+
+	return bRemoved;
 }

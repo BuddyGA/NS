@@ -10,7 +10,7 @@ struct nsThreadWorker
 	uint32 Affinity;
 	nsName Name;
 	nsTArray<nsIThreadTask*> Tasks;
-	nsCriticalSection CS;
+	nsCriticalSection CriticalSection;
 	HANDLE WakeSemaphore;
 };
 
@@ -37,12 +37,12 @@ static DWORD WINAPI ns_ThreadProc(_In_ LPVOID lpParameter) noexcept
 			break;
 		}
 
-		worker->CS.Enter();
+		worker->CriticalSection.Enter();
 		{
 			cachedTasks = worker->Tasks;
 			worker->Tasks.Clear();
 		}
-		worker->CS.Leave();
+		worker->CriticalSection.Leave();
 
 		for (int i = 0; i < cachedTasks.GetCount(); ++i)
 		{
@@ -192,7 +192,7 @@ void nsThreadPool::SubmitTasks(nsIThreadTask** tasks, int taskCount, nsThreadAff
 
 		if (bNotMainThread)
 		{
-			worker->CS.Enter();
+			worker->CriticalSection.Enter();
 		}
 
 		if (workCountPerThread > 0)
@@ -211,7 +211,7 @@ void nsThreadPool::SubmitTasks(nsIThreadTask** tasks, int taskCount, nsThreadAff
 
 		if (bNotMainThread)
 		{
-			worker->CS.Leave();
+			worker->CriticalSection.Leave();
 
 			if (bSubmit)
 			{

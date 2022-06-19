@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nsPhysics.h"
 #include "nsRenderer.h"
 #include "nsAssetTypes.h"
 
@@ -28,11 +29,12 @@ public:
 	virtual void OnActorRemovedFromLevel() {}
 	virtual void OnActorTransformUpdated() {}
 	virtual void OnVisibilityChanged() {}
+	virtual bool IsFullyLoaded() { return true; }
 	void SetVisibility(bool bVisible);
 
 
 public:
-	NS_NODISCARD_INLINE const nsName& GetName() const noexcept
+	NS_NODISCARD_INLINE const nsName& GetName() const
 	{
 		return Name;
 	}
@@ -45,6 +47,41 @@ public:
 
 
 	friend class nsActor;
+
+};
+
+
+
+class NS_ENGINE_API nsCollisionComponent : public nsActorComponent
+{
+protected:
+	nsPhysicsObjectID PhysicsObject;
+	nsEPhysicsShape Shape;
+
+public:
+	nsPhysicsCollisionLayers CollisionLayers;
+
+
+public:
+	nsCollisionComponent();
+	virtual void OnActorAddedToLevel() override;
+	virtual void OnActorRemovedFromLevel() override;
+	virtual void UpdateCollisionVolume() = 0;
+
+};
+
+
+
+class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
+{
+public:
+	nsVector3 HalfExtent;
+
+
+public:
+	nsBoxCollisionComponent();
+	virtual void OnInitialize() override;
+	virtual void UpdateCollisionVolume() override;
 
 };
 

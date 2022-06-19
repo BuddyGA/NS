@@ -136,6 +136,8 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 				{
 					nsMeshComponent* meshComp = newActor->AddComponent<nsMeshComponent>("mesh");
 					meshComp->SetMesh(nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name));
+
+					MainWorld->AddActorToLevel(newActor);
 				}
 
 				bIsDraggingAssetSpawned = true;
@@ -392,16 +394,13 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 
 void cstEditor::SelectFocusActor(nsActor* newActor)
 {
-	if (FocusActor != newActor)
+	if (newActor && newActor != FocusActor)
 	{
-		FocusActor = newActor;
-		ActorInspector.SetInspectActor(FocusActor);
-
-		if (FocusActor)
-		{
-			NS_CONSOLE_Debug(EditorLog, "Select actor [%s]", *FocusActor->Name);
-		}
+		NS_CONSOLE_Debug(EditorLog, "Select actor [%s]", *newActor->Name);
 	}
+
+	FocusActor = newActor;
+	ActorInspector.SetInspectActor(FocusActor);
 }
 
 

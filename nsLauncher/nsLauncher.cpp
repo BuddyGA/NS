@@ -11,24 +11,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	nsCommandLines::Get().Initialize(GetCommandLineA());
 
-	nsPlatform::Initialize();
-
+	if (nsCommandLines::Get().HasCommand("console") && AllocConsole())
+	{
+		ShowWindow(GetConsoleWindow(), SW_SHOW);
+	}
 
 #else
 int main(int argc, char* argv[])
 {
 	nsCommandLines::Get().Initialize(argc, argv);
 
-	nsPlatform::Initialize();
-
 #endif // NS_PLATFORM_WINDOWS
 
+
+	nsPlatform::Initialize();
 
 	nsLogger::Get().Initialize(nsELogVerbosity::LV_DEBUG, "Log.txt");
 
 	nsThreadPool::Initialize();
 
+
+	// TODO: Init online platform (Steam, etc.)
+
+
 	// TODO: Read config from file (nsConfig.ini)
+
 	
 	g_Engine = new nsEngine();
 	g_Engine->Initialize();

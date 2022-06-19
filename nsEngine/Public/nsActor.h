@@ -69,16 +69,16 @@ public:
 	nsActor();
 
 protected:
-	virtual void OnInitialize();
-	virtual void OnStartPlay();
-	virtual void OnStopPlay();
-	virtual void OnTickUpdate(float deltaTime);
-	virtual void OnDestroy();
-	virtual void OnTransformUpdated();
+	void OnInitialize();
+	void OnStartPlay();
+	void OnStopPlay();
+	void OnTickUpdate(float deltaTime);
+	void OnDestroy();
+	void OnTransformUpdated();
 
 public:
-	virtual void OnAddedToLevel();
-	virtual void OnRemovedFromLevel();
+	void OnAddedToLevel();
+	void OnRemovedFromLevel();
 
 private:
 	void UpdateTransform();

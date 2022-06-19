@@ -93,6 +93,9 @@
     <ClCompile Include="Private\nsAssetTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Private\nsPhysics_PhysX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Public\nsEngineTypes.h">
@@ -179,9 +182,6 @@
     <ClInclude Include="Public\nsAnimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\nsPhysics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Public\nsRenderContextWorld.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -189,6 +189,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Private\ThirdParty\json.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsPhysics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Private\nsPhysics_PhysX.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,32 +1,18 @@
-#include "nsPhysics.h"
+#include "nsPhysics_PhysX.h"
+
+
+NS_ENGINE_DEFINE_HANDLE(nsPhysicsObjectID);
+NS_ENGINE_DEFINE_HANDLE(nsPhysicsSceneID);
 
 
 
-static nsLogCategory PhysicsLog("nsPhysicsLog", nsELogVerbosity::LV_DEBUG);
-
-
-
-nsPhysicsManager::nsPhysicsManager() noexcept
-	: bInitialized(false)
+nsPhysicsManager& nsPhysicsManager::Get()
 {
+#if NS_ENGINE_PHYSICS_USE_PHYSX
+	static nsPhysicsManager_PhysX instance;
+#else
+	static nsPhysicsManager instance;
+#endif // NS_PHYSICS_ENGINE_USE_PHYSX
 
-}
-
-
-void nsPhysicsManager::Initialize() noexcept
-{
-	if (bInitialized)
-	{
-		return;
-	}
-
-	NS_LogInfo(PhysicsLog, "Initialize physics manager");
-
-	bInitialized = true;
-}
-
-
-void nsPhysicsManager::Update(float deltaTime) noexcept
-{
-
+	return instance;
 }

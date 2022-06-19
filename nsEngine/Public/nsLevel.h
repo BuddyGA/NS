@@ -20,10 +20,10 @@ public:
 	void Destroy();
 	
 	// Add actor into level
-	void AddActor(nsActor* actor) noexcept;
+	bool AddActor(nsActor* actor) noexcept;
 
 	// Remove actor from level
-	void RemoveActor(nsActor* actor) noexcept;
+	bool RemoveActor(nsActor* actor) noexcept;
 
 
 	NS_NODISCARD_INLINE const nsName& GetName() const noexcept

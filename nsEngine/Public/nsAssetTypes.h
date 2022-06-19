@@ -5,8 +5,6 @@
 
 
 
-
-
 extern nsLogCategory AssetLog;
 
 

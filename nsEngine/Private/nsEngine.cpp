@@ -205,14 +205,22 @@ void nsEngine::MainLoop()
 	nsPhysicsManager::Get().Update(DeltaTimeSeconds);
 
 
-	if (Game && !Game->IsMinimized())
+	if (Game)
 	{
-		Game->DrawGUI();
+		Game->PostPhysicsUpdate();
+
+		if (!Game->IsMinimized())
+		{
+			Game->DrawGUI();
+		}
 	}
+
 
 	for (int i = 0; i < Worlds.GetCount(); ++i)
 	{
-		Worlds[i]->CleanupActors();
+		nsWorld* world = Worlds[i];
+		world->SyncActorTransformsWithPhysics();
+		world->CleanupLevelsAndActors();
 	}
 
 

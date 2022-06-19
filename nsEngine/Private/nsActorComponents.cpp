@@ -4,6 +4,9 @@
 
 
 
+// ================================================================================================================================== //
+// ACTOR COMPONENT
+// ================================================================================================================================== //
 nsActorComponent::nsActorComponent()
 {
 	Actor = nullptr;
@@ -35,6 +38,55 @@ void nsActorComponent::SetVisibility(bool bVisible)
 
 
 
+// ================================================================================================================================== //
+// COLLISION COMPONENT
+// ================================================================================================================================== //
+nsCollisionComponent::nsCollisionComponent()
+{
+	PhysicsObject = nsPhysicsObjectID::INVALID;
+	Shape = nsEPhysicsShape::NONE;
+	CollisionLayers = nsEPhysicsCollisionLayer::Default;
+}
+
+
+void nsCollisionComponent::OnActorAddedToLevel()
+{
+	UpdateCollisionVolume();
+}
+
+
+void nsCollisionComponent::OnActorRemovedFromLevel()
+{
+}
+
+
+
+
+// ================================================================================================================================== //
+// BOX COLLISION COMPONENT
+// ================================================================================================================================== //
+nsBoxCollisionComponent::nsBoxCollisionComponent()
+{
+	HalfExtent = nsVector3(50.0f);
+}
+
+
+void nsBoxCollisionComponent::OnInitialize()
+{
+
+}
+
+
+void nsBoxCollisionComponent::UpdateCollisionVolume()
+{
+}
+
+
+
+
+// ================================================================================================================================== //
+// MESH COMPONENT
+// ================================================================================================================================== //
 nsMeshComponent::nsMeshComponent()
 {
 	bIsVisible = true;

@@ -800,6 +800,8 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 	// Setup memory allocator
 	VmaVulkanFunctions vmaFunctions = {};
+	vmaFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+	vmaFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
 	vmaFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
 	vmaFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
 	vmaFunctions.vkGetPhysicalDeviceMemoryProperties2KHR = vkGetPhysicalDeviceMemoryProperties2KHR;
@@ -825,11 +827,10 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 	VmaAllocatorCreateInfo allocatorCreateInfo = {};
 	allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+	allocatorCreateInfo.instance = Instance;
 	allocatorCreateInfo.physicalDevice = PhysicalDevice;
 	allocatorCreateInfo.device = Device;
-	allocatorCreateInfo.frameInUseCount = 0;
 	allocatorCreateInfo.pHeapSizeLimit = NULL;
-	allocatorCreateInfo.pRecordSettings = NULL;
 	allocatorCreateInfo.preferredLargeHeapBlockSize = (32 * 1024 * 1024);
 	allocatorCreateInfo.pVulkanFunctions = &vmaFunctions;
 	allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_1;

@@ -17,6 +17,7 @@ void nsConsoleManager::Initialize() noexcept
 		return;
 	}
 
+	/*
 	NS_CONSOLE_Log(nsTempLog, "[00] log message...");
 	NS_CONSOLE_Log(nsTempLog, "[01] log message...");
 	NS_CONSOLE_Log(nsTempLog, "[02] log message...");
@@ -62,6 +63,7 @@ void nsConsoleManager::Initialize() noexcept
 	NS_CONSOLE_Log(nsTempLog, "[42] log message...");
 	NS_CONSOLE_Log(nsTempLog, "[43] log message...");
 	NS_CONSOLE_Error(nsTempLog, "[44] Error message... [END]");
+	*/
 
 	bInitialized = true;
 }

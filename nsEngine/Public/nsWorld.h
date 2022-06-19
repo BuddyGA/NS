@@ -12,6 +12,7 @@ private:
 	float DeltaTimeSeconds;
 	bool bHasStartedPlay;
 
+	nsPhysicsSceneID PhysicsScene;
 	nsTArray<nsLevel*> Levels;
 
 	nsMemory ActorMemory;
@@ -28,10 +29,11 @@ public:
 	nsWorld(nsName name, bool bHasPhysics);
 	void Initialize();
 	void Destroy();
-	void CleanupActors();
+	void CleanupLevelsAndActors();
 	void DispatchStartPlay();
 	void DispatchStopPlay();
 	void DispatchTickUpdate(float deltaTime);
+	void SyncActorTransformsWithPhysics();
 
 private:
 	void RefreshActorList();
@@ -56,45 +58,11 @@ public:
 	}
 
 
-	void DestroyActor(nsActor* actor);
-
-
-	template<typename TActor = nsActor>
-	NS_INLINE TActor* CreateActor(nsName name, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr, nsLevel* optLevel = nullptr)
-	{
-		static_assert(std::is_base_of<nsActor, TActor>::value, "CreateActor type of <TActor> must be derived from type <nsActor>!");
-		NS_Validate_IsMainThread();
-
-		nsLevel* level = optLevel ? optLevel : GetPersistentLevel();
-
-		TActor* newActor = ActorMemory.AllocateConstruct<TActor>();
-		newActor->Name = name;
-		newActor->Level = level;
-
-		uint32& flags = newActor->Flags;
-		if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(newActor);
-		if (flags & nsEActorFlag::CallTickUpdate) TickUpdateActors.Add(newActor);
-		
-		newActor->SetWorldTransform(optTransform);
-		newActor->OnInitialize();
-
-		if (bHasStartedPlay && (flags & nsEActorFlag::CallStartStopPlay) )
-		{
-			newActor->OnStartPlay();
-		}
-
-		ActorList.Add(newActor);
-		level->AddActor(newActor);
-
-		return newActor;
-	}
-
-
-	template<typename TActor = nsActor>
-	NS_INLINE TActor* CreateActor(nsName name, const nsVector3& position, const nsQuaternion& rotation = nsQuaternion::IDENTITY, const nsVector3& scale = 1.0f) noexcept
-	{
-		return CreateActor<TActor>(name, nsTransform(position, rotation, scale));
-	}
+	nsActor* CreateActor(nsName name, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr);
+	nsActor* CreateActor(nsName name, const nsVector3& position, const nsQuaternion& rotation = nsQuaternion::IDENTITY, const nsVector3& scale = 1.0f);
+	void DestroyActor(nsActor*& actor);
+	void AddActorToLevel(nsActor* actor, nsLevel* level = nullptr);
+	void RemoveActorFromLevel(nsActor* actor);
 
 
 	// Get all actors

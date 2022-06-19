@@ -92,6 +92,12 @@ void nsGameApplication::TickUpdate(float deltaTime) noexcept
 }
 
 
+void nsGameApplication::PostPhysicsUpdate() noexcept
+{
+
+}
+
+
 void nsGameApplication::PreRender() noexcept
 {
 	const nsPointInt windowDimension = GetDimension();
@@ -341,14 +347,22 @@ void nsGameApplication::LoadTestLevel_Boxes()
 
 	nsActor* floorActor = MainWorld->CreateActor("floor_actor", nsVector3(0.0f, -8.0f, 0.0f));
 	{
+		nsBoxCollisionComponent* boxCollisionComp = floorActor->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(1600.0f, 8.0f, 1600.0f);
+
 		nsMeshComponent* meshComp = floorActor->AddComponent<nsMeshComponent>("mesh");
 		meshComp->SetMesh(assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME));
+
+		MainWorld->AddActorToLevel(floorActor);
 	}
+
 
 	nsActor* wallActor = MainWorld->CreateActor("wall_actor", nsVector3(-500.0f, 138.0f, 100.0f));
 	{
 		nsMeshComponent* meshComp = wallActor->AddComponent<nsMeshComponent>("mesh");
 		meshComp->SetMesh(assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME));
+
+		MainWorld->AddActorToLevel(wallActor);
 	}
 
 	nsSharedModelAsset boxModelAsset = assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME);
@@ -357,6 +371,8 @@ void nsGameApplication::LoadTestLevel_Boxes()
 	{
 		nsMeshComponent* meshComp = boxCenter->AddComponent<nsMeshComponent>("mesh");
 		meshComp->SetMesh(boxModelAsset);
+
+		MainWorld->AddActorToLevel(boxCenter);
 	}
 
 
@@ -378,6 +394,8 @@ void nsGameApplication::LoadTestLevel_Boxes()
 				{
 					nsMeshComponent* meshComp = actor->AddComponent<nsMeshComponent>("mesh");
 					meshComp->SetMesh(boxModelAsset);
+
+					MainWorld->AddActorToLevel(actor);
 				}
 
 				spawnPosition.Z += 300.0f;

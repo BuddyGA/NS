@@ -78,7 +78,7 @@ public:
 
 
 	template<typename T>
-	NS_NODISCARD_INLINE bool IsSubclassType() const noexcept
+	NS_NODISCARD_INLINE bool IsSubclass() const noexcept
 	{
 		const nsClass* checkClass = GetClass();
 

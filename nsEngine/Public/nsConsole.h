@@ -57,6 +57,7 @@ public:
 		return LogEntries;
 	}
 
+
 	NS_DECLARE_SINGLETON(nsConsoleManager)
 
 };

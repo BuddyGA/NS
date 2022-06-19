@@ -9,6 +9,8 @@
 
 #define NS_ENGINE_FRAME_BUFFERING									(3)
 
+#define NS_ENGINE_PHYSICS_USE_PHYSX									(1)
+
 #define NS_ENGINE_MESH_MAX_LODs										(4)
 
 #define NS_ENGINE_TEXTURE_MAX_MIPs									(16)
@@ -185,3 +187,7 @@ NS_INLINE void ns_DestroyObject(T*& obj) noexcept
 {
 	g_EngineDefaultMemory.DeallocateDestruct<T>(obj);
 }
+
+
+
+class nsActor;

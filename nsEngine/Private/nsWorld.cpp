@@ -40,7 +40,7 @@ void nsWorld::Destroy()
 }
 
 
-void nsWorld::CleanupActors()
+void nsWorld::CleanupLevelsAndActors()
 {
 	const int pendingDestroyCount = PendingDestroyActors.GetCount();
 
@@ -114,6 +114,17 @@ void nsWorld::DispatchTickUpdate(float deltaTime)
 	for (int i = 0; i < TickUpdateActors.GetCount(); ++i)
 	{
 		TickUpdateActors[i]->OnTickUpdate(deltaTime);
+	}
+}
+
+
+void nsWorld::SyncActorTransformsWithPhysics()
+{
+	nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
+
+	if (physicsManager.IsPhysicsSceneValid(PhysicsScene))
+	{
+		physicsManager.SyncPhysicsSceneTransforms(PhysicsScene);
 	}
 }
 
@@ -205,7 +216,32 @@ void nsWorld::DestroyLevel(nsName levelName)
 }
 
 
-void nsWorld::DestroyActor(nsActor* actor)
+nsActor* nsWorld::CreateActor(nsName name, const nsTransform& optTransform, nsActor* optParent)
+{
+	NS_Validate_IsMainThread();
+
+	nsActor* newActor = ActorMemory.AllocateConstruct<nsActor>();
+	newActor->Name = name;
+
+	uint32& flags = newActor->Flags;
+	if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(newActor);
+	if (flags & nsEActorFlag::CallTickUpdate) TickUpdateActors.Add(newActor);
+
+	newActor->SetWorldTransform(optTransform);
+	newActor->OnInitialize();
+	ActorList.Add(newActor);
+
+	return newActor;
+}
+
+
+nsActor* nsWorld::CreateActor(nsName name, const nsVector3& position, const nsQuaternion& rotation, const nsVector3& scale)
+{
+	return CreateActor(name, nsTransform(position, rotation, scale));
+}
+
+
+void nsWorld::DestroyActor(nsActor*& actor)
 {
 	if (actor == nullptr)
 	{
@@ -214,7 +250,7 @@ void nsWorld::DestroyActor(nsActor* actor)
 
 	if (actor->Flags & nsEActorFlag::PendingDestroy)
 	{
-		NS_CONSOLE_Warning(WorldLog, "Ignoring destroy actor that has marked as pending destroy!");
+		NS_CONSOLE_Warning(WorldLog, "Ignoring destroy actor [%s] that has marked as pending destroy!", *actor->Name);
 		return;
 	}
 
@@ -223,7 +259,6 @@ void nsWorld::DestroyActor(nsActor* actor)
 
 	nsWorld* world = level->World;
 	NS_Assert(world);
-
 	NS_AssertV(world == this, "Cannot destroy actor from different world!");
 
 	for (int i = 0; i < actor->Children.GetCount(); ++i)
@@ -233,6 +268,39 @@ void nsWorld::DestroyActor(nsActor* actor)
 
 	NS_CONSOLE_Debug(WorldLog, "Mark actor [%s] as pending destroy", *actor->Name);
 
-	actor->Flags |= nsEActorFlag::PendingDestroy;
 	PendingDestroyActors.Add(actor);
+	actor->Flags |= nsEActorFlag::PendingDestroy;
+	actor = nullptr;
+}
+
+
+void nsWorld::AddActorToLevel(nsActor* actor, nsLevel* level)
+{
+	if (actor == nullptr)
+	{
+		return;
+	}
+
+	NS_AssertV(actor->Level == nullptr, "Cannot add actor to level while inside another level. Call RemoveActorFromLevel() before add it to another level!");
+	nsLevel* useLevel = level ? level : GetPersistentLevel();
+	actor->Level = useLevel;
+
+	if (useLevel->AddActor(actor) && bHasStartedPlay && (actor->Flags & nsEActorFlag::CallStartStopPlay))
+	{
+		actor->OnStartPlay();
+	}
+}
+
+
+void nsWorld::RemoveActorFromLevel(nsActor* actor)
+{
+	if (actor == nullptr)
+	{
+		return;
+	}
+
+	nsLevel* level = actor->Level;
+	NS_Assert(level);
+
+	level->RemoveActor(actor);
 }
