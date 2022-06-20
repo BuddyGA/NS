@@ -32,6 +32,9 @@
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME					"mdl_default_floor"
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME						"mdl_default_wall"
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME						"mdl_default_box"
+
+#define NS_ENGINE_TRANSFORM_MAX_CHILDREN							(8)
+
 #define NS_ENGINE_GAME_MODULE_HOTRELOAD								(1)
 
 

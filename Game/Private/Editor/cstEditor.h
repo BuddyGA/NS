@@ -19,7 +19,7 @@ private:
 
 public:
 	cstEditorContextMenu();
-	void DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord);
+	bool DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord);
 
 
 	NS_NODISCARD_INLINE float GetSnapTranslationValue() const

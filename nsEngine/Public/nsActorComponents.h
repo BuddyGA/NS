@@ -1,21 +1,18 @@
 #pragma once
 
+#include "nsObject.h"
 #include "nsPhysics.h"
 #include "nsRenderer.h"
 #include "nsAssetTypes.h"
 
 
-class nsActor;
 
-
-
-class NS_ENGINE_API nsActorComponent
+class NS_ENGINE_API nsActorComponent 
 {
 protected:
 	nsName Name;
 	nsActor* Actor;
 	bool bAddedToLevel;
-	bool bIsVisible;
 
 
 public:
@@ -25,12 +22,9 @@ public:
 	virtual void OnStopPlay() {}
 	virtual void OnTickUpdate(float deltaTime) {}
 	virtual void OnDestroy();
-	virtual void OnActorAddedToLevel() {}
-	virtual void OnActorRemovedFromLevel() {}
-	virtual void OnActorTransformUpdated() {}
-	virtual void OnVisibilityChanged() {}
+	virtual void OnAddedToLevel() {}
+	virtual void OnRemovedFromLevel() {}
 	virtual bool IsFullyLoaded() { return true; }
-	void SetVisibility(bool bVisible);
 
 
 public:
@@ -40,33 +34,256 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE bool IsVisible() const
-	{
-		return bIsVisible;
-	}
-
-
 	friend class nsActor;
 
 };
 
 
 
-class NS_ENGINE_API nsCollisionComponent : public nsActorComponent
+enum class nsETransformAttachmentMode : uint8
+{
+	RESET_TRANSFORM = 0,
+	KEEP_LOCAL_TRANSFORM,
+	KEEP_WORLD_TRANSFORM
+};
+
+
+class NS_ENGINE_API nsTransformComponent : public nsActorComponent
+{
+	enum class EDirtyTransform : uint8
+	{
+		NONE = 0,
+		LOCAL,
+		WORLD
+	};
+
+
+private:
+	nsTransformComponent* Parent;
+	nsTransform LocalTransform;
+	nsTransform WorldTransform;
+	nsTArrayInline<nsTransformComponent*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> Children;
+	EDirtyTransform DirtyTransform;
+
+
+public:
+	nsTransformComponent();
+
+private:
+	void UpdateTransform();
+
+protected:
+	virtual void OnTransformChanged() {}
+
+public:
+	void AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode);
+	void DetachFromParent();
+
+
+	NS_INLINE void SetLocalTransform(nsTransform transform)
+	{
+		LocalTransform = transform;
+		DirtyTransform = EDirtyTransform::WORLD;
+		UpdateTransform();
+	}
+
+
+	NS_INLINE void SetLocalPosition(nsVector3 position)
+	{
+		if (DirtyTransform == EDirtyTransform::LOCAL)
+		{
+			UpdateTransform();
+		}
+
+		LocalTransform.Position = position;
+		DirtyTransform = EDirtyTransform::WORLD;
+	}
+
+
+	NS_INLINE void SetLocalRotation(nsQuaternion rotation)
+	{
+		if (DirtyTransform == EDirtyTransform::LOCAL)
+		{
+			UpdateTransform();
+		}
+
+		LocalTransform.Rotation = rotation;
+		DirtyTransform = EDirtyTransform::WORLD;
+	}
+
+
+	NS_INLINE void SetLocalScale(nsVector3 scale)
+	{
+		if (DirtyTransform == EDirtyTransform::LOCAL)
+		{
+			UpdateTransform();
+		}
+
+		LocalTransform.Scale = scale;
+		DirtyTransform = EDirtyTransform::WORLD;
+	}
+
+
+	NS_INLINE void SetWorldTransform(nsTransform transform)
+	{
+		WorldTransform = transform;
+		DirtyTransform = EDirtyTransform::LOCAL;
+		UpdateTransform();
+	}
+
+
+	NS_INLINE void SetWorldPosition(nsVector3 position)
+	{
+		if (DirtyTransform == EDirtyTransform::WORLD)
+		{
+			UpdateTransform();
+		}
+
+		WorldTransform.Position = position;
+		DirtyTransform = EDirtyTransform::LOCAL;
+	}
+
+
+	NS_INLINE void SetWorldRotation(nsQuaternion rotation)
+	{
+		if (DirtyTransform == EDirtyTransform::WORLD)
+		{
+			UpdateTransform();
+		}
+
+		WorldTransform.Rotation = rotation;
+		DirtyTransform = EDirtyTransform::LOCAL;
+	}
+
+
+	NS_INLINE void SetWorldScale(nsVector3 scale)
+	{
+		if (DirtyTransform == EDirtyTransform::WORLD)
+		{
+			UpdateTransform();
+		}
+
+		WorldTransform.Scale = scale;
+		DirtyTransform = EDirtyTransform::LOCAL;
+	}
+
+
+	NS_NODISCARD_INLINE nsTransform GetLocalTransform()
+	{
+		UpdateTransform();
+		return LocalTransform;
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetLocalPosition()
+	{
+		UpdateTransform();
+		return LocalTransform.Position;
+	}
+
+
+	NS_NODISCARD_INLINE nsQuaternion GetLocalRotation()
+	{
+		UpdateTransform();
+		return LocalTransform.Rotation;
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetLocalScale()
+	{
+		UpdateTransform();
+		return LocalTransform.Scale;
+	}
+
+
+	NS_NODISCARD_INLINE nsTransform GetWorldTransform()
+	{
+		UpdateTransform();
+		return WorldTransform;
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetWorldPosition()
+	{
+		UpdateTransform();
+		return WorldTransform.Position;
+	}
+
+
+	NS_NODISCARD_INLINE nsQuaternion GetWorldRotation()
+	{
+		UpdateTransform();
+		return WorldTransform.Rotation;
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetWorldScale()
+	{
+		UpdateTransform();
+		return WorldTransform.Scale;
+	}
+
+
+	NS_INLINE void AddLocalPosition(nsVector3 delta)
+	{
+		SetLocalPosition(delta + GetLocalPosition());
+	}
+
+
+	NS_INLINE void AddLocalRotation(nsQuaternion delta)
+	{
+		SetLocalRotation(delta * GetLocalRotation());
+	}
+
+
+	NS_INLINE void AddLocalScale(nsVector3 delta)
+	{
+		SetLocalScale(delta + GetLocalScale());
+	}
+
+
+	NS_INLINE void AddWorldPosition(nsVector3 delta)
+	{
+		SetWorldPosition(delta + GetWorldPosition());
+	}
+
+
+	NS_INLINE void AddWorldRotation(nsQuaternion delta)
+	{
+		SetWorldRotation(delta * GetWorldRotation());
+	}
+
+
+	NS_INLINE void AddWorldScale(nsVector3 delta)
+	{
+		SetWorldScale(delta + GetWorldScale());
+	}
+
+};
+
+
+
+class NS_ENGINE_API nsCollisionComponent : public nsTransformComponent
 {
 protected:
 	nsPhysicsObjectID PhysicsObject;
 	nsEPhysicsShape Shape;
-
-public:
-	nsPhysicsCollisionLayers CollisionLayers;
+	nsEPhysicsCollisionChannel CollisionChannel;
 
 
 public:
 	nsCollisionComponent();
-	virtual void OnActorAddedToLevel() override;
-	virtual void OnActorRemovedFromLevel() override;
+	virtual void OnAddedToLevel() override;
+	virtual void OnRemovedFromLevel() override;
+
+	void SetCollisionChannel(nsEPhysicsCollisionChannel channel);
 	virtual void UpdateCollisionVolume() = 0;
+
+
+	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel GetCollisionChannel() const
+	{
+		return CollisionChannel;
+	}
 
 };
 
@@ -87,7 +304,34 @@ public:
 
 
 
-class NS_ENGINE_API nsMeshComponent : public nsActorComponent
+
+class NS_ENGINE_API nsRenderComponent : public nsTransformComponent
+{
+private:
+	bool bIsVisible;
+
+
+public:
+	nsRenderComponent();
+
+protected:
+	virtual void OnVisibilityChanged() {}
+
+public:
+	void SetVisibility(bool bVisible);
+
+
+	NS_NODISCARD_INLINE bool IsVisible() const
+	{
+		return bIsVisible;
+	}
+
+};
+
+
+
+
+class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 {
 private:
 	nsSharedModelAsset ModelAsset;
@@ -98,9 +342,11 @@ private:
 public:
 	nsMeshComponent();
 	virtual void OnDestroy() override;
-	virtual void OnActorAddedToLevel() override;
-	virtual void OnActorRemovedFromLevel() override;
-	virtual void OnActorTransformUpdated() override;
+	virtual void OnAddedToLevel() override;
+	virtual void OnRemovedFromLevel() override;
+
+protected:
+	virtual void OnTransformChanged() override;
 	virtual void OnVisibilityChanged() override;
 
 private:

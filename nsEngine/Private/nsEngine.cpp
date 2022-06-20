@@ -26,8 +26,11 @@ nsEngine::nsEngine() noexcept
 	, DeltaTimeSeconds(0.0f)
 	, FpsTimeMs(0.0f)
 	, Fps(0.0f)
+	, PhysicsTimeAccumulator(0.0f)
 {
 	Worlds.Reserve(4);
+	PhysicsFixedTimeSteps = 0.016667f;
+	PhysicsMaxSteps = 3;
 }
 
 
@@ -202,9 +205,25 @@ void nsEngine::MainLoop()
 	nsAnimationManager::Get().Update(DeltaTimeSeconds);
 
 
-	nsPhysicsManager::Get().Update(DeltaTimeSeconds);
+	// Update physics
+	{
+		PhysicsTimeAccumulator += DeltaTimeSeconds;
+		int physicsStepCount = 0;
+
+		while (PhysicsTimeAccumulator >= PhysicsFixedTimeSteps)
+		{
+			nsPhysicsManager::Get().Update(PhysicsFixedTimeSteps);
+			PhysicsTimeAccumulator -= PhysicsFixedTimeSteps;
+
+			if (++physicsStepCount >= PhysicsMaxSteps)
+			{
+				break;
+			}
+		}
+	}
 
 
+	// Post physics update
 	if (Game)
 	{
 		Game->PostPhysicsUpdate();
@@ -220,7 +239,7 @@ void nsEngine::MainLoop()
 	{
 		nsWorld* world = Worlds[i];
 		world->SyncActorTransformsWithPhysics();
-		world->CleanupLevelsAndActors();
+		world->CleanupPendingDestroyLevelsAndActors();
 	}
 
 

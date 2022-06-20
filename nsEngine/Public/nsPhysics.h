@@ -26,23 +26,30 @@ enum class nsEPhysicsShape : uint8
 
 
 
-namespace nsEPhysicsCollisionLayer
+enum class nsEPhysicsCollisionChannel : uint32
 {
-	enum Flags : uint16
-	{
-		None			= (0),
+	NONE = 0,
 
-		Default			= (1 << 0),
-		Character		= (1 << 1),
-		Water			= (1 << 2),
+	DEFAULT,
+	CHARACTER,
+	WATER,
 
-		// ...
+	// ...
 
-		ALL				= (UINT16_MAX)
-	};
+	COUNT
 };
 
-typedef uint16 nsPhysicsCollisionLayers;
+
+
+enum class nsEPhysicsQueryChannel : uint32
+{
+	NONE = 0,
+
+	VISIBILITY,
+	PICKING,
+
+	COUNT,
+};
 
 
 
@@ -57,7 +64,8 @@ struct nsPhysicsSceneSettings
 struct nsPhysicsObjectSettings
 {
 	nsEPhysicsShape Shape = nsEPhysicsShape::NONE;
-	nsPhysicsCollisionLayers CollisionLayers = 0;
+	nsEPhysicsCollisionChannel CollisionChannel = nsEPhysicsCollisionChannel::NONE;
+	bool bIsStatic = true;
 	void* UserData = nullptr;
 };
 
@@ -81,10 +89,22 @@ public:
 	virtual bool IsPhysicsSceneValid(nsPhysicsSceneID scene) const = 0;
 	virtual nsName GetPhysicsSceneName(nsPhysicsSceneID scene) const = 0;
 
-	virtual nsPhysicsObjectID CreatePhysicsObjectRigidBody_Box(nsName name, nsActor* actor, const nsVector3& halfExtent, nsPhysicsCollisionLayers collisionLayers = nsEPhysicsCollisionLayer::Default, bool bIsStatic = true) = 0;
+	virtual nsPhysicsObjectID CreatePhysicsObjectRigidBody_Box(nsName name, nsActor* actor, const nsVector3& halfExtent, nsEPhysicsCollisionChannel collisionChannel = nsEPhysicsCollisionChannel::NONE, bool bIsStatic = true) = 0;
+	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) = 0;
+	virtual void SetPhysicsObjectCollisionChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel collisionChannel) = 0;
 	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) = 0;
 	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) = 0;
 	virtual bool IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const = 0;
 	virtual nsName GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const = 0;
+
+	virtual void AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) = 0;
+	virtual void RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) = 0;
+
+
+#ifdef __NS_ENGINE_DEBUG_DRAW__
+	virtual void DEBUG_Draw(class nsRenderContextWorld& renderContextWorld) = 0;
+#else
+	NS_INLINE void DEBUG_Draw(class nsRenderContextWorld&) {}
+#endif // __NS_ENGINE_DEBUG_DRAW__
 
 };

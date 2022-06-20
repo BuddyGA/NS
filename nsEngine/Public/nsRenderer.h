@@ -16,8 +16,30 @@ enum class nsERenderFinalTexture : uint8
 };
 
 
+
+namespace nsERenderDebugDraw
+{
+	enum Flags : uint8
+	{
+		None			= (0),
+		Wireframe		= (1 << 0),
+		Collision		= (1 << 1),
+		Skeleton		= (1 << 2),
+
+		// ...
+
+		ALL				= (UINT8_MAX)
+	};
+};
+
+typedef uint8 nsRenderDebugDrawFlags;
+
+
+
 class NS_ENGINE_API nsRenderer
 {
+	NS_DECLARE_NOCOPY(nsRenderer)
+
 private:
 	struct Frame
 	{
@@ -48,7 +70,7 @@ public:
 	nsERenderFinalTexture RenderFinalTexture;
 	nsRenderContextWorld* RenderContextWorld;
 	nsGUIContext* GUIContext;
-	bool bIsWireframe;
+	nsRenderDebugDrawFlags DebugDrawFlags;
 
 
 public:
@@ -96,8 +118,5 @@ public:
 	{
 		return FrameDatas[FrameIndex].SceneDepthStencil;
 	}
-
-
-	NS_DECLARE_NOCOPY(nsRenderer)
 
 };

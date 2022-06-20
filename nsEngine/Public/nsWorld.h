@@ -10,6 +10,7 @@ private:
 	nsName Name;
 	float StartTimeSeconds;
 	float DeltaTimeSeconds;
+	bool bHasPhysics;
 	bool bHasStartedPlay;
 
 	nsPhysicsSceneID PhysicsScene;
@@ -26,10 +27,10 @@ public:
 
 
 public:
-	nsWorld(nsName name, bool bHasPhysics);
+	nsWorld(nsName name, bool bInitPhysics);
 	void Initialize();
 	void Destroy();
-	void CleanupLevelsAndActors();
+	void CleanupPendingDestroyLevelsAndActors();
 	void DispatchStartPlay();
 	void DispatchStopPlay();
 	void DispatchTickUpdate(float deltaTime);
@@ -65,6 +66,12 @@ public:
 	void RemoveActorFromLevel(nsActor* actor);
 
 
+	NS_NODISCARD_INLINE nsPhysicsSceneID GetPhysicsScene() const noexcept
+	{
+		return PhysicsScene;
+	}
+
+
 	// Get all actors
 	NS_NODISCARD_INLINE const nsTArray<nsActor*>& GetAllActors() const noexcept
 	{
@@ -78,7 +85,7 @@ public:
 	}
 
 
-	// Get start time in seconds when start play 
+	// Get start time in seconds when start play
 	NS_NODISCARD_INLINE float GetStartTimeSeconds() const noexcept
 	{
 		return StartTimeSeconds;

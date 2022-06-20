@@ -43,8 +43,10 @@ cstEditorContextMenu::cstEditorContextMenu()
 }
 
 
-void cstEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord)
+bool cstEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord)
 {
+	int commitCount = 0;
+
 	nsGUIRect rect;
 	rect.Left = screenCoord.X;
 	rect.Top = screenCoord.Y;
@@ -59,17 +61,28 @@ void cstEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& sc
 		context.BeginRegion(nullptr, contentRect, nsPointFloat(2.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::None, false, "editor_context_menu");
 		{
 			context.AddControlText("Snap Position:");
-			InputSnapTranslation.Draw(context);
+			if (InputSnapTranslation.Draw(context))
+			{
+				commitCount++;
+			}
 
 			context.AddControlText("Snap Rotation:");
-			InputSnapRotation.Draw(context);
+			if (InputSnapRotation.Draw(context))
+			{
+				commitCount++;
+			}
 
 			context.AddControlText("Snap Scale:");
-			InputSnapScale.Draw(context);
+			if (InputSnapScale.Draw(context))
+			{
+				commitCount++;
+			}
 		}
 		context.EndRegion();
 	}
 	Window.EndDraw(context);
+
+	return commitCount > 0;
 }
 
 
@@ -264,7 +277,16 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		{
 			if (MainRenderer)
 			{
-				MainRenderer->bIsWireframe = !MainRenderer->bIsWireframe;
+				MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
+				NS_CONSOLE_Log(EditorLog, "Debug draw wireframe [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? "ON" : "OFF");
+			}
+		}
+		else if (e.Key == nsEInputKey::KEYBOARD_F6)
+		{
+			if (MainRenderer)
+			{
+				MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
+				NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
 			}
 		}
 
@@ -502,10 +524,8 @@ void cstEditor::DrawGUI(nsGUIContext& context)
 			SelectFocusActor(selectedActor);
 		}
 
-		if (bShowContextMenu)
+		if (bShowContextMenu && ContextMenu.DrawGUI(context, ContextMenuCoord))
 		{
-			ContextMenu.DrawGUI(context, ContextMenuCoord);
-
 			ActorGizmo.SnapTranslationValue = ContextMenu.GetSnapTranslationValue();
 			ActorGizmo.SnapRotationValue = ContextMenu.GetSnapRotationValue();
 		}

@@ -14,12 +14,13 @@ nsActor::nsActor()
 	Level = nullptr;
 	Flags = 0;
 	Parent = nullptr;
-	DirtyTransform = EDirtyTransform::NONE;
+	RootComponent = nullptr;
 }
 
 
 void nsActor::OnInitialize()
 {
+	RootComponent = AddComponent<nsTransformComponent>("root_component");
 }
 
 
@@ -99,22 +100,13 @@ void nsActor::OnDestroy()
 }
 
 
-void nsActor::OnTransformUpdated()
-{
-	for (int i = 0; i < Components.GetCount(); ++i)
-	{
-		Components[i]->OnActorTransformUpdated();
-	}
-}
-
-
 void nsActor::OnAddedToLevel()
 {
 	Flags |= nsEActorFlag::AddedToLevel;
 
 	for (int i = 0; i < Components.GetCount(); ++i)
 	{
-		Components[i]->OnActorAddedToLevel();
+		Components[i]->OnAddedToLevel();
 	}
 }
 
@@ -123,42 +115,10 @@ void nsActor::OnRemovedFromLevel()
 {
 	for (int i = 0; i < Components.GetCount(); ++i)
 	{
-		Components[i]->OnActorRemovedFromLevel();
+		Components[i]->OnRemovedFromLevel();
 	}
 
 	Flags &= ~nsEActorFlag::AddedToLevel;
-}
-
-
-void nsActor::UpdateTransform()
-{
-	if (DirtyTransform == EDirtyTransform::NONE)
-	{
-		return;
-	}
-
-	if (DirtyTransform == EDirtyTransform::LOCAL)
-	{
-		LocalTransform.Position = Parent ? Parent->WorldTransform.Position - WorldTransform.Position : WorldTransform.Position;
-		LocalTransform.Rotation = Parent ? LocalTransform.Rotation * Parent->WorldTransform.Rotation.GetConjugate() : WorldTransform.Rotation;
-		LocalTransform.Scale = Parent ? WorldTransform.Scale / Parent->WorldTransform.Scale : WorldTransform.Scale;
-	}
-	else if (DirtyTransform == EDirtyTransform::WORLD)
-	{
-		WorldTransform.Position = Parent ? LocalTransform.Position + Parent->WorldTransform.Position : LocalTransform.Position;
-		WorldTransform.Rotation = Parent ? LocalTransform.Rotation * Parent->WorldTransform.Rotation : LocalTransform.Rotation;
-		WorldTransform.Scale = Parent ? LocalTransform.Scale * Parent->WorldTransform.Scale : LocalTransform.Scale;
-	}
-
-	DirtyTransform = EDirtyTransform::NONE;
-	OnTransformUpdated();
-
-	// Propagate to children
-	for (int i = 0; i < Children.GetCount(); ++i)
-	{
-		Children[i]->DirtyTransform = EDirtyTransform::WORLD;
-		Children[i]->UpdateTransform();
-	}
 }
 
 
@@ -169,213 +129,13 @@ nsWorld* nsActor::GetWorld() const
 }
 
 
-void nsActor::AttachToParent(nsActor* parent, nsEActorAttachmentMode attachmentMode)
+void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode)
 {
-	if (parent == nullptr)
-	{
-		NS_CONSOLE_Warning(ActorLog, "Ignore attach actor [%s] to parent. parent is NULL!", *Name);
-		return;
-	}
-
-	if (this == parent)
-	{
-		NS_CONSOLE_Warning(ActorLog, "Fail attach actor [%s] to parent. Cannot attach to itself!", *Name);
-		return;
-	}
-
-	const nsWorld* world = GetWorld();
-	const nsWorld* parentWorld = parent->GetWorld();
-	NS_Assert(world);
-	NS_Assert(parentWorld);
-
-	if (world != parentWorld)
-	{
-		NS_CONSOLE_Warning(ActorLog, "Fail attach actor [%s] to parent [%s]. Cannot attach actor to parent from different world! [ActorWorld: %s, ParentWorld: %s]", *Name, *parent->Name, *world->GetName(), *parentWorld->GetName());
-		return;
-	}
-
-	if (this == parent->Parent)
-	{
-		parent->DetachFromParent();
-	}
-
-	DetachFromParent();
-	Parent = parent;
-	Parent->Children.Add(this);
-
-	if (attachmentMode == nsEActorAttachmentMode::RESET_TRANSFORM)
-	{
-		LocalTransform = nsTransform();
-		WorldTransform = Parent->WorldTransform;
-	}
-	else if (attachmentMode == nsEActorAttachmentMode::KEEP_LOCAL_TRANSFORM)
-	{
-		DirtyTransform = EDirtyTransform::WORLD;
-	}
-	else // ecEActorAttachmentMode::KEEP_WORLD_TRANSFORM
-	{
-		DirtyTransform = EDirtyTransform::LOCAL;
-	}
-
-	UpdateTransform();
 }
 
 
 void nsActor::DetachFromParent()
 {
-	if (Parent == nullptr)
-	{
-		return;
-	}
-
-	Parent->Children.Remove(this);
-	Parent = nullptr;
-	DirtyTransform = EDirtyTransform::LOCAL;
-	UpdateTransform();
-}
-
-
-void nsActor::SetLocalTransform(nsTransform transform)
-{
-	LocalTransform = transform;
-	DirtyTransform = EDirtyTransform::WORLD;
-	UpdateTransform();
-}
-
-
-void nsActor::SetLocalPosition(nsVector3 position)
-{
-	if (DirtyTransform == EDirtyTransform::LOCAL)
-	{
-		UpdateTransform();
-	}
-
-	LocalTransform.Position = position;
-	DirtyTransform = EDirtyTransform::WORLD;
-}
-
-
-void nsActor::SetLocalRotation(nsQuaternion rotation)
-{
-	if (DirtyTransform == EDirtyTransform::LOCAL)
-	{
-		UpdateTransform();
-	}
-
-	LocalTransform.Rotation = rotation;
-	DirtyTransform = EDirtyTransform::WORLD;
-}
-
-
-void nsActor::SetLocalScale(nsVector3 scale)
-{
-	if (DirtyTransform == EDirtyTransform::LOCAL)
-	{
-		UpdateTransform();
-	}
-
-	LocalTransform.Scale = scale;
-	DirtyTransform = EDirtyTransform::WORLD;
-}
-
-
-void nsActor::SetWorldTransform(nsTransform transform)
-{
-	WorldTransform = transform;
-	DirtyTransform = EDirtyTransform::LOCAL;
-	UpdateTransform();
-}
-
-
-void nsActor::SetWorldPosition(nsVector3 position)
-{
-	if (DirtyTransform == EDirtyTransform::WORLD)
-	{
-		UpdateTransform();
-	}
-
-	WorldTransform.Position = position;
-	DirtyTransform = EDirtyTransform::LOCAL;
-}
-
-
-void nsActor::SetWorldRotation(nsQuaternion rotation)
-{
-	if (DirtyTransform == EDirtyTransform::WORLD)
-	{
-		UpdateTransform();
-	}
-
-	WorldTransform.Rotation = rotation;
-	DirtyTransform = EDirtyTransform::LOCAL;
-}
-
-
-void nsActor::SetWorldScale(nsVector3 scale)
-{
-	if (DirtyTransform == EDirtyTransform::WORLD)
-	{
-		UpdateTransform();
-	}
-
-	WorldTransform.Scale = scale;
-	DirtyTransform = EDirtyTransform::LOCAL;
-}
-
-
-nsTransform nsActor::GetLocalTransform()
-{
-	UpdateTransform();
-	return LocalTransform;
-}
-
-
-nsVector3 nsActor::GetLocalPosition()
-{
-	UpdateTransform();
-	return LocalTransform.Position;
-}
-
-
-nsQuaternion nsActor::GetLocalRotation()
-{
-	UpdateTransform();
-	return LocalTransform.Rotation;
-}
-
-
-nsVector3 nsActor::GetLocalScale()
-{
-	UpdateTransform();
-	return LocalTransform.Scale;
-}
-
-
-nsTransform nsActor::GetWorldTransform()
-{
-	UpdateTransform();
-	return WorldTransform;
-}
-
-
-nsVector3 nsActor::GetWorldPosition()
-{
-	UpdateTransform();
-	return WorldTransform.Position;
-}
-
-
-nsQuaternion nsActor::GetWorldRotation()
-{
-	UpdateTransform();
-	return WorldTransform.Rotation;
-}
-
-
-nsVector3 nsActor::GetWorldScale()
-{
-	UpdateTransform();
-	return WorldTransform.Scale;
 }
 
 

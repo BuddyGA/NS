@@ -7,13 +7,14 @@ static nsLogCategory WorldLog("nsWorldLog", nsELogVerbosity::LV_DEBUG);
 
 
 
-nsWorld::nsWorld(nsName name, bool bHasPhysics)
+nsWorld::nsWorld(nsName name, bool bInitPhysics)
 {
 	NS_Assert(name.GetLength() > 0);
 
 	Name = name;
 	StartTimeSeconds = 0;
 	DeltaTimeSeconds = 0.0f;
+	bHasPhysics = bInitPhysics;
 	bHasStartedPlay = false;
 
 	Levels.Reserve(8);
@@ -29,6 +30,11 @@ nsWorld::nsWorld(nsName name, bool bHasPhysics)
 
 void nsWorld::Initialize()
 {
+	if (bHasPhysics)
+	{
+		PhysicsScene = nsPhysicsManager::Get().CreatePhysicsScene(nsName::Format("%s.physics_scene", *Name));
+	}
+
 	CreateLevel(nsName::Format("%s.level_persistent", *Name));
 }
 
@@ -36,11 +42,10 @@ void nsWorld::Initialize()
 void nsWorld::Destroy()
 {
 	NS_ValidateV(0, "Not implemented yet!");
-
 }
 
 
-void nsWorld::CleanupLevelsAndActors()
+void nsWorld::CleanupPendingDestroyLevelsAndActors()
 {
 	const int pendingDestroyCount = PendingDestroyActors.GetCount();
 
@@ -120,11 +125,9 @@ void nsWorld::DispatchTickUpdate(float deltaTime)
 
 void nsWorld::SyncActorTransformsWithPhysics()
 {
-	nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
-
-	if (physicsManager.IsPhysicsSceneValid(PhysicsScene))
+	if (bHasPhysics)
 	{
-		physicsManager.SyncPhysicsSceneTransforms(PhysicsScene);
+		nsPhysicsManager::Get().SyncPhysicsSceneTransforms(PhysicsScene);
 	}
 }
 
@@ -227,8 +230,8 @@ nsActor* nsWorld::CreateActor(nsName name, const nsTransform& optTransform, nsAc
 	if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(newActor);
 	if (flags & nsEActorFlag::CallTickUpdate) TickUpdateActors.Add(newActor);
 
-	newActor->SetWorldTransform(optTransform);
 	newActor->OnInitialize();
+	newActor->SetWorldTransform(optTransform);
 	ActorList.Add(newActor);
 
 	return newActor;

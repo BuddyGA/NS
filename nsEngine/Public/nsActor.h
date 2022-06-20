@@ -8,15 +8,6 @@ class nsWorld;
 
 
 
-enum class nsEActorAttachmentMode : uint8
-{
-	RESET_TRANSFORM = 0,
-	KEEP_LOCAL_TRANSFORM,
-	KEEP_WORLD_TRANSFORM
-};
-
-
-
 namespace nsEActorFlag
 {
 	enum
@@ -47,19 +38,10 @@ protected:
 	nsActorFlags Flags;
 
 private:
-	enum class EDirtyTransform : uint8
-	{
-		NONE = 0,
-		LOCAL,
-		WORLD
-	};
-
-	nsTransform LocalTransform;
-	nsTransform WorldTransform;
 	nsActor* Parent;
 	nsTArray<nsActorComponent*> Components;
 	nsTArray<nsActor*> Children;
-	EDirtyTransform DirtyTransform;
+	nsTransformComponent* RootComponent;
 
 
 	static nsMemory ComponentMemory;
@@ -67,78 +49,148 @@ private:
 
 public:
 	nsActor();
-
-protected:
 	void OnInitialize();
 	void OnStartPlay();
 	void OnStopPlay();
 	void OnTickUpdate(float deltaTime);
 	void OnDestroy();
-	void OnTransformUpdated();
-
-public:
 	void OnAddedToLevel();
 	void OnRemovedFromLevel();
 
-private:
-	void UpdateTransform();
-
-public:
 	NS_NODISCARD nsWorld* GetWorld() const;
-	void AttachToParent(nsActor* parent, nsEActorAttachmentMode attachmentMode);
+	void AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode);
 	void DetachFromParent();
-	void SetLocalTransform(nsTransform transform);
-	void SetLocalPosition(nsVector3 position);
-	void SetLocalRotation(nsQuaternion rotation);
-	void SetLocalScale(nsVector3 scale);
-	void SetWorldTransform(nsTransform transform);
-	void SetWorldPosition(nsVector3 position);
-	void SetWorldRotation(nsQuaternion rotation);
-	void SetWorldScale(nsVector3 scale);
 
-	NS_NODISCARD nsTransform GetLocalTransform();
-	NS_NODISCARD nsVector3 GetLocalPosition();
-	NS_NODISCARD nsQuaternion GetLocalRotation();
-	NS_NODISCARD nsVector3 GetLocalScale();
-	NS_NODISCARD nsTransform GetWorldTransform();
-	NS_NODISCARD nsVector3 GetWorldPosition();
-	NS_NODISCARD nsQuaternion GetWorldRotation();
-	NS_NODISCARD nsVector3 GetWorldScale();
+
+	NS_INLINE void SetLocalTransform(nsTransform transform)
+	{
+		RootComponent->SetLocalTransform(transform);
+	}
+
+
+	NS_INLINE void SetLocalPosition(nsVector3 position)
+	{
+		RootComponent->SetLocalPosition(position);
+	}
+
+
+	NS_INLINE void SetLocalRotation(nsQuaternion rotation)
+	{
+		RootComponent->SetLocalRotation(rotation);
+	}
+
+
+	NS_INLINE void SetLocalScale(nsVector3 scale)
+	{
+		RootComponent->SetLocalScale(scale);
+	}
+
+
+	NS_INLINE void SetWorldTransform(nsTransform transform)
+	{
+		RootComponent->SetWorldTransform(transform);
+	}
+
+
+	NS_INLINE void SetWorldPosition(nsVector3 position)
+	{
+		RootComponent->SetWorldPosition(position);
+	}
+
+
+	NS_INLINE void SetWorldRotation(nsQuaternion rotation)
+	{
+		RootComponent->SetWorldRotation(rotation);
+	}
+
+
+	NS_INLINE void SetWorldScale(nsVector3 scale)
+	{
+		RootComponent->SetWorldScale(scale);
+	}
+
+
+	NS_NODISCARD_INLINE nsTransform GetLocalTransform()
+	{
+		return RootComponent->GetLocalTransform();
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetLocalPosition()
+	{
+		return RootComponent->GetLocalPosition();
+	}
+
+
+	NS_NODISCARD_INLINE nsQuaternion GetLocalRotation()
+	{
+		return RootComponent->GetLocalRotation();
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetLocalScale()
+	{
+		return RootComponent->GetLocalScale();
+	}
+
+
+	NS_NODISCARD_INLINE nsTransform GetWorldTransform()
+	{
+		return RootComponent->GetWorldTransform();
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetWorldPosition()
+	{
+		return RootComponent->GetWorldPosition();
+	}
+
+
+	NS_NODISCARD_INLINE nsQuaternion GetWorldRotation()
+	{
+		return RootComponent->GetWorldRotation();
+	}
+
+
+	NS_NODISCARD_INLINE nsVector3 GetWorldScale()
+	{
+		return RootComponent->GetWorldScale();
+	}
 
 
 	NS_INLINE void AddLocalPosition(nsVector3 delta)
 	{
-		SetLocalPosition(delta + GetLocalPosition());
+		RootComponent->AddLocalPosition(delta);
 	}
 
 
 	NS_INLINE void AddLocalRotation(nsQuaternion delta)
 	{
-		SetLocalRotation(delta * GetLocalRotation());
+		RootComponent->AddLocalRotation(delta);
 	}
 
 
 	NS_INLINE void AddLocalScale(nsVector3 delta)
 	{
-		SetLocalScale(delta + GetLocalScale());
+		RootComponent->AddLocalScale(delta);
 	}
 
 
 	NS_INLINE void AddWorldPosition(nsVector3 delta)
 	{
-		SetWorldPosition(delta + GetWorldPosition());
+		RootComponent->AddWorldPosition(delta);
 	}
 
 
 	NS_INLINE void AddWorldRotation(nsQuaternion delta)
 	{
-		SetWorldRotation(delta * GetWorldRotation());
+		RootComponent->AddWorldRotation(delta);
 	}
 
 
 	NS_INLINE void AddWorldScale(nsVector3 delta)
 	{
-		SetWorldScale(delta + GetWorldScale());
+		RootComponent->AddWorldScale(delta);
 	}
 
 
@@ -165,6 +217,14 @@ public:
 		newComponent->Actor = this;
 		newComponent->OnInitialize();
 
+		if constexpr (std::is_base_of<nsTransformComponent, TComponent>::value)
+		{
+			if (RootComponent)
+			{
+				newComponent->AttachToParent(RootComponent, nsETransformAttachmentMode::RESET_TRANSFORM);
+			}
+		}
+
 		if ((Flags & nsEActorFlag::CallStartStopPlay) && (Flags & nsEActorFlag::StartedPlay))
 		{
 			newComponent->OnStartPlay();
@@ -172,7 +232,7 @@ public:
 
 		if (Flags & nsEActorFlag::AddedToLevel)
 		{
-			newComponent->OnActorAddedToLevel();
+			newComponent->OnAddedToLevel();
 		}
 
 		Components.Add(newComponent);

@@ -1,9 +1,9 @@
 #include "nsGameApplication.h"
 #include "nsConsole.h"
 #include "nsRenderManager.h"
-#include "nsEngine.h"
 #include "nsWorld.h"
 #include "nsAssetManager.h"
+#include "nsEngine.h"
 
 
 
@@ -349,6 +349,7 @@ void nsGameApplication::LoadTestLevel_Boxes()
 	{
 		nsBoxCollisionComponent* boxCollisionComp = floorActor->AddComponent<nsBoxCollisionComponent>("box_collision");
 		boxCollisionComp->HalfExtent = nsVector3(1600.0f, 8.0f, 1600.0f);
+		boxCollisionComp->UpdateCollisionVolume();
 
 		nsMeshComponent* meshComp = floorActor->AddComponent<nsMeshComponent>("mesh");
 		meshComp->SetMesh(assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME));

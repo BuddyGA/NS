@@ -2,6 +2,7 @@
 #include "API_VK/nsVulkanFunctions.h"
 #include "nsTexture.h"
 #include "nsGUICore.h"
+#include "nsPhysics.h"
 
 
 
@@ -14,7 +15,7 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 	, RenderFinalTexture(nsERenderFinalTexture::NONE)
 	, RenderContextWorld(nullptr)
 	, GUIContext(nullptr)
-	, bIsWireframe(false)
+	, DebugDrawFlags(0)
 {
 	RenderPassFlags |= nsERenderPass::Forward;
 
@@ -95,6 +96,11 @@ void nsRenderer::BeginRender(int frameIndex, float deltaTime) noexcept
 
 		if (RenderContextWorld)
 		{
+			if (DebugDrawFlags & nsERenderDebugDraw::Collision)
+			{
+				nsPhysicsManager::Get().DEBUG_Draw(*RenderContextWorld);
+			}
+
 			RenderContextWorld->UpdateResourcesAndBuildDrawCalls(FrameIndex);
 		}
 	}
@@ -392,7 +398,7 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 			vkUpdateDescriptorSets(nsVulkan::GetVkDevice(), 2, writeEnvironmentCameraDescriptorSets, 0, nullptr);
 		}
 
-		if (bIsWireframe)
+		if (DebugDrawFlags & nsERenderDebugDraw::Wireframe)
 		{
 			RenderPassForward_Wireframe(commandBuffer);
 		}

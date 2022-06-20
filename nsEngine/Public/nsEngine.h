@@ -18,11 +18,14 @@ private:
 	int64 PrevTick;
 	int64 FrameCounter;
 	float DeltaTimeSeconds;
-
 	float FpsTimeMs;
 	float Fps;
-
+	float PhysicsTimeAccumulator;
 	nsTArray<nsWorld*> Worlds;
+
+public:
+	float PhysicsFixedTimeSteps;
+	int PhysicsMaxSteps;
 
 
 public:
