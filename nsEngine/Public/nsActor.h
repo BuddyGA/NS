@@ -217,7 +217,7 @@ public:
 		static_assert(std::is_base_of<nsActorComponent, TComponent>::value, "AddComponent() type of <TComponent> must be derived from type <nsActorComponent>!");
 
 		nsActorComponent* checkComponent = FindComponent(name);
-		NS_ValidateV(checkComponent == nullptr, "Component with name [%s] already exists!", *name);
+		NS_ValidateV(checkComponent == nullptr, "Actor [%s] already had component with name [%s]!", *Name, *name);
 
 		TComponent* newComponent = ComponentMemory.AllocateConstruct<TComponent>();
 		newComponent->Name = name;
@@ -279,11 +279,9 @@ public:
 
 		for (int i = 0; i < Components.GetCount(); ++i)
 		{
-			TComponent* check = dynamic_cast<TComponent*>(Components[i]);
-
-			if (check)
+			if (TComponent* comp = ns_Cast<TComponent>(Components[i]))
 			{
-				return check;
+				return comp;
 			}
 		}
 

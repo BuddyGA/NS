@@ -29,8 +29,7 @@ nsEngine::nsEngine() noexcept
 	, PhysicsTimeAccumulator(0.0f)
 {
 	Worlds.Reserve(4);
-	PhysicsFixedTimeSteps = 0.016667f;
-	PhysicsMaxSteps = 3;
+	PhysicsTimeSteps = 0.016667f;
 }
 
 
@@ -210,12 +209,12 @@ void nsEngine::MainLoop()
 		PhysicsTimeAccumulator += DeltaTimeSeconds;
 		int physicsStepCount = 0;
 
-		while (PhysicsTimeAccumulator >= PhysicsFixedTimeSteps)
+		while (PhysicsTimeAccumulator >= PhysicsTimeSteps)
 		{
-			nsPhysicsManager::Get().Update(PhysicsFixedTimeSteps);
-			PhysicsTimeAccumulator -= PhysicsFixedTimeSteps;
+			nsPhysicsManager::Get().Update(PhysicsTimeSteps);
+			PhysicsTimeAccumulator -= PhysicsTimeSteps;
 
-			if (++physicsStepCount >= PhysicsMaxSteps)
+			if (++physicsStepCount == 3)
 			{
 				break;
 			}

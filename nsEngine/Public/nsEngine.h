@@ -24,8 +24,7 @@ private:
 	nsTArray<nsWorld*> Worlds;
 
 public:
-	float PhysicsFixedTimeSteps;
-	int PhysicsMaxSteps;
+	float PhysicsTimeSteps;
 
 
 public:
