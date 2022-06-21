@@ -9,18 +9,21 @@ nsMemory nsActor::ComponentMemory("actor_components", NS_MEMORY_SIZE_MiB(1));
 
 
 
+NS_DEFINE_OBJECT(nsActor, "Actor", nsObject);
+
 nsActor::nsActor()
 {
 	Level = nullptr;
 	Flags = 0;
 	Parent = nullptr;
+	Components.Reserve(4);
 	RootComponent = nullptr;
 }
 
 
 void nsActor::OnInitialize()
 {
-	RootComponent = AddComponent<nsTransformComponent>("root_component");
+	RootComponent = AddComponent<nsTransformComponent>("default_root_component");
 }
 
 
@@ -86,7 +89,7 @@ void nsActor::OnDestroy()
 		Children[i]->OnDestroy();
 	}
 
-	Children.Clear(true);
+	Children.Clear();
 
 	for (int i = 0; i < Components.GetCount(); ++i)
 	{
@@ -129,6 +132,58 @@ nsWorld* nsActor::GetWorld() const
 }
 
 
+void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
+{
+	if (newRootComponent == nullptr || newRootComponent == RootComponent)
+	{
+		return;
+	}
+
+	const int newRootIndex = Components.Find(newRootComponent);
+
+	if (newRootIndex == NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(ActorLog, "Fail to set actor new root component. newRootComponent not found from component list! [actor: %s, newRootComponent: %s]", *Name, *newRootComponent->Name);
+		return;
+	}
+
+	NS_Assert(Components[0] == RootComponent);
+	nsTArrayInline<nsTransformComponent*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> detachedFromRootComponent;
+
+	for (int i = 1; i < Components.GetCount(); ++i)
+	{
+		nsTransformComponent* transformComponent = ns_Cast<nsTransformComponent>(Components[i]);
+
+		if (transformComponent && transformComponent->GetParent() == RootComponent)
+		{
+			transformComponent->DetachFromParent();
+			detachedFromRootComponent.Add(transformComponent);
+		}
+	}
+
+	if (RootComponent->Name == "default_root_component")
+	{
+		Components[0] = Components[newRootIndex];
+		Components[newRootIndex] = RootComponent;
+		RemoveComponent(RootComponent);
+		RootComponent = nullptr;
+	}
+
+	NS_Assert(Components[0] == newRootComponent);
+	RootComponent = newRootComponent;
+
+	for (int i = 0; i < detachedFromRootComponent.GetCount(); ++i)
+	{
+		if (detachedFromRootComponent[i] == RootComponent)
+		{
+			continue;
+		}
+
+		detachedFromRootComponent[i]->AttachToParent(RootComponent, nsETransformAttachmentMode::KEEP_WORLD_TRANSFORM);
+	}
+}
+
+
 void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode)
 {
 }
@@ -155,4 +210,28 @@ nsActorComponent* nsActor::FindComponent(const nsName& name) const
 	}
 
 	return nullptr;
+}
+
+
+bool nsActor::RemoveComponent(nsActorComponent* component)
+{
+	if (component == nullptr)
+	{
+		return false;
+	}
+
+	const int index = Components.Find(component);
+
+	if (index == NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(ActorLog, "Fail to remove component [%s] from actor [%s]. Actor does not own the component!", *component->Name, *Name);
+		return false;
+	}
+
+	component->OnRemovedFromLevel();
+	component->OnDestroy();
+	Components.RemoveAt(index);
+	ComponentMemory.Deallocate(component);
+
+	return true;
 }

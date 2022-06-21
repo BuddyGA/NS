@@ -28,10 +28,9 @@ typedef uint32 nsActorFlags;
 
 
 
-class NS_ENGINE_API nsActor
+class NS_ENGINE_API nsActor final : public nsObject
 {
-public:
-	nsName Name;
+	NS_DECLARE_OBJECT()
 
 protected:
 	nsLevel* Level;
@@ -40,7 +39,7 @@ protected:
 private:
 	nsActor* Parent;
 	nsTArray<nsActorComponent*> Components;
-	nsTArray<nsActor*> Children;
+	nsTArrayInline<nsActor*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> Children;
 	nsTransformComponent* RootComponent;
 
 
@@ -58,6 +57,7 @@ public:
 	void OnRemovedFromLevel();
 
 	NS_NODISCARD nsWorld* GetWorld() const;
+	void SetRootComponent(nsTransformComponent* newRootComponent);
 	void AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode);
 	void DetachFromParent();
 
@@ -202,6 +202,13 @@ public:
 
 
 	nsActorComponent* FindComponent(const nsName& name) const;
+	bool RemoveComponent(nsActorComponent* component);
+
+
+	NS_NODISCARD_INLINE nsTransformComponent* GetRootComponent() const
+	{
+		return RootComponent;
+	}
 
 
 	template<typename TComponent = nsActorComponent>
@@ -248,13 +255,14 @@ public:
 
 		for (int i = 0; i < Components.GetCount(); ++i)
 		{
-			TComponent* check = dynamic_cast<TComponent*>(Components[i]);
+			TComponent* check = ns_Cast<TComponent>(Components[i]);
 
 			if (check)
 			{
+				check->OnRemovedFromLevel();
 				check->OnDestroy();
 				Components.RemoveAt(i);
-				ComponentMemory.DeallocateDestruct<TComponent>(check);
+				ComponentMemory.Deallocate(check);
 
 				return true;
 			}

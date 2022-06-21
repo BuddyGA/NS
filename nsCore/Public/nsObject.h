@@ -32,7 +32,7 @@ public:
 
 namespace nsEObject
 {
-	enum Flag
+	enum Flag : uint32
 	{
 		None			= (0),
 		Default			= (1 << 0),
@@ -51,9 +51,6 @@ public:
 	static const nsClass* Class;
 
 
-private:
-	nsObjectFlags Flags;
-
 public:
 	nsName Name;
 
@@ -64,21 +61,8 @@ public:
 	virtual const nsClass* GetClass() const noexcept;
 
 
-	NS_NODISCARD_INLINE nsObjectFlags GetFlags() const noexcept
-	{
-		return Flags;
-	}
-
-
 	template<typename T>
 	NS_NODISCARD_INLINE bool IsClass() const noexcept
-	{
-		return GetClass() == T::Class;
-	}
-
-
-	template<typename T>
-	NS_NODISCARD_INLINE bool IsSubclass() const noexcept
 	{
 		const nsClass* checkClass = GetClass();
 
@@ -96,6 +80,35 @@ public:
 	}
 
 };
+
+
+
+class NS_CORE_API nsObjectManager
+{
+	NS_DECLARE_SINGLETON(nsObjectManager)
+
+private:
+	nsTArray<const nsClass*> RegisteredObjectClasses;
+
+
+public:
+	void RegisterObjectClass(const nsClass* objectClass);
+	const nsClass* FindObjectClass(const nsName& name) const;
+
+};
+
+
+
+template<typename T>
+NS_NODISCARD_INLINE T* ns_Cast(nsObject* obj) noexcept
+{
+	if (obj == nullptr)
+	{
+		return nullptr;
+	}
+
+	return obj->IsClass<T>() ? static_cast<T*>(obj) : nullptr;
+}
 
 
 

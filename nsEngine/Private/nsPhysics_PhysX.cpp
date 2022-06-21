@@ -65,7 +65,27 @@ void nsPhysX_ErrorCallback::reportError(PxErrorCode::Enum code, const char* mess
 
 namespace nsPxHelper
 {
-	NS_NODISCARD_INLINE PxShape* GetShape(PxRigidActor* rigidActor)
+	NS_INLINE PxFilterFlags PxDefaultSimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+	{
+		// let triggers through
+		if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
+		{
+			pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
+			return PxFilterFlag::eDEFAULT;
+		}
+
+		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
+
+		if ( (filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1) )
+		{
+			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		}
+		
+		return PxFilterFlag::eDEFAULT;
+	}
+
+
+	NS_NODISCARD_INLINE PxShape* GetActorShape(PxRigidActor* rigidActor)
 	{
 		NS_Assert(rigidActor);
 
@@ -92,11 +112,10 @@ nsPhysicsManager_PhysX::nsPhysicsManager_PhysX()
 	DefaultMaterial = nullptr;
 
 	SceneNames.Reserve(8);
-	SceneSettings.Reserve(8);
 	SceneObjects.Reserve(8);
 
 	ObjectNames.Reserve(128);
-	ObjectSettings.Reserve(128);
+	ObjectRigidActors.Reserve(128);
 }
 
 
@@ -135,18 +154,16 @@ void nsPhysicsManager_PhysX::Update(float fixedDeltaTime)
 }
 
 
-nsPhysicsSceneID nsPhysicsManager_PhysX::CreatePhysicsScene(nsName name, const nsPhysicsSceneSettings& settings)
+nsPhysicsSceneID nsPhysicsManager_PhysX::CreatePhysicsScene(nsName name)
 {
 	const int nameId = SceneNames.Add();
-	const int settingsId = SceneSettings.Add();
-	const int objectId = SceneObjects.Add();
-	NS_Assert(nameId == settingsId && settingsId == objectId);
+	const int sceneId = SceneObjects.Add();
+	NS_Assert(nameId == sceneId);
 
 	SceneNames[nameId] = name;
-	SceneSettings[settingsId] = settings;
 
 	PxSceneDesc sceneDesc(Physics->getTolerancesScale());
-	sceneDesc.gravity = NS_ToPxVec3(settings.Gravity);
+	sceneDesc.gravity = PxVec3(0.0f, -980.0f, 0.0f);
 	sceneDesc.filterShader = PxDefaultSimulationFilterShader;
 	sceneDesc.cpuDispatcher = CpuDispatcher;
 	sceneDesc.flags = PxSceneFlag::eENABLE_ACTIVE_ACTORS | PxSceneFlag::eEXCLUDE_KINEMATICS_FROM_ACTIVE_ACTORS;
@@ -159,7 +176,7 @@ nsPhysicsSceneID nsPhysicsManager_PhysX::CreatePhysicsScene(nsName name, const n
 	scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 #endif // __NS_ENGINE_DEBUG_DRAW__
 
-	SceneObjects[objectId] = scene;
+	SceneObjects[sceneId] = scene;
 
 	return nameId;
 }
@@ -179,15 +196,7 @@ void nsPhysicsManager_PhysX::DestroyPhysicsScene(nsPhysicsSceneID& scene)
 
 bool nsPhysicsManager_PhysX::IsPhysicsSceneValid(nsPhysicsSceneID scene) const
 {
-	return scene.IsValid() && SceneSettings.IsValid(scene.Id) && SceneObjects[scene.Id] != nullptr;
-}
-
-
-nsName nsPhysicsManager_PhysX::GetPhysicsSceneName(nsPhysicsSceneID scene) const
-{
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	return SceneNames[scene.Id];
+	return scene.IsValid() && SceneObjects[scene.Id] != nullptr;
 }
 
 
@@ -209,7 +218,7 @@ void nsPhysicsManager_PhysX::SyncPhysicsSceneTransforms(nsPhysicsSceneID scene)
 		NS_Assert(actor);
 
 		const PxTransform globalPose = pxRigidActor->getGlobalPose();
-		
+
 		nsTransform newTransform;
 		newTransform.Position = NS_FromPxVec3(globalPose.p);
 		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
@@ -220,63 +229,51 @@ void nsPhysicsManager_PhysX::SyncPhysicsSceneTransforms(nsPhysicsSceneID scene)
 }
 
 
-nsPhysicsObjectID nsPhysicsManager_PhysX::CreatePhysicsObjectRigidBody_Box(nsName name, nsActor* actor, const nsVector3& halfExtent, nsEPhysicsCollisionChannel collisionChannel, bool bIsStatic)
+nsName nsPhysicsManager_PhysX::GetPhysicsSceneName(nsPhysicsSceneID scene) const
 {
-	const int id = AllocatePhysicsObject(name, actor, collisionChannel, nsEPhysicsShape::BOX, bIsStatic);
+	NS_Assert(IsPhysicsSceneValid(scene));
+
+	return SceneNames[scene.Id];
+}
+
+
+nsPhysicsObjectID nsPhysicsManager_PhysX::CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, nsEPhysicsCollisionChannel::Type collisionChannel, bool bIsStatic, bool bIsTrigger, void* transformComponent)
+{
+	NS_Assert(transformComponent);
+	nsTransformComponent* transform = static_cast<nsTransformComponent*>(transformComponent);
+
+	const int id = AllocatePhysicsObject();
+
+	ObjectNames[id] = name;
 
 	PxRigidActor* rigidActor = nullptr;
 	
 	if (bIsStatic)
 	{
-		PxRigidStatic* rigidStatic = Physics->createRigidStatic(NS_ToPxTransform(actor->GetWorldTransform()));
+		PxRigidStatic* rigidStatic = Physics->createRigidStatic(NS_ToPxTransform(transform->GetWorldTransform()));
 		rigidActor = rigidStatic;
 	}
 	else
 	{
-		PxRigidDynamic* rigidDynamic = Physics->createRigidDynamic(NS_ToPxTransform(actor->GetWorldTransform()));
+		PxRigidDynamic* rigidDynamic = Physics->createRigidDynamic(NS_ToPxTransform(transform->GetWorldTransform()));
 		PxRigidBodyExt::updateMassAndInertia(*rigidDynamic, 100.0f);
 		rigidActor = rigidDynamic;
 	}
 
-	PxRigidActorExt::createExclusiveShape(*rigidActor, PxBoxGeometry(NS_ToPxVec3(halfExtent)), *DefaultMaterial);
+	PxShape* shape = PxRigidActorExt::createExclusiveShape(*rigidActor, PxBoxGeometry(NS_ToPxVec3(halfExtent)), *DefaultMaterial);
+
+	if (bIsTrigger)
+	{
+		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
+		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
+	}
 
 	NS_Assert(rigidActor);
-	rigidActor->userData = actor;
+	rigidActor->userData = transformComponent;
 
 	ObjectRigidActors[id] = rigidActor;
-
+	
 	return id;
-}
-
-
-void nsPhysicsManager_PhysX::SetPhysicsObjectCollisionChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel collisionChannel)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	PxShape* shape = nsPxHelper::GetShape(ObjectRigidActors[physicsObject.Id]);
-
-	PxFilterData filterData{};
-	
-	// TODO: Update filter data
-
-}
-
-
-void nsPhysicsManager_PhysX::UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	const nsPhysicsObjectSettings& settings = ObjectSettings[physicsObject.Id];
-	NS_Assert(settings.Shape == nsEPhysicsShape::BOX);
-
-	PxShape* boxShape = nsPxHelper::GetShape(ObjectRigidActors[physicsObject.Id]);
-	
-	PxBoxGeometry boxGeometry;
-	const bool bValid = boxShape->getBoxGeometry(boxGeometry);
-	NS_Assert(bValid);
-
-	boxGeometry.halfExtents = NS_ToPxVec3(halfExtent);
-	boxShape->setGeometry(boxGeometry);
 }
 
 
@@ -292,18 +289,59 @@ void nsPhysicsManager_PhysX::DestroyPhysicsObject(nsPhysicsObjectID& physicsObje
 }
 
 
+bool nsPhysicsManager_PhysX::IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const
+{
+	return physicsObject.IsValid() && ObjectRigidActors[physicsObject.Id] != nullptr;
+}
+
+
+void nsPhysicsManager_PhysX::UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent)
+{
+	NS_Assert(IsPhysicsObjectValid(physicsObject));
+
+	PxShape* boxShape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
+	
+	PxBoxGeometry boxGeometry;
+	const bool bValid = boxShape->getBoxGeometry(boxGeometry);
+	NS_Assert(bValid);
+
+	boxGeometry.halfExtents = NS_ToPxVec3(halfExtent);
+	boxShape->setGeometry(boxGeometry);
+}
+
+
+void nsPhysicsManager_PhysX::SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel)
+{
+	NS_Assert(IsPhysicsObjectValid(physicsObject));
+
+	PxShape* shape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
+
+	PxFilterData filterData = shape->getSimulationFilterData();
+	filterData.word0 = static_cast<PxU32>(objectChannel);
+
+	shape->setSimulationFilterData(filterData);
+}
+
+
+void nsPhysicsManager_PhysX::SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels)
+{
+	NS_Assert(IsPhysicsObjectValid(physicsObject));
+
+	PxShape* shape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
+
+	PxFilterData filterData = shape->getSimulationFilterData();
+	filterData.word1 = static_cast<PxU32>(collisionChannels);
+
+	shape->setSimulationFilterData(filterData);
+}
+
+
 void nsPhysicsManager_PhysX::SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation)
 {
 	NS_Assert(IsPhysicsObjectValid(physicsObject));
 
 	PxRigidActor* rigidActor = ObjectRigidActors[physicsObject.Id];
 	rigidActor->setGlobalPose(NS_ToPxTransform(nsTransform(worldPosition, worldRotation)));
-}
-
-
-bool nsPhysicsManager_PhysX::IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const
-{
-	return physicsObject.IsValid() && ObjectSettings.IsValid(physicsObject.Id);
 }
 
 

@@ -4,8 +4,10 @@
 
 
 
-class NS_ENGINE_API nsWorld
+class NS_ENGINE_API nsWorld : public nsObject
 {
+	NS_DECLARE_OBJECT()
+
 private:
 	nsName Name;
 	float StartTimeSeconds;

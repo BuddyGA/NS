@@ -7,6 +7,8 @@ static nsLogCategory WorldLog("nsWorldLog", nsELogVerbosity::LV_DEBUG);
 
 
 
+NS_DEFINE_OBJECT(nsWorld, "World", nsObject);
+
 nsWorld::nsWorld(nsName name, bool bInitPhysics)
 {
 	NS_Assert(name.GetLength() > 0);

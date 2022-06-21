@@ -12,6 +12,8 @@ static nsLogCategory ComponentLog("nsComponentLog", nsELogVerbosity::LV_INFO);
 // ================================================================================================================================== //
 // ACTOR COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsActorComponent, "ActorComponent", nsObject);
+
 nsActorComponent::nsActorComponent()
 {
 	Actor = nullptr;
@@ -32,6 +34,8 @@ void nsActorComponent::OnDestroy()
 // ================================================================================================================================== //
 // TRANSFORM COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsTransformComponent, "TransformComponent", nsActorComponent);
+
 nsTransformComponent::nsTransformComponent()
 {
 	Parent = nullptr;
@@ -133,11 +137,25 @@ void nsTransformComponent::DetachFromParent()
 // ================================================================================================================================== //
 // COLLISION COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsCollisionComponent, "CollisionComponent", nsTransformComponent);
+
 nsCollisionComponent::nsCollisionComponent()
 {
 	PhysicsObject = nsPhysicsObjectID::INVALID;
 	Shape = nsEPhysicsShape::NONE;
-	CollisionChannel = nsEPhysicsCollisionChannel::DEFAULT;
+	ObjectChannel = nsEPhysicsCollisionChannel::Default;
+	CollisionChannels = UINT32_MAX;
+}
+
+
+void nsCollisionComponent::OnDestroy()
+{
+	if (PhysicsObject != nsPhysicsObjectID::INVALID)
+	{
+		nsPhysicsManager::Get().DestroyPhysicsObject(PhysicsObject);
+	}
+
+	nsTransformComponent::OnDestroy();
 }
 
 
@@ -161,15 +179,29 @@ void nsCollisionComponent::OnRemovedFromLevel()
 }
 
 
-void nsCollisionComponent::SetCollisionChannel(nsEPhysicsCollisionChannel channel)
+void nsCollisionComponent::SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel)
 {
-	if (CollisionChannel != channel)
+	if (ObjectChannel != newObjectChannel)
 	{
-		CollisionChannel = channel;
+		ObjectChannel = newObjectChannel;
 
 		if (PhysicsObject != nsPhysicsObjectID::INVALID)
 		{
-			nsPhysicsManager::Get().SetPhysicsObjectCollisionChannel(PhysicsObject, CollisionChannel);
+			nsPhysicsManager::Get().SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
+		}
+	}
+}
+
+
+void nsCollisionComponent::SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels)
+{
+	if (CollisionChannels != newCollisionChannels)
+	{
+		CollisionChannels = newCollisionChannels;
+
+		if (PhysicsObject != nsPhysicsObjectID::INVALID)
+		{
+			nsPhysicsManager::Get().SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
 		}
 	}
 }
@@ -180,6 +212,8 @@ void nsCollisionComponent::SetCollisionChannel(nsEPhysicsCollisionChannel channe
 // ================================================================================================================================== //
 // BOX COLLISION COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsBoxCollisionComponent, "BoxCollisionComponent", nsCollisionComponent);
+
 nsBoxCollisionComponent::nsBoxCollisionComponent()
 {
 	Shape = nsEPhysicsShape::BOX;
@@ -191,7 +225,7 @@ void nsBoxCollisionComponent::OnInitialize()
 {
 	nsActorComponent::OnInitialize();
 
-	PhysicsObject = nsPhysicsManager::Get().CreatePhysicsObjectRigidBody_Box(Name, Actor, HalfExtent, CollisionChannel, true);
+	PhysicsObject = nsPhysicsManager::Get().CreatePhysicsObject_Box(Name, HalfExtent, ObjectChannel, true, false, this);
 }
 
 
@@ -201,7 +235,8 @@ void nsBoxCollisionComponent::UpdateCollisionVolume()
 	{
 		nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
 		physicsManager.UpdatePhysicsObjectShape_Box(PhysicsObject, HalfExtent);
-		physicsManager.SetPhysicsObjectCollisionChannel(PhysicsObject, CollisionChannel);
+		physicsManager.SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
+		physicsManager.SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
 	}
 }
 
@@ -211,6 +246,7 @@ void nsBoxCollisionComponent::UpdateCollisionVolume()
 // ================================================================================================================================== //
 // RENDER COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsRenderComponent, "RenderComponent", nsTransformComponent);
 
 nsRenderComponent::nsRenderComponent()
 {
@@ -233,6 +269,8 @@ void nsRenderComponent::SetVisibility(bool bVisible)
 // ================================================================================================================================== //
 // MESH COMPONENT
 // ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsMeshComponent, "MeshComponent", nsRenderComponent);
+
 nsMeshComponent::nsMeshComponent()
 {
 	Materials.Add();

@@ -26,48 +26,21 @@ enum class nsEPhysicsShape : uint8
 
 
 
-enum class nsEPhysicsCollisionChannel : uint32
+namespace nsEPhysicsCollisionChannel
 {
-	NONE = 0,
+	enum Type : uint32
+	{
+		Default			= (1 << 0),
+		Character		= (1 << 1),
+		Camera			= (1 << 2),
+		Water			= (1 << 3),
 
-	DEFAULT,
-	CHARACTER,
-	WATER,
-
-	// ...
-
-	COUNT
+		// ...
+	};
 };
 
+typedef uint32 nsPhysicsCollisionChannels;
 
-
-enum class nsEPhysicsQueryChannel : uint32
-{
-	NONE = 0,
-
-	VISIBILITY,
-	PICKING,
-
-	COUNT,
-};
-
-
-
-struct nsPhysicsSceneSettings
-{
-	nsVector3 Gravity = nsVector3(0.0f, -980.0f, 0.0f);
-	int MaxRigidBodies = 1024;
-};
-
-
-
-struct nsPhysicsObjectSettings
-{
-	nsEPhysicsShape Shape = nsEPhysicsShape::NONE;
-	nsEPhysicsCollisionChannel CollisionChannel = nsEPhysicsCollisionChannel::NONE;
-	bool bIsStatic = true;
-	void* UserData = nullptr;
-};
 
 
 
@@ -83,16 +56,17 @@ public:
 	virtual void Initialize() = 0;
 	virtual void Update(float deltaTime) = 0;
 
-	virtual nsPhysicsSceneID CreatePhysicsScene(nsName name, const nsPhysicsSceneSettings& settings = nsPhysicsSceneSettings()) = 0;
+	virtual nsPhysicsSceneID CreatePhysicsScene(nsName name) = 0;
 	virtual void DestroyPhysicsScene(nsPhysicsSceneID& scene) = 0;
 	virtual void SyncPhysicsSceneTransforms(nsPhysicsSceneID scene) = 0;
 	virtual bool IsPhysicsSceneValid(nsPhysicsSceneID scene) const = 0;
 	virtual nsName GetPhysicsSceneName(nsPhysicsSceneID scene) const = 0;
 
-	virtual nsPhysicsObjectID CreatePhysicsObjectRigidBody_Box(nsName name, nsActor* actor, const nsVector3& halfExtent, nsEPhysicsCollisionChannel collisionChannel = nsEPhysicsCollisionChannel::NONE, bool bIsStatic = true) = 0;
-	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) = 0;
-	virtual void SetPhysicsObjectCollisionChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel collisionChannel) = 0;
+	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, nsEPhysicsCollisionChannel::Type collisionChannel, bool bIsStatic, bool bIsTrigger, void* transformComponent) = 0;
 	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) = 0;
+	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) = 0;
+	virtual void SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel) = 0;
+	virtual void SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels) = 0;
 	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) = 0;
 	virtual bool IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const = 0;
 	virtual nsName GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const = 0;

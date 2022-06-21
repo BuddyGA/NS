@@ -7,10 +7,11 @@
 
 
 
-class NS_ENGINE_API nsActorComponent 
+class NS_ENGINE_API nsActorComponent : public nsObject
 {
+	NS_DECLARE_OBJECT()
+
 protected:
-	nsName Name;
 	nsActor* Actor;
 	bool bAddedToLevel;
 
@@ -25,13 +26,6 @@ public:
 	virtual void OnAddedToLevel() {}
 	virtual void OnRemovedFromLevel() {}
 	virtual bool IsFullyLoaded() { return true; }
-
-
-public:
-	NS_NODISCARD_INLINE const nsName& GetName() const
-	{
-		return Name;
-	}
 
 
 	friend class nsActor;
@@ -50,6 +44,9 @@ enum class nsETransformAttachmentMode : uint8
 
 class NS_ENGINE_API nsTransformComponent : public nsActorComponent
 {
+	NS_DECLARE_OBJECT()
+
+private:
 	enum class EDirtyTransform : uint8
 	{
 		NONE = 0,
@@ -58,7 +55,6 @@ class NS_ENGINE_API nsTransformComponent : public nsActorComponent
 	};
 
 
-private:
 	nsTransformComponent* Parent;
 	nsTransform LocalTransform;
 	nsTransform WorldTransform;
@@ -78,6 +74,12 @@ protected:
 public:
 	void AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode);
 	void DetachFromParent();
+
+
+	NS_NODISCARD_INLINE nsTransformComponent* GetParent() const
+	{
+		return Parent;
+	}
 
 
 	NS_INLINE void SetLocalTransform(nsTransform transform)
@@ -265,24 +267,35 @@ public:
 
 class NS_ENGINE_API nsCollisionComponent : public nsTransformComponent
 {
+	NS_DECLARE_OBJECT()
+
 protected:
 	nsPhysicsObjectID PhysicsObject;
 	nsEPhysicsShape Shape;
-	nsEPhysicsCollisionChannel CollisionChannel;
+	nsEPhysicsCollisionChannel::Type ObjectChannel;
+	nsPhysicsCollisionChannels CollisionChannels;
 
 
 public:
 	nsCollisionComponent();
+	virtual void OnDestroy() override;
 	virtual void OnAddedToLevel() override;
 	virtual void OnRemovedFromLevel() override;
 
-	void SetCollisionChannel(nsEPhysicsCollisionChannel channel);
+	void SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel);
+	void SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels);
 	virtual void UpdateCollisionVolume() = 0;
 
 
-	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel GetCollisionChannel() const
+	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel::Type GetObjectChannel() const
 	{
-		return CollisionChannel;
+		return ObjectChannel;
+	}
+
+
+	NS_NODISCARD_INLINE nsPhysicsCollisionChannels GetCollisionChannels() const
+	{
+		return CollisionChannels;
 	}
 
 };
@@ -291,6 +304,8 @@ public:
 
 class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
 {
+	NS_DECLARE_OBJECT()
+
 public:
 	nsVector3 HalfExtent;
 
@@ -307,6 +322,8 @@ public:
 
 class NS_ENGINE_API nsRenderComponent : public nsTransformComponent
 {
+	NS_DECLARE_OBJECT()
+
 private:
 	bool bIsVisible;
 
@@ -333,6 +350,8 @@ public:
 
 class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 {
+	NS_DECLARE_OBJECT()
+
 private:
 	nsSharedModelAsset ModelAsset;
 	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESHES> Materials;

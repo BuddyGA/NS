@@ -48,11 +48,9 @@ private:
 	PxMaterial* DefaultMaterial;
 
 	nsTArrayFreeList<nsName> SceneNames;
-	nsTArrayFreeList<nsPhysicsSceneSettings> SceneSettings;
 	nsTArrayFreeList<PxScene*> SceneObjects;
 
 	nsTArrayFreeList<nsName> ObjectNames;
-	nsTArrayFreeList<nsPhysicsObjectSettings> ObjectSettings;
 	nsTArrayFreeList<PxRigidActor*> ObjectRigidActors;
 
 
@@ -61,18 +59,19 @@ public:
 	virtual void Initialize() override;
 	virtual void Update(float fixedDeltaTime) override;
 
-	virtual nsPhysicsSceneID CreatePhysicsScene(nsName name, const nsPhysicsSceneSettings& settings = nsPhysicsSceneSettings()) override;
+	virtual nsPhysicsSceneID CreatePhysicsScene(nsName name) override;
 	virtual void DestroyPhysicsScene(nsPhysicsSceneID& scene) override;
-	virtual void SyncPhysicsSceneTransforms(nsPhysicsSceneID scene) override;
 	virtual bool IsPhysicsSceneValid(nsPhysicsSceneID scene) const override;
+	virtual void SyncPhysicsSceneTransforms(nsPhysicsSceneID scene) override;
 	virtual nsName GetPhysicsSceneName(nsPhysicsSceneID scene) const override;
 
-	virtual nsPhysicsObjectID CreatePhysicsObjectRigidBody_Box(nsName name, nsActor* actor, const nsVector3& halfExtent, nsEPhysicsCollisionChannel collisionChannel = nsEPhysicsCollisionChannel::NONE, bool bIsStatic = true) override;
-	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) override;
-	virtual void SetPhysicsObjectCollisionChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel collisionChannel) override;
+	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, nsEPhysicsCollisionChannel::Type collisionChannel, bool bIsStatic, bool bIsTrigger, void* transformComponent) override;
 	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) override;
-	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) override;
 	virtual bool IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const override;
+	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) override;
+	virtual void SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel) override;
+	virtual void SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels) override;
+	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) override;
 	virtual nsName GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const override;
 
 	virtual void AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) override;
@@ -85,23 +84,11 @@ public:
 
 
 private:
-	NS_NODISCARD_INLINE int AllocatePhysicsObject(nsName name, nsActor* actor, nsEPhysicsCollisionChannel collisionChannel, nsEPhysicsShape shape, bool bIsStatic)
+	NS_NODISCARD_INLINE int AllocatePhysicsObject()
 	{
-		NS_Assert(actor);
-		NS_Assert(shape != nsEPhysicsShape::NONE);
-
 		const int nameId = ObjectNames.Add();
-		const int settingsId = ObjectSettings.Add();
 		const int rigidActorId = ObjectRigidActors.Add();
-		NS_Assert(nameId == settingsId && settingsId == rigidActorId);
-
-		ObjectNames[nameId] = name;
-
-		nsPhysicsObjectSettings& settings = ObjectSettings[settingsId];
-		settings.CollisionChannel = collisionChannel;
-		settings.Shape = shape;
-		settings.bIsStatic = bIsStatic;
-		settings.UserData = actor;
+		NS_Assert(nameId == rigidActorId);
 
 		return nameId;
 	}
