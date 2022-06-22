@@ -258,9 +258,9 @@ void cstGame::HandleGameState_Cutscene()
 
 void cstGame::HandleGameState_Editing()
 {
-	g_Editor->MainWorld = MainWorld;
 	g_Editor->MainViewport = &MainViewport;
 	g_Editor->MainRenderer = MainRenderer;
+	g_Editor->MainWorld = MainWorld;
 }
 
 #endif // CST_GAME_WITH_EDITOR

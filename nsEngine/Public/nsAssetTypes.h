@@ -158,6 +158,9 @@ private:
 	int AssetId;
 	nsName Name;
 	nsMaterialID Material;
+	nsTMap<nsName, nsSharedTextureAsset> TextureParameters;
+	nsTMap<nsName, float> ScalarParameters;
+	nsTMap<nsName, nsVector4> VectorParameters;
 
 
 public:
@@ -246,7 +249,7 @@ public:
 
 
 typedef nsTArrayInline<nsMeshID, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMeshes;
-typedef nsTArrayInline<nsSharedMaterialAsset, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMaterials;
+//typedef nsTArrayInline<nsSharedMaterialAsset, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMaterials;
 
 
 class NS_ENGINE_API nsSharedModelAsset
@@ -255,7 +258,7 @@ private:
 	int AssetId;
 	nsName Name;
 	nsAssetModelMeshes Meshes;
-	nsAssetModelMaterials Materials;
+	//nsAssetModelMaterials Materials;
 
 
 public:

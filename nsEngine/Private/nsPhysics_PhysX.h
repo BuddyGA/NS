@@ -9,29 +9,12 @@
 using namespace physx;
 
 
-
-class nsPhysX_AllocatorCallback : public PxAllocatorCallback
-{
-private:
-	nsCriticalSection CriticalSection;
-	nsMemory Memory;
-
-public:
-	nsPhysX_AllocatorCallback();
-	virtual void* allocate(size_t size, const char*, const char*, int) override;
-	virtual void deallocate(void* ptr) override;
-
-};
-
-
-
-
-class nsPhysX_ErrorCallback : public PxErrorCallback
-{
-public:
-	virtual void reportError(PxErrorCode::Enum code, const char* message, const char* file, int line) override;
-
-};
+#define NS_ToPxVec3(nsVec3) PxVec3(nsVec3.X, nsVec3.Y, nsVec3.Z)
+#define NS_FromPxVec3(pxVec3) nsVector3(pxVec3.x, pxVec3.y, pxVec3.z)
+#define NS_ToPxQuat(nsQuat) PxQuat(nsQuat.X, nsQuat.Y, nsQuat.Z, nsQuat.W)
+#define NS_FromPxQuat(pxQuat) nsQuaternion(pxQuat.x, pxQuat.y, pxQuat.z, pxQuat.w)
+#define NS_ToPxTransform(nsTrans) PxTransform(NS_ToPxVec3(nsTrans.Position), NS_ToPxQuat(nsTrans.Rotation))
+#define NS_FromPxTransform(pxTrans) nsTransform(NS_FromPxVec3(pxTrans.p), NS_FromPxQuat(pxTrans.q))
 
 
 
@@ -40,12 +23,15 @@ class nsPhysicsManager_PhysX : public nsPhysicsManager
 private:
 	bool bInitialized;
 
-	nsPhysX_AllocatorCallback AllocatorCallback;
-	nsPhysX_ErrorCallback ErrorCallback;
 	PxFoundation* Foundation;
 	PxDefaultCpuDispatcher* CpuDispatcher;
 	PxPhysics* Physics;
 	PxMaterial* DefaultMaterial;
+
+#ifndef __NS_ENGINE_SHIPPING__
+	PxCooking* Cooking;
+#endif // !__NS_ENGINE_SHIPPING__
+
 
 	nsTArrayFreeList<nsName> SceneNames;
 	nsTArrayFreeList<PxScene*> SceneObjects;
@@ -65,25 +51,11 @@ public:
 	virtual void SyncPhysicsSceneTransforms(nsPhysicsSceneID scene) override;
 	virtual nsName GetPhysicsSceneName(nsPhysicsSceneID scene) const override;
 
-	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, nsEPhysicsCollisionChannel::Type collisionChannel, bool bIsStatic, bool bIsTrigger, void* transformComponent) override;
-	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) override;
-	virtual bool IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const override;
-	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) override;
-	virtual void SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel) override;
-	virtual void SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels) override;
-	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) override;
-	virtual nsName GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const override;
-
-	virtual void AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) override;
-	virtual void RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) override;
-
-
-#ifdef __NS_ENGINE_DEBUG_DRAW__
-	virtual void DEBUG_Draw(nsRenderContextWorld& renderContextWorld) override;
-#endif // __NS_ENGINE_DEBUG_DRAW__
-
 
 private:
+	NS_NODISCARD int CreatePhysicsObject(nsName name, bool bIsStatic, nsTransformComponent* transformComponent);
+
+
 	NS_NODISCARD_INLINE int AllocatePhysicsObject()
 	{
 		const int nameId = ObjectNames.Add();
@@ -100,5 +72,34 @@ private:
 
 	}
 
+
+public:
+	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, bool bIsStatic, bool bIsTrigger, nsTransformComponent* transformComponent) override;
+	virtual nsPhysicsObjectID CreatePhysicsObject_ConvexMesh(nsName name, const nsTArray<nsVertexMeshPosition>& vertices, bool bIsStatic, nsTransformComponent* transformComponent) override;
+	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) override;
+	virtual bool IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const override;
+	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) override;
+	virtual void SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel) override;
+	virtual void SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels) override;
+	virtual void SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation) override;
+	virtual nsName GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const override;
+
+	virtual void AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) override;
+	virtual void RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) override;
+	virtual bool SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
+
+private:
+	bool SceneQuerySweep(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params);
+
+public:
+	virtual bool SceneQuerySweepBox(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override
+	{
+		return SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), worldTransform, direction, distance, params);
+	}
+
+
+#ifdef __NS_ENGINE_DEBUG_DRAW__
+	virtual void DEBUG_Draw(nsRenderContextWorld& renderContextWorld) override;
+#endif // __NS_ENGINE_DEBUG_DRAW__
 
 };

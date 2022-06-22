@@ -134,6 +134,17 @@ void nsWorld::SyncActorTransformsWithPhysics()
 }
 
 
+bool nsWorld::PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	if (!bHasPhysics)
+	{
+		return false;
+	}
+
+	return nsPhysicsManager::Get().SceneQueryRayCast(PhysicsScene, hitResult, origin, direction, distance, params);
+}
+
+
 void nsWorld::RefreshActorList()
 {
 	ActorList.Clear();

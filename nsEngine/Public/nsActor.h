@@ -18,9 +18,10 @@ namespace nsEActorFlag
 		CallTickUpdate			= (1 << 2),
 		CallPhysicsTickUpdate	= (1 << 3),
 		CallPostTickUpdate		= (1 << 4),
-		AddedToLevel			= (1 << 5),
-		StartedPlay				= (1 << 6),
-		PendingDestroy			= (1 << 7),
+		Initialized				= (1 << 5),
+		AddedToLevel			= (1 << 6),
+		StartedPlay				= (1 << 7),
+		PendingDestroy			= (1 << 8),
 	};
 };
 

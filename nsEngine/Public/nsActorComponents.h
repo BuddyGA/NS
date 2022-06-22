@@ -23,9 +23,15 @@ public:
 	virtual void OnStopPlay() {}
 	virtual void OnTickUpdate(float deltaTime) {}
 	virtual void OnDestroy();
-	virtual void OnAddedToLevel() {}
-	virtual void OnRemovedFromLevel() {}
+	virtual void OnAddedToLevel();
+	virtual void OnRemovedFromLevel();
 	virtual bool IsFullyLoaded() { return true; }
+
+
+	NS_NODISCARD_INLINE nsActor* GetActor() const
+	{
+		return Actor;
+	}
 
 
 	friend class nsActor;
@@ -271,7 +277,6 @@ class NS_ENGINE_API nsCollisionComponent : public nsTransformComponent
 
 protected:
 	nsPhysicsObjectID PhysicsObject;
-	nsEPhysicsShape Shape;
 	nsEPhysicsCollisionChannel::Type ObjectChannel;
 	nsPhysicsCollisionChannels CollisionChannels;
 
@@ -281,10 +286,12 @@ public:
 	virtual void OnDestroy() override;
 	virtual void OnAddedToLevel() override;
 	virtual void OnRemovedFromLevel() override;
+	virtual void OnTransformChanged() override;
 
 	void SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel);
 	void SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels);
 	virtual void UpdateCollisionVolume() = 0;
+	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
 
 
 	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel::Type GetObjectChannel() const
@@ -314,6 +321,27 @@ public:
 	nsBoxCollisionComponent();
 	virtual void OnInitialize() override;
 	virtual void UpdateCollisionVolume() override;
+	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
+
+};
+
+
+
+
+class NS_ENGINE_API nsConvexMeshCollisionComponent : public nsCollisionComponent
+{
+	NS_DECLARE_OBJECT()
+
+private:
+	nsMeshID Mesh;
+
+
+public:
+	nsConvexMeshCollisionComponent();
+	virtual void UpdateCollisionVolume() override;
+	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
+
+	void SetMesh(nsMeshID newMesh);
 
 };
 
@@ -375,5 +403,11 @@ private:
 public:
 	void SetMesh(nsSharedModelAsset newMesh);
 	void SetMaterial(nsMaterialID newMaterial, int index);
+
+
+	NS_NODISCARD_INLINE const nsSharedModelAsset& GetModelAsset() const
+	{
+		return ModelAsset;
+	}
 
 };

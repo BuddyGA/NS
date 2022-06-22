@@ -12,6 +12,10 @@ NS_ENGINE_DECLARE_HANDLE(nsPhysicsSceneID, nsPhysicsManager)
 #endif // NS_ENGINE_PHYSICS_USE_PHYSX
 
 
+class nsActorComponent;
+class nsTransformComponent;
+
+
 
 enum class nsEPhysicsShape : uint8
 {
@@ -33,13 +37,59 @@ namespace nsEPhysicsCollisionChannel
 		Default			= (1 << 0),
 		Character		= (1 << 1),
 		Camera			= (1 << 2),
-		Water			= (1 << 3),
-
-		// ...
+		MousePicking	= (1 << 3),
 	};
 };
 
 typedef uint32 nsPhysicsCollisionChannels;
+
+
+
+enum class nsEPhysicsCollisionTest : uint8
+{
+	NONE = 0,
+	COLLISION_ONLY,
+	QUERY_ONLY,
+	COLLISION_AND_QUERY
+};
+
+
+
+struct nsPhysicsQueryParams
+{
+	nsEPhysicsCollisionChannel::Type Channel;
+	nsTArrayInline<nsActor*, 8> IgnoredActors;
+
+
+public:
+	nsPhysicsQueryParams()
+		: Channel(nsEPhysicsCollisionChannel::Default)
+		, IgnoredActors()
+	{
+	}
+
+};
+
+
+
+struct nsPhysicsHitResult
+{
+	nsActor* Actor;
+	nsActorComponent* Component;
+	nsVector3 WorldPosition;
+	nsVector3 WorldNormal;
+
+
+public:
+	nsPhysicsHitResult()
+		: Actor(nullptr)
+		, Component(nullptr)
+		, WorldPosition()
+		, WorldNormal()
+	{
+	}
+
+};
 
 
 
@@ -62,7 +112,8 @@ public:
 	virtual bool IsPhysicsSceneValid(nsPhysicsSceneID scene) const = 0;
 	virtual nsName GetPhysicsSceneName(nsPhysicsSceneID scene) const = 0;
 
-	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, nsEPhysicsCollisionChannel::Type collisionChannel, bool bIsStatic, bool bIsTrigger, void* transformComponent) = 0;
+	virtual nsPhysicsObjectID CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, bool bIsStatic, bool bIsTrigger, nsTransformComponent* transformComponent) = 0;
+	virtual nsPhysicsObjectID CreatePhysicsObject_ConvexMesh(nsName name, const nsTArray<nsVertexMeshPosition>& vertices, bool bIsStatic, nsTransformComponent* transformComponent) = 0;
 	virtual void DestroyPhysicsObject(nsPhysicsObjectID& physicsObject) = 0;
 	virtual void UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent) = 0;
 	virtual void SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel) = 0;
@@ -73,6 +124,8 @@ public:
 
 	virtual void AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) = 0;
 	virtual void RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) = 0;
+	virtual bool SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
+	virtual bool SceneQuerySweepBox(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
 
 
 #ifdef __NS_ENGINE_DEBUG_DRAW__

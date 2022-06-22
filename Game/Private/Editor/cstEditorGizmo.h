@@ -329,4 +329,10 @@ public:
 		SelectedScale = -1;
 	}
 
+
+	NS_NODISCARD_INLINE bool IsUpdating() const
+	{
+		return bUpdating;
+	}
+
 };

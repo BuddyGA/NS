@@ -8,7 +8,6 @@ nsLogCategory EditorLog("cstEditorLog", nsELogVerbosity::LV_DEBUG);
 
 
 
-
 // ================================================================================================================================================================================== //
 // EDITOR - CONTEXT OPTIONS
 // ================================================================================================================================================================================== //
@@ -144,12 +143,14 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 			if (!bIsDraggingAssetSpawned && bValidProjection)
 			{
 				NS_CONSOLE_Log(EditorLog, "Spawn actor from asset [%s]", *DragDropAssetInfo.Name);
+				nsSharedModelAsset ModelAsset = nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name);
 
 				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name, projectedPosition);
 				{
 					nsMeshComponent* meshComp = newActor->AddComponent<nsMeshComponent>("mesh");
-					meshComp->SetMesh(nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name));
-
+					meshComp->SetMesh(ModelAsset);
+					AddMousePickingForActor(newActor);
+					newActor->SetRootComponent(meshComp);
 					MainWorld->AddActorToLevel(newActor);
 				}
 
@@ -197,13 +198,16 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 
 void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 {
+	NS_Assert(MainViewport);
+	NS_Assert(MainWorld);
+
 	if (e.ButtonState == nsEButtonState::PRESSED)
 	{
 		if (bSceneViewportHovered)
 		{
 			if (e.Key == nsEInputKey::MOUSE_LEFT)
 			{
-				if (MainViewport && FocusActor)
+				if (FocusActor)
 				{
 					const nsTransform transform = bIsLocalCoordSpace ? FocusActor->GetLocalTransform() : FocusActor->GetWorldTransform();
 					ActorGizmo.BeginTransform(MainViewport, nsVector2(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y)), transform, bIsLocalCoordSpace);
@@ -226,6 +230,20 @@ void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 			{
 				NS_CONSOLE_Debug(EditorLog, "End drag-drop asset");
 				bIsDraggingAsset = false;
+			}
+			else if (!ActorGizmo.IsUpdating() && bSceneViewportHovered)
+			{
+				const nsVector2 mousePosition(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
+				nsVector3 worldOrigin;
+				nsVector3 worldDirection;
+				MainViewport->ProjectToWorld(mousePosition, worldOrigin, worldDirection);
+
+				float nearClip, farClip;
+				MainViewport->GetClip(nearClip, farClip);
+
+				nsPhysicsHitResult hitResult;
+				const bool bHit = MainWorld->PhysicsRayCast(hitResult, worldOrigin, worldDirection, farClip);
+				SelectFocusActor(bHit ? hitResult.Actor : nullptr);
 			}
 
 			ActorGizmo.EndTransform();
@@ -254,14 +272,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 {
 	if (e.ButtonState == nsEButtonState::PRESSED)
 	{
-		if (e.Key == nsEInputKey::KEYBOARD_ESCAPE)
-		{
-			if (!bIsAnyControlFocused)
-			{
-				SelectFocusActor(nullptr);
-			}
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_F1)
+		if (e.Key == nsEInputKey::KEYBOARD_F1)
 		{
 			bShowAssetExplorer = !bShowAssetExplorer;
 		}
@@ -275,30 +286,36 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F5)
 		{
-			if (MainRenderer)
-			{
-				MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
-				NS_CONSOLE_Log(EditorLog, "Debug draw wireframe [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? "ON" : "OFF");
-			}
+			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
+			NS_CONSOLE_Log(EditorLog, "Debug draw wireframe [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? "ON" : "OFF");
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F6)
 		{
-			if (MainRenderer)
-			{
-				MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
-				NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
-			}
+			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
+			NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
 		}
 
 		if (bSceneViewportHovered)
 		{
 			if (bMovingCamera)
 			{
-				if (e.Key == nsEInputKey::KEYBOARD_A) CameraMoveAxis.X = -1.0f;
-				else if (e.Key == nsEInputKey::KEYBOARD_D) CameraMoveAxis.X = 1.0f;
+				if (e.Key == nsEInputKey::KEYBOARD_A)
+				{
+					CameraMoveAxis.X = -1.0f;
+				}
+				else if (e.Key == nsEInputKey::KEYBOARD_D)
+				{
+					CameraMoveAxis.X = 1.0f;
+				}
 
-				if (e.Key == nsEInputKey::KEYBOARD_W) CameraMoveAxis.Z = 1.0f;
-				else if (e.Key == nsEInputKey::KEYBOARD_S) CameraMoveAxis.Z = -1.0f;
+				if (e.Key == nsEInputKey::KEYBOARD_W)
+				{
+					CameraMoveAxis.Z = 1.0f;
+				}
+				else if (e.Key == nsEInputKey::KEYBOARD_S)
+				{
+					CameraMoveAxis.Z = -1.0f;
+				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_Q)
 			{
@@ -335,10 +352,33 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 
 		if (!bIsAnyControlFocused)
 		{
-			if (e.Key == nsEInputKey::KEYBOARD_DELETE && MainWorld && FocusActor)
+			if (e.Key == nsEInputKey::KEYBOARD_ESCAPE)
+			{
+				SelectFocusActor(nullptr);
+			}
+			else if (e.Key == nsEInputKey::KEYBOARD_DELETE && FocusActor)
 			{
 				MainWorld->DestroyActor(FocusActor);
 				SelectFocusActor(nullptr);
+			}
+			else if (e.Key == nsEInputKey::KEYBOARD_Z && FocusActor)
+			{
+				nsTransform focusActorTransform = FocusActor->GetWorldTransform();
+
+				nsPhysicsQueryParams queryParams;
+				queryParams.IgnoredActors.Add(FocusActor);
+
+				nsPhysicsHitResult hitResult;
+				if (MainWorld->PhysicsRayCast(hitResult, focusActorTransform.Position, -nsVector3::UP, 1000.0f, queryParams))
+				{
+					NS_CONSOLE_Debug(EditorLog, "Hit actor [%s]", *hitResult.Actor->Name);
+					focusActorTransform.Position = hitResult.WorldPosition;
+					FocusActor->SetWorldTransform(focusActorTransform);
+				}
+				else
+				{
+					NS_CONSOLE_Debug(EditorLog, "No hit found below!");
+				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_0)
 			{
@@ -403,12 +443,55 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 	}
 	else
 	{
-		if (e.Key == nsEInputKey::KEYBOARD_A || e.Key == nsEInputKey::KEYBOARD_D) CameraMoveAxis.X = 0.0f;
-		if (e.Key == nsEInputKey::KEYBOARD_W || e.Key == nsEInputKey::KEYBOARD_S) CameraMoveAxis.Z = 0.0f;
+		if (e.Key == nsEInputKey::KEYBOARD_A || e.Key == nsEInputKey::KEYBOARD_D)
+		{
+			CameraMoveAxis.X = 0.0f;
+		}
+
+		if (e.Key == nsEInputKey::KEYBOARD_W || e.Key == nsEInputKey::KEYBOARD_S)
+		{
+			CameraMoveAxis.Z = 0.0f;
+		}
 
 		if (e.Key == nsEInputKey::KEYBOARD_SHIFT_LEFT && bKeyPressed_LeftShift)
 		{
 			bKeyPressed_LeftShift = false;
+		}
+	}
+}
+
+
+void cstEditor::AddMousePickingForActor(nsActor* actor)
+{
+	if (actor == nullptr)
+	{
+		return;
+	}
+
+	if (nsCollisionComponent* collisionComp = actor->GetComponent<nsCollisionComponent>())
+	{
+		nsPhysicsCollisionChannels collisionChannels = collisionComp->GetCollisionChannels();
+		collisionChannels |= nsEPhysicsCollisionChannel::Default | nsEPhysicsCollisionChannel::MousePicking;
+
+		collisionComp->SetCollisionChannels(collisionChannels);
+	}
+	else if (nsMeshComponent* meshComp = actor->GetComponent<nsMeshComponent>())
+	{
+		const nsSharedModelAsset& modelAsset = meshComp->GetModelAsset();
+
+		if (modelAsset.IsValid())
+		{
+			const nsMeshID mesh0 = modelAsset.GetMeshes()[0];
+			NS_Assert(mesh0 != nsMeshID::INVALID);
+
+			nsConvexMeshCollisionComponent* convexMeshPicking = actor->AddComponent<nsConvexMeshCollisionComponent>("editor_mouse_picking");
+			convexMeshPicking->SetMesh(mesh0);
+			convexMeshPicking->SetObjectChannel(nsEPhysicsCollisionChannel::MousePicking);
+
+			nsPhysicsCollisionChannels collisionChannels = convexMeshPicking->GetCollisionChannels();
+			collisionChannels |= nsEPhysicsCollisionChannel::Default | nsEPhysicsCollisionChannel::MousePicking;
+
+			convexMeshPicking->SetCollisionChannels(collisionChannels);
 		}
 	}
 }

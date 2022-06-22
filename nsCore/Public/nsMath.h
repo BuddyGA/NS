@@ -2392,11 +2392,16 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE nsVector3 ProjectPoint(const nsVector3& point) const noexcept
+	NS_NODISCARD_INLINE nsVector3 ProjectPoint(const nsVector3& point, float* outT = nullptr) const noexcept
 	{
 		const nsVector3 AB = (B - A);
 		const nsVector3 AP = (point - A);
 		const float t = nsVector3::DotProduct(AP, AB) / AB.GetMagnitudeSqr();
+
+		if (outT)
+		{
+			*outT = t;
+		}
 
 		return A + (AB * t);
 	}

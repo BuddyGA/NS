@@ -23,6 +23,12 @@ nsActor::nsActor()
 
 void nsActor::OnInitialize()
 {
+	if (Flags & nsEActorFlag::Initialized)
+	{
+		return;
+	}
+
+	Flags |= nsEActorFlag::Initialized;
 	RootComponent = AddComponent<nsTransformComponent>("default_root_component");
 }
 
@@ -49,16 +55,14 @@ void nsActor::OnStopPlay()
 {
 	NS_Assert(Flags & nsEActorFlag::CallStartStopPlay);
 
-	if (!(Flags & nsEActorFlag::StartedPlay))
+	if (Flags & nsEActorFlag::StartedPlay)
 	{
-		return;
-	}
+		for (int i = 0; i < Components.GetCount(); ++i)
+		{
+			Components[i]->OnStopPlay();
+		}
 
-	Flags &= ~nsEActorFlag::StartedPlay;
-
-	for (int i = 0; i < Components.GetCount(); ++i)
-	{
-		Components[i]->OnStopPlay();
+		Flags &= ~nsEActorFlag::StartedPlay;
 	}
 }
 
@@ -105,6 +109,11 @@ void nsActor::OnDestroy()
 
 void nsActor::OnAddedToLevel()
 {
+	if (Flags & nsEActorFlag::AddedToLevel)
+	{
+		return;
+	}
+
 	Flags |= nsEActorFlag::AddedToLevel;
 
 	for (int i = 0; i < Components.GetCount(); ++i)
@@ -116,12 +125,15 @@ void nsActor::OnAddedToLevel()
 
 void nsActor::OnRemovedFromLevel()
 {
-	for (int i = 0; i < Components.GetCount(); ++i)
+	if (Flags & nsEActorFlag::AddedToLevel)
 	{
-		Components[i]->OnRemovedFromLevel();
-	}
+		for (int i = 0; i < Components.GetCount(); ++i)
+		{
+			Components[i]->OnRemovedFromLevel();
+		}
 
-	Flags &= ~nsEActorFlag::AddedToLevel;
+		Flags &= ~nsEActorFlag::AddedToLevel;
+	}
 }
 
 

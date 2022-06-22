@@ -37,6 +37,7 @@ public:
 	void DispatchStopPlay();
 	void DispatchTickUpdate(float deltaTime);
 	void SyncActorTransformsWithPhysics();
+	bool PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());
 
 private:
 	void RefreshActorList();

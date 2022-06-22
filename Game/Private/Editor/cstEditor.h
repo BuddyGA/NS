@@ -7,7 +7,6 @@
 
 
 
-
 class cstEditorContextMenu
 {
 private:
@@ -82,6 +81,7 @@ public:
 	void OnMouseWheel(const nsMouseWheelEventArgs& e);
 	void OnKeyboardButton(const nsKeyboardButtonEventArgs& e);
 
+	void AddMousePickingForActor(nsActor* actor);
 	void SelectFocusActor(nsActor* newActor);
 	void BeginDragDropAsset(const nsAssetInfo& assetInfo);
 

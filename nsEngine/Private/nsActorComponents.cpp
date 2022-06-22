@@ -29,6 +29,18 @@ void nsActorComponent::OnDestroy()
 }
 
 
+void nsActorComponent::OnAddedToLevel()
+{
+	bAddedToLevel = true;
+}
+
+
+void nsActorComponent::OnRemovedFromLevel()
+{
+	bAddedToLevel = false;
+}
+
+
 
 
 // ================================================================================================================================== //
@@ -142,7 +154,6 @@ NS_DEFINE_OBJECT(nsCollisionComponent, "CollisionComponent", nsTransformComponen
 nsCollisionComponent::nsCollisionComponent()
 {
 	PhysicsObject = nsPhysicsObjectID::INVALID;
-	Shape = nsEPhysicsShape::NONE;
 	ObjectChannel = nsEPhysicsCollisionChannel::Default;
 	CollisionChannels = UINT32_MAX;
 }
@@ -161,6 +172,8 @@ void nsCollisionComponent::OnDestroy()
 
 void nsCollisionComponent::OnAddedToLevel()
 {
+	nsTransformComponent::OnAddedToLevel();
+
 	UpdateCollisionVolume();
 
 	if (PhysicsObject != nsPhysicsObjectID::INVALID)
@@ -175,6 +188,18 @@ void nsCollisionComponent::OnRemovedFromLevel()
 	if (PhysicsObject != nsPhysicsObjectID::INVALID)
 	{
 		nsPhysicsManager::Get().RemovePhysicsObjectFromScene(PhysicsObject, Actor->GetWorld()->GetPhysicsScene());
+	}
+
+	nsTransformComponent::OnRemovedFromLevel();
+}
+
+
+void nsCollisionComponent::OnTransformChanged()
+{
+	if (PhysicsObject != nsPhysicsObjectID::INVALID)
+	{
+		const nsTransform worldTransform = GetWorldTransform();
+		nsPhysicsManager::Get().SetPhysicsObjectWorldTransform(PhysicsObject, worldTransform.Position, worldTransform.Rotation);
 	}
 }
 
@@ -216,7 +241,6 @@ NS_DEFINE_OBJECT(nsBoxCollisionComponent, "BoxCollisionComponent", nsCollisionCo
 
 nsBoxCollisionComponent::nsBoxCollisionComponent()
 {
-	Shape = nsEPhysicsShape::BOX;
 	HalfExtent = nsVector3(50.0f);
 }
 
@@ -225,7 +249,7 @@ void nsBoxCollisionComponent::OnInitialize()
 {
 	nsActorComponent::OnInitialize();
 
-	PhysicsObject = nsPhysicsManager::Get().CreatePhysicsObject_Box(Name, HalfExtent, ObjectChannel, true, false, this);
+	PhysicsObject = nsPhysicsManager::Get().CreatePhysicsObject_Box(Name, HalfExtent, true, false, this);
 }
 
 
@@ -238,6 +262,66 @@ void nsBoxCollisionComponent::UpdateCollisionVolume()
 		physicsManager.SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
 		physicsManager.SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
 	}
+}
+
+
+bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	if (PhysicsObject == nsPhysicsObjectID::INVALID)
+	{
+		return false;
+	}
+
+	return nsPhysicsManager::Get().SceneQuerySweepBox(Actor->GetWorld()->GetPhysicsScene(), hitResult, HalfExtent, GetWorldTransform(), direction, distance, params);
+}
+
+
+
+
+// ================================================================================================================================== //
+// CONVEX MESH COLLISION COMPONENT
+// ================================================================================================================================== //
+NS_DEFINE_OBJECT(nsConvexMeshCollisionComponent, "ConvexMeshCollisionComponent", nsCollisionComponent);
+
+nsConvexMeshCollisionComponent::nsConvexMeshCollisionComponent()
+{
+	Mesh = nsMeshID::INVALID;
+}
+
+
+void nsConvexMeshCollisionComponent::UpdateCollisionVolume()
+{
+	if (Mesh == nsMeshID::INVALID)
+	{
+		return;
+	}
+
+	const nsMeshVertexData& vertexData = nsMeshManager::Get().GetMeshVertexData(Mesh, 0);
+	nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
+
+	if (PhysicsObject == nsPhysicsObjectID::INVALID)
+	{
+		PhysicsObject = physicsManager.CreatePhysicsObject_ConvexMesh(Name, vertexData.Positions, true, this);
+	}
+
+	physicsManager.SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
+	physicsManager.SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
+}
+
+
+void nsConvexMeshCollisionComponent::SetMesh(nsMeshID newMesh)
+{
+	if (Mesh != newMesh)
+	{
+		Mesh = newMesh;
+		UpdateCollisionVolume();
+	}
+}
+
+
+bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	return false;
 }
 
 
@@ -292,7 +376,8 @@ void nsMeshComponent::OnDestroy()
 
 void nsMeshComponent::OnAddedToLevel()
 {
-	bAddedToLevel = true;
+	nsRenderComponent::OnAddedToLevel();
+
 	RegisterMesh();
 }
 
@@ -300,7 +385,8 @@ void nsMeshComponent::OnAddedToLevel()
 void nsMeshComponent::OnRemovedFromLevel()
 {
 	UnregisterMesh();
-	bAddedToLevel = false;
+
+	nsRenderComponent::OnRemovedFromLevel();
 }
 
 

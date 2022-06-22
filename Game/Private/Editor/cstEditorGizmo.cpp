@@ -55,30 +55,8 @@ bool cstEditorGizmoTranslate::UpdateTranslation(nsViewport* viewport, const nsVe
 		return false;
 	}
 
-	/*
-	nsVector3 currentIntersectionPoint = GetIntersectionPoint(viewport, mousePosition, transform, scale, bIsLocal);
-	nsVector3 deltaPosition = currentIntersectionPoint - transform.Position - TranslationOffset;
-
-	if (deltaPosition.IsZero() || (snapValue > 0.0f && deltaPosition.GetMagnitude() < snapValue))
-	{
-		return false;
-	}
-
-	if (snapValue > 0.0f)
-	{
-		deltaPosition.Normalize();
-		transform.Position += deltaPosition * snapValue;
-	}
-	else
-	{
-		transform.Position += deltaPosition;
-	}
-
-	LastIntersectionPoint = currentIntersectionPoint;
-	*/
-
 	const nsVector3 currentIntersectionPoint = GetIntersectionPoint(viewport, mousePosition, transform, scale, bIsLocal);
-	nsVector3 deltaPosition = currentIntersectionPoint - LastIntersectionPoint; // -transform.Position;// -TranslationOffset;
+	nsVector3 deltaPosition = currentIntersectionPoint - LastIntersectionPoint;
 	bool bUpdatePosition = true;
 
 	if (snapValue > 0.0f)
@@ -495,7 +473,7 @@ bool cstEditorGizmoTransform::UpdateTransform(nsViewport* viewport, const nsVect
 	NS_Assert(viewport);
 
 	const float distanceToView = nsVector3::Distance(viewport->GetViewTransform().Position, outTransform.Position);
-	const float gizmoScale = viewMode == cstEEditorViewMode::PERSPECTIVE ? nsMath::Lerp(1.0f, 10.0f, distanceToView / 10000.0f) : 2.0f;
+	const float gizmoScale = (viewMode == cstEEditorViewMode::PERSPECTIVE) ? nsMath::Lerp(1.0f, 10.0f, distanceToView / 10000.0f) : 2.0f;
 
 	if (bUpdating)
 	{
@@ -538,11 +516,21 @@ bool cstEditorGizmoTransform::UpdateTransform(nsViewport* viewport, const nsVect
 
 				if (dist < closestDist)
 				{
-					closestDist = dist;
-					closestIndex = i;
-				}
+					const nsPlane viewPlane(viewport->GetViewTransform().GetAxisForward(), outTransform.Position);
+					nsVector3 planeIntersectionPoint;
 
-				//NS_CONSOLE_Debug(EditorLog, "[%i] dist: %f", i, dist);
+					if (viewPlane.TestIntersectionRay(planeIntersectionPoint, rayOrigin, rayDirection))
+					{
+						float t = 100.0f;
+						const nsVector3 projectedIntersectionPoint = axisLine.ProjectPoint(planeIntersectionPoint, &t);
+
+						if (t >= 0.0f && t < 1.2f)
+						{
+							closestDist = dist;
+							closestIndex = i;
+						}
+					}
+				}
 			}
 
 			//NS_CONSOLE_Debug(EditorLog, "Closest gizmo translate [%i]: %f", closestIndex, closestDist);
