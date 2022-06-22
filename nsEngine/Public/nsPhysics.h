@@ -12,10 +12,6 @@ NS_ENGINE_DECLARE_HANDLE(nsPhysicsSceneID, nsPhysicsManager)
 #endif // NS_ENGINE_PHYSICS_USE_PHYSX
 
 
-class nsActorComponent;
-class nsTransformComponent;
-
-
 
 enum class nsEPhysicsShape : uint8
 {
@@ -78,6 +74,7 @@ struct nsPhysicsHitResult
 	nsActorComponent* Component;
 	nsVector3 WorldPosition;
 	nsVector3 WorldNormal;
+	float Distance;
 
 
 public:
@@ -86,11 +83,11 @@ public:
 		, Component(nullptr)
 		, WorldPosition()
 		, WorldNormal()
+		, Distance(0.0f)
 	{
 	}
 
 };
-
 
 
 
@@ -126,6 +123,9 @@ public:
 	virtual void RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene) = 0;
 	virtual bool SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
 	virtual bool SceneQuerySweepBox(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
+	virtual bool SceneQuerySweepSphere(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
+	virtual bool SceneQuerySweepConvexMesh(nsPhysicsSceneID scene, nsPhysicsObjectID physicsObject, nsPhysicsHitResult& hitResult, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
+	virtual bool AdjustPhysicsObjectPosition(nsPhysicsObjectID physicsObjectToAdjust, nsPhysicsObjectID physicsObjectAgaints) = 0;
 
 
 #ifdef __NS_ENGINE_DEBUG_DRAW__

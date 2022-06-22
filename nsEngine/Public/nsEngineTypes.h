@@ -194,3 +194,6 @@ NS_INLINE void ns_DestroyObject(T*& obj) noexcept
 
 
 class nsActor;
+class nsWorld;
+class nsActorComponent;
+class nsTransformComponent;

@@ -2,6 +2,7 @@
 #include "nsWorld.h"
 #include "nsRenderManager.h"
 #include "nsConsole.h"
+#include "nsPhysics_PhysX.h"
 
 
 
@@ -38,6 +39,14 @@ void nsActorComponent::OnAddedToLevel()
 void nsActorComponent::OnRemovedFromLevel()
 {
 	bAddedToLevel = false;
+}
+
+
+nsWorld* nsActorComponent::GetWorld() const
+{
+	NS_Assert(Actor);
+
+	return Actor->GetWorld();
 }
 
 
@@ -156,6 +165,7 @@ nsCollisionComponent::nsCollisionComponent()
 	PhysicsObject = nsPhysicsObjectID::INVALID;
 	ObjectChannel = nsEPhysicsCollisionChannel::Default;
 	CollisionChannels = UINT32_MAX;
+	bIsTrigger = false;
 }
 
 
@@ -178,7 +188,7 @@ void nsCollisionComponent::OnAddedToLevel()
 
 	if (PhysicsObject != nsPhysicsObjectID::INVALID)
 	{
-		nsPhysicsManager::Get().AddPhysicsObjectToScene(PhysicsObject, Actor->GetWorld()->GetPhysicsScene());
+		nsPhysicsManager::Get().AddPhysicsObjectToScene(PhysicsObject, GetWorld()->GetPhysicsScene());
 	}
 }
 
@@ -187,7 +197,7 @@ void nsCollisionComponent::OnRemovedFromLevel()
 {
 	if (PhysicsObject != nsPhysicsObjectID::INVALID)
 	{
-		nsPhysicsManager::Get().RemovePhysicsObjectFromScene(PhysicsObject, Actor->GetWorld()->GetPhysicsScene());
+		nsPhysicsManager::Get().RemovePhysicsObjectFromScene(PhysicsObject, GetWorld()->GetPhysicsScene());
 	}
 
 	nsTransformComponent::OnRemovedFromLevel();
@@ -232,6 +242,19 @@ void nsCollisionComponent::SetCollisionChannels(nsPhysicsCollisionChannels newCo
 }
 
 
+bool nsCollisionComponent::AdjustPositionIfOverlappedWith(nsActor* actorToTest)
+{
+	nsCollisionComponent* testAgaintsCollisionComponent = actorToTest ? actorToTest->GetComponent<nsCollisionComponent>() : nullptr;
+
+	if (testAgaintsCollisionComponent == nullptr)
+	{
+		return false;
+	}
+
+	return nsPhysicsManager::Get().AdjustPhysicsObjectPosition(PhysicsObject, testAgaintsCollisionComponent->PhysicsObject);
+}
+
+
 
 
 // ================================================================================================================================== //
@@ -272,7 +295,7 @@ bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsV
 		return false;
 	}
 
-	return nsPhysicsManager::Get().SceneQuerySweepBox(Actor->GetWorld()->GetPhysicsScene(), hitResult, HalfExtent, GetWorldTransform(), direction, distance, params);
+	return nsPhysicsManager::Get().SceneQuerySweepBox(GetWorld()->GetPhysicsScene(), hitResult, HalfExtent, GetWorldTransform(), direction, distance, params);
 }
 
 
@@ -321,7 +344,12 @@ void nsConvexMeshCollisionComponent::SetMesh(nsMeshID newMesh)
 
 bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return false;
+	if (PhysicsObject == nsPhysicsObjectID::INVALID)
+	{
+		return false;
+	}
+
+	return nsPhysicsManager::Get().SceneQuerySweepConvexMesh(GetWorld()->GetPhysicsScene(), PhysicsObject, hitResult, GetWorldTransform(), direction, distance, params);
 }
 
 

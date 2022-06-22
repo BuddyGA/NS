@@ -518,6 +518,8 @@ bool nsPhysicsManager_PhysX::SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysics
 		{
 			hitResult.WorldNormal = NS_FromPxVec3(rayCastHit.normal);
 		}
+
+		hitResult.Distance = rayCastHit.distance;
 	}
 
 	return bFoundHit;
@@ -559,11 +561,45 @@ bool nsPhysicsManager_PhysX::SceneQuerySweep(nsPhysicsSceneID scene, nsPhysicsHi
 		{
 			hitResult.WorldNormal = NS_FromPxVec3(sweepHit.normal);
 		}
+
+		hitResult.Distance = sweepHit.distance;
 	}
 
-	return false;
+	return bFoundHit;
 }
 
+
+bool nsPhysicsManager_PhysX::AdjustPhysicsObjectPosition(nsPhysicsObjectID physicsObjectToAdjust, nsPhysicsObjectID physicsObjectAgaints)
+{
+	NS_Assert(IsPhysicsObjectValid(physicsObjectToAdjust));
+	NS_Assert(IsPhysicsObjectValid(physicsObjectAgaints));
+
+	PxRigidActor* firstRigidActor = ObjectRigidActors[physicsObjectToAdjust.Id];
+	NS_Assert(firstRigidActor);
+	PxShape* firstShape = nullptr;
+	firstRigidActor->getShapes(&firstShape, 1);
+	NS_Assert(firstShape);
+
+	PxRigidActor* secondRigidActor = ObjectRigidActors[physicsObjectAgaints.Id];
+	NS_Assert(secondRigidActor);
+	PxShape* secondShape = nullptr;
+	secondRigidActor->getShapes(&secondShape, 1);
+	NS_Assert(secondShape);
+
+	PxVec3 direction;
+	float depth;
+	const bool bIsPenetrating = PxGeometryQuery::computePenetration(direction, depth, firstShape->getGeometry().any(), firstRigidActor->getGlobalPose(), secondShape->getGeometry().any(), secondRigidActor->getGlobalPose());
+
+	if (bIsPenetrating)
+	{
+		nsActor* actorToAdjust = static_cast<nsTransformComponent*>(firstRigidActor->userData)->GetActor();
+		nsTransform newTransform = actorToAdjust->GetWorldTransform();
+		newTransform.Position = newTransform.Position + NS_FromPxVec3(direction) * depth;
+		actorToAdjust->SetWorldTransform(newTransform);
+	}
+
+	return bIsPenetrating;
+}
 
 
 

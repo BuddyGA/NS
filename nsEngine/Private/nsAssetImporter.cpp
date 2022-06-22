@@ -28,11 +28,12 @@ void nsAssetImporter::Initialize() noexcept
 
 	nsAssetImportOption_Model importOptionModel{};
 
-	importOptionModel.SourceFile = "../../../Assets/Models/mesh_cube.glb";
-	importOptionModel.MeshScaleMultiplier = 100.0f;
+	//importOptionModel.SourceFile = "../../../Assets/Models/mesh_wall.glb";
+	//importOptionModel.MeshScaleMultiplier = 100.0f;
 
-	//importOptionModel.SourceFile = "../../../Assets/Models/mesh_boombox.glb";
-	//importOptionModel.MeshScaleMultiplier = 1000.0f;
+	importOptionModel.SourceFile = "../../../Assets/Models/mesh_boombox.glb";
+	importOptionModel.MeshScaleMultiplier = 1000.0f;
+
 	//importOptionModel.SourceFile = "../../../Assets/Models/mesh_cube_two_mats.glb";
 	//importOptionModel.MeshScaleMultiplier = 100.0f;
 

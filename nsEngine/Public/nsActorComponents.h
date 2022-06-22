@@ -26,6 +26,7 @@ public:
 	virtual void OnAddedToLevel();
 	virtual void OnRemovedFromLevel();
 	virtual bool IsFullyLoaded() { return true; }
+	NS_NODISCARD nsWorld* GetWorld() const;
 
 
 	NS_NODISCARD_INLINE nsActor* GetActor() const
@@ -279,6 +280,7 @@ protected:
 	nsPhysicsObjectID PhysicsObject;
 	nsEPhysicsCollisionChannel::Type ObjectChannel;
 	nsPhysicsCollisionChannels CollisionChannels;
+	bool bIsTrigger;
 
 
 public:
@@ -290,9 +292,10 @@ public:
 
 	void SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel);
 	void SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels);
+	bool AdjustPositionIfOverlappedWith(nsActor* actorToTest);
 	virtual void UpdateCollisionVolume() = 0;
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
-
+	
 
 	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel::Type GetObjectChannel() const
 	{

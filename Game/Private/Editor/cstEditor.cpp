@@ -363,21 +363,35 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_Z && FocusActor)
 			{
-				nsTransform focusActorTransform = FocusActor->GetWorldTransform();
-
-				nsPhysicsQueryParams queryParams;
-				queryParams.IgnoredActors.Add(FocusActor);
-
-				nsPhysicsHitResult hitResult;
-				if (MainWorld->PhysicsRayCast(hitResult, focusActorTransform.Position, -nsVector3::UP, 1000.0f, queryParams))
+				// Move actor to floor if there's any hit on down sweep test
+				if (nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>())
 				{
-					NS_CONSOLE_Debug(EditorLog, "Hit actor [%s]", *hitResult.Actor->Name);
-					focusActorTransform.Position = hitResult.WorldPosition;
-					FocusActor->SetWorldTransform(focusActorTransform);
-				}
-				else
-				{
-					NS_CONSOLE_Debug(EditorLog, "No hit found below!");
+					nsTransform focusActorTransform = FocusActor->GetWorldTransform();
+
+					nsPhysicsQueryParams queryParams;
+					queryParams.IgnoredActors.Add(FocusActor);
+
+					nsPhysicsHitResult hitResult;
+					if (collisionComp->SweepTest(hitResult, -nsVector3::UP, 1000.0f, queryParams))
+					{
+						NS_CONSOLE_Log(EditorLog, "Move actor [%s] down to floor! [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]", 
+							*FocusActor->Name, 
+							*hitResult.Actor->Name,
+							hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z,
+							hitResult.Distance
+						);
+
+						if (hitResult.Distance > 0.0f)
+						{
+							focusActorTransform.Position.Y = hitResult.WorldPosition.Y;
+							FocusActor->SetWorldTransform(focusActorTransform);
+							collisionComp->AdjustPositionIfOverlappedWith(hitResult.Actor);
+						}
+					}
+					else
+					{
+						NS_CONSOLE_Warning(EditorLog, "Cannot move actor down to floor. No hit found below!");
+					}
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_0)

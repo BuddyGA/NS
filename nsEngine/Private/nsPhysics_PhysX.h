@@ -98,6 +98,34 @@ public:
 	}
 
 
+	virtual bool SceneQuerySweepSphere(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override
+	{
+		return SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), worldTransform, direction, distance, params);
+	}
+
+
+	virtual bool SceneQuerySweepConvexMesh(nsPhysicsSceneID scene, nsPhysicsObjectID physicsObject, nsPhysicsHitResult& hitResult, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override
+	{
+		NS_Assert(IsPhysicsObjectValid(physicsObject));
+
+		PxRigidActor* pxRigidActor = ObjectRigidActors[physicsObject.Id];
+		NS_Assert(pxRigidActor);
+
+		PxShape* shape = nullptr;
+		pxRigidActor->getShapes(&shape, 1);
+		NS_Assert(shape);
+
+		PxConvexMeshGeometry convexMeshGeometry;
+		bool bIsConvexMeshShape = shape->getConvexMeshGeometry(convexMeshGeometry);
+		NS_ValidateV(bIsConvexMeshShape, "SceneQuerySweepConvexMesh() requires physics object with convex mesh geometry shape!");
+
+		return SceneQuerySweep(scene, hitResult, convexMeshGeometry, worldTransform, direction, distance, params);
+	}
+
+
+	virtual bool AdjustPhysicsObjectPosition(nsPhysicsObjectID physicsObjectToAdjust, nsPhysicsObjectID physicsObjectAgaints) override;
+
+
 #ifdef __NS_ENGINE_DEBUG_DRAW__
 	virtual void DEBUG_Draw(nsRenderContextWorld& renderContextWorld) override;
 #endif // __NS_ENGINE_DEBUG_DRAW__
