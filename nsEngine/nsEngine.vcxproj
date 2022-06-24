@@ -183,8 +183,9 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClCompile Include="Private\nsLevel.cpp" />
     <ClCompile Include="Private\nsMaterial.cpp" />
     <ClCompile Include="Private\nsMesh.cpp" />
-    <ClCompile Include="Private\nsPhysics.cpp" />
+    <ClCompile Include="Private\nsPhysicsComponents.cpp" />
     <ClCompile Include="Private\nsPhysics_PhysX.cpp" />
+    <ClCompile Include="Private\nsRenderComponents.cpp" />
     <ClCompile Include="Private\nsRenderContextWorld.cpp" />
     <ClCompile Include="Private\nsRenderer.cpp" />
     <ClCompile Include="Private\nsRenderManager.cpp" />
@@ -204,6 +205,8 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Private\ThirdParty\stb_truetype.h" />
     <ClInclude Include="Public\nsActorComponents.h" />
     <ClInclude Include="Public\nsActor.h" />
+    <ClInclude Include="Public\nsPhysicsComponents.h" />
+    <ClInclude Include="Public\nsRenderComponents.h" />
     <ClInclude Include="Public\nsAnimation.h" />
     <ClInclude Include="Public\nsAssetImporter.h" />
     <ClInclude Include="Public\nsAssetManager.h" />
@@ -219,7 +222,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Public\nsLevel.h" />
     <ClInclude Include="Public\nsMaterial.h" />
     <ClInclude Include="Public\nsMesh.h" />
-    <ClInclude Include="Public\nsPhysics.h" />
+    <ClInclude Include="Public\nsPhysicsManager.h" />
     <ClInclude Include="Public\nsRenderer.h" />
     <ClInclude Include="Public\nsRenderManager.h" />
     <ClInclude Include="Public\nsViewport.h" />

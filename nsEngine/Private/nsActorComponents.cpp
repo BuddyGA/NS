@@ -1,8 +1,6 @@
 #include "nsActorComponents.h"
 #include "nsWorld.h"
-#include "nsRenderManager.h"
 #include "nsConsole.h"
-#include "nsPhysics_PhysX.h"
 
 
 
@@ -13,12 +11,13 @@ static nsLogCategory ComponentLog("nsComponentLog", nsELogVerbosity::LV_INFO);
 // ================================================================================================================================== //
 // ACTOR COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsActorComponent, "ActorComponent", nsObject);
+NS_DEFINE_OBJECT(nsActorComponent, nsObject);
 
 nsActorComponent::nsActorComponent()
 {
 	Actor = nullptr;
 	bAddedToLevel = false;
+	bStartedPlay = false;
 }
 
 
@@ -42,6 +41,18 @@ void nsActorComponent::OnRemovedFromLevel()
 }
 
 
+void nsActorComponent::OnStartPlay()
+{
+	bStartedPlay = true;
+}
+
+
+void nsActorComponent::OnStopPlay()
+{
+	bStartedPlay = false;
+}
+
+
 nsWorld* nsActorComponent::GetWorld() const
 {
 	NS_Assert(Actor);
@@ -55,7 +66,7 @@ nsWorld* nsActorComponent::GetWorld() const
 // ================================================================================================================================== //
 // TRANSFORM COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsTransformComponent, "TransformComponent", nsActorComponent);
+NS_DEFINE_OBJECT(nsTransformComponent, nsActorComponent);
 
 nsTransformComponent::nsTransformComponent()
 {
@@ -150,367 +161,4 @@ void nsTransformComponent::DetachFromParent()
 	Parent = nullptr;
 	DirtyTransform = EDirtyTransform::LOCAL;
 	UpdateTransform();
-}
-
-
-
-
-// ================================================================================================================================== //
-// COLLISION COMPONENT
-// ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsCollisionComponent, "CollisionComponent", nsTransformComponent);
-
-nsCollisionComponent::nsCollisionComponent()
-{
-	PhysicsObject = nsPhysicsObjectID::INVALID;
-	ObjectChannel = nsEPhysicsCollisionChannel::Default;
-	CollisionChannels = UINT32_MAX;
-	bIsTrigger = false;
-}
-
-
-void nsCollisionComponent::OnDestroy()
-{
-	if (PhysicsObject != nsPhysicsObjectID::INVALID)
-	{
-		nsPhysicsManager::Get().DestroyPhysicsObject(PhysicsObject);
-	}
-
-	nsTransformComponent::OnDestroy();
-}
-
-
-void nsCollisionComponent::OnAddedToLevel()
-{
-	nsTransformComponent::OnAddedToLevel();
-
-	UpdateCollisionVolume();
-
-	if (PhysicsObject != nsPhysicsObjectID::INVALID)
-	{
-		nsPhysicsManager::Get().AddPhysicsObjectToScene(PhysicsObject, GetWorld()->GetPhysicsScene());
-	}
-}
-
-
-void nsCollisionComponent::OnRemovedFromLevel()
-{
-	if (PhysicsObject != nsPhysicsObjectID::INVALID)
-	{
-		nsPhysicsManager::Get().RemovePhysicsObjectFromScene(PhysicsObject, GetWorld()->GetPhysicsScene());
-	}
-
-	nsTransformComponent::OnRemovedFromLevel();
-}
-
-
-void nsCollisionComponent::OnTransformChanged()
-{
-	if (PhysicsObject != nsPhysicsObjectID::INVALID)
-	{
-		const nsTransform worldTransform = GetWorldTransform();
-		nsPhysicsManager::Get().SetPhysicsObjectWorldTransform(PhysicsObject, worldTransform.Position, worldTransform.Rotation);
-	}
-}
-
-
-void nsCollisionComponent::SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel)
-{
-	if (ObjectChannel != newObjectChannel)
-	{
-		ObjectChannel = newObjectChannel;
-
-		if (PhysicsObject != nsPhysicsObjectID::INVALID)
-		{
-			nsPhysicsManager::Get().SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
-		}
-	}
-}
-
-
-void nsCollisionComponent::SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels)
-{
-	if (CollisionChannels != newCollisionChannels)
-	{
-		CollisionChannels = newCollisionChannels;
-
-		if (PhysicsObject != nsPhysicsObjectID::INVALID)
-		{
-			nsPhysicsManager::Get().SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
-		}
-	}
-}
-
-
-bool nsCollisionComponent::AdjustPositionIfOverlappedWith(nsActor* actorToTest)
-{
-	nsCollisionComponent* testAgaintsCollisionComponent = actorToTest ? actorToTest->GetComponent<nsCollisionComponent>() : nullptr;
-
-	if (testAgaintsCollisionComponent == nullptr)
-	{
-		return false;
-	}
-
-	return nsPhysicsManager::Get().AdjustPhysicsObjectPosition(PhysicsObject, testAgaintsCollisionComponent->PhysicsObject);
-}
-
-
-
-
-// ================================================================================================================================== //
-// BOX COLLISION COMPONENT
-// ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsBoxCollisionComponent, "BoxCollisionComponent", nsCollisionComponent);
-
-nsBoxCollisionComponent::nsBoxCollisionComponent()
-{
-	HalfExtent = nsVector3(50.0f);
-}
-
-
-void nsBoxCollisionComponent::OnInitialize()
-{
-	nsActorComponent::OnInitialize();
-
-	PhysicsObject = nsPhysicsManager::Get().CreatePhysicsObject_Box(Name, HalfExtent, true, false, this);
-}
-
-
-void nsBoxCollisionComponent::UpdateCollisionVolume()
-{
-	if (PhysicsObject != nsPhysicsObjectID::INVALID)
-	{
-		nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
-		physicsManager.UpdatePhysicsObjectShape_Box(PhysicsObject, HalfExtent);
-		physicsManager.SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
-		physicsManager.SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
-	}
-}
-
-
-bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
-{
-	if (PhysicsObject == nsPhysicsObjectID::INVALID)
-	{
-		return false;
-	}
-
-	return nsPhysicsManager::Get().SceneQuerySweepBox(GetWorld()->GetPhysicsScene(), hitResult, HalfExtent, GetWorldTransform(), direction, distance, params);
-}
-
-
-
-
-// ================================================================================================================================== //
-// CONVEX MESH COLLISION COMPONENT
-// ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsConvexMeshCollisionComponent, "ConvexMeshCollisionComponent", nsCollisionComponent);
-
-nsConvexMeshCollisionComponent::nsConvexMeshCollisionComponent()
-{
-	Mesh = nsMeshID::INVALID;
-}
-
-
-void nsConvexMeshCollisionComponent::UpdateCollisionVolume()
-{
-	if (Mesh == nsMeshID::INVALID)
-	{
-		return;
-	}
-
-	const nsMeshVertexData& vertexData = nsMeshManager::Get().GetMeshVertexData(Mesh, 0);
-	nsPhysicsManager& physicsManager = nsPhysicsManager::Get();
-
-	if (PhysicsObject == nsPhysicsObjectID::INVALID)
-	{
-		PhysicsObject = physicsManager.CreatePhysicsObject_ConvexMesh(Name, vertexData.Positions, true, this);
-	}
-
-	physicsManager.SetPhysicsObjectChannel(PhysicsObject, ObjectChannel);
-	physicsManager.SetPhysicsObjectCollisionChannels(PhysicsObject, CollisionChannels);
-}
-
-
-void nsConvexMeshCollisionComponent::SetMesh(nsMeshID newMesh)
-{
-	if (Mesh != newMesh)
-	{
-		Mesh = newMesh;
-		UpdateCollisionVolume();
-	}
-}
-
-
-bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
-{
-	if (PhysicsObject == nsPhysicsObjectID::INVALID)
-	{
-		return false;
-	}
-
-	return nsPhysicsManager::Get().SceneQuerySweepConvexMesh(GetWorld()->GetPhysicsScene(), PhysicsObject, hitResult, GetWorldTransform(), direction, distance, params);
-}
-
-
-
-
-// ================================================================================================================================== //
-// RENDER COMPONENT
-// ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsRenderComponent, "RenderComponent", nsTransformComponent);
-
-nsRenderComponent::nsRenderComponent()
-{
-	bIsVisible = true;
-}
-
-
-void nsRenderComponent::SetVisibility(bool bVisible)
-{
-	if (bIsVisible != bVisible)
-	{
-		bIsVisible = bVisible;
-		OnVisibilityChanged();
-	}
-}
-
-
-
-
-// ================================================================================================================================== //
-// MESH COMPONENT
-// ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsMeshComponent, "MeshComponent", nsRenderComponent);
-
-nsMeshComponent::nsMeshComponent()
-{
-	Materials.Add();
-	RenderMeshId = nsRenderContextMeshID::INVALID;
-}
-
-
-void nsMeshComponent::OnDestroy()
-{
-	UnregisterMesh();
-
-	ModelAsset = nsSharedModelAsset();
-	Materials.Resize(1);
-	RenderMeshId = nsRenderContextMeshID::INVALID;
-
-	nsActorComponent::OnDestroy();
-}
-
-
-void nsMeshComponent::OnAddedToLevel()
-{
-	nsRenderComponent::OnAddedToLevel();
-
-	RegisterMesh();
-}
-
-
-void nsMeshComponent::OnRemovedFromLevel()
-{
-	UnregisterMesh();
-
-	nsRenderComponent::OnRemovedFromLevel();
-}
-
-
-void nsMeshComponent::OnTransformChanged()
-{
-	RegisterMesh();
-}
-
-
-void nsMeshComponent::OnVisibilityChanged()
-{
-	if (!bAddedToLevel)
-	{
-		return;
-	}
-
-	if (IsVisible())
-	{
-		RegisterMesh();
-	}
-	else
-	{
-		UnregisterMesh();
-	}
-}
-
-
-void nsMeshComponent::RegisterMesh()
-{
-	if (!IsVisible() || !bAddedToLevel || !ModelAsset.IsValid())
-	{
-		return;
-	}
-
-	nsRenderContextWorld& renderContext = nsRenderManager::Get().GetWorldRenderContext(Actor->GetWorld());
-
-	if (Materials[0] == nsMaterialID::INVALID)
-	{
-		Materials[0] = nsMaterialManager::Get().GetDefaultMaterial_PhongChecker();
-	}
-
-	const nsAssetModelMeshes& meshes = ModelAsset.GetMeshes();
-
-	if (RenderMeshId == nsRenderContextMeshID::INVALID)
-	{
-		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix());
-	}
-	else
-	{
-		renderContext.UpdateRenderMesh(RenderMeshId, meshes[0], Materials[0], GetWorldTransform().ToMatrix());
-	}
-}
-
-
-void nsMeshComponent::UnregisterMesh()
-{
-	if (RenderMeshId == nsRenderContextMeshID::INVALID || !bAddedToLevel)
-	{
-		return;
-	}
-
-	nsRenderContextWorld& renderContext = nsRenderManager::Get().GetWorldRenderContext(Actor->GetWorld());
-	renderContext.RemoveRenderMesh(RenderMeshId);
-}
-
-
-void nsMeshComponent::SetMesh(nsSharedModelAsset newMesh)
-{
-	if (ModelAsset == newMesh)
-	{
-		return;
-	}
-
-	ModelAsset = newMesh;
-
-	if (ModelAsset.IsValid())
-	{
-		RegisterMesh();
-	}
-	else if (IsVisible())
-	{
-		UnregisterMesh();
-	}
-}
-
-
-void nsMeshComponent::SetMaterial(nsMaterialID newMaterial, int index)
-{
-	NS_Assert(newMaterial != nsMaterialID::INVALID);
-	NS_Assert(index >= 0 && index < 8);
-
-	if (Materials[index] == newMaterial)
-	{
-		return;
-	}
-
-	Materials[index] = newMaterial;
-	RegisterMesh();
 }

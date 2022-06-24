@@ -2,6 +2,7 @@
 #include "nsAssetManager.h"
 #include "nsFileSystem.h"
 #include "nsConsole.h"
+#include "nsMesh.h"
 
 
 

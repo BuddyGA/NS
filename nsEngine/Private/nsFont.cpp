@@ -1,6 +1,7 @@
 #include "nsFont.h"
 #include "nsLogger.h"
 #include "nsFileSystem.h"
+#include "nsTexture.h"
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "ThirdParty/stb_rect_pack.h"
@@ -134,13 +135,16 @@ nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& posi
 	NS_Assert(IsFontValid(font));
 
 	const nsFontData& data = FontDatas[font.Id];
-	
+	rect.Height = data.Ascent - data.Descent;
+
 	for (int i = 0; i < length; ++i)
 	{
 		char c = text[i];
+		NS_Assert(c != '\0');
 
-		if (c == '\n' || c == '\0')
+		if (c == '\n')
 		{
+			rect.Height += data.LineSpace;
 			continue;
 		}
 
@@ -148,8 +152,6 @@ nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& posi
 		NS_Assert(width >= 0.0f);
 		rect.Width += width;
 	}
-
-	rect.Height = data.Ascent - data.Descent;
 	
 	return rect;
 }
@@ -234,11 +236,11 @@ float nsFontManager::CalculateCaretPositionX(nsFontID font, const nsString& text
 }
 
 
-void nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, const char* text, int length, const nsColor& color, nsTArray<nsVertexGUI>& outVertices, nsTArray<uint32>& outIndices)
+int nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, const char* text, int length, const nsColor& color, nsTArray<nsVertexGUI>& outVertices, nsTArray<uint32>& outIndices)
 {
 	if (text == nullptr || length <= 0)
 	{
-		return;
+		return 0;
 	}
 
 	NS_Assert(IsFontValid(font));
@@ -250,13 +252,18 @@ void nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, cons
 	const nsPointInt textureDimension = nsTextureManager::Get().GetTextureDimension(FontTextures[font.Id]);
 	position.Y += data.Ascent;
 	uint32 vertexCount = 0;
+	const nsPointFloat initialPosition = position;
+	int charCount = 0;
 
 	for (int i = 0; i < length; ++i)
 	{
 		char c = text[i];
+		NS_Assert(c != '\0');
 
-		if (c == '\t' || c == '\r' || c == '\n' || c == '\0')
+		if (c == '\n')
 		{
+			position.X = initialPosition.X;
+			position.Y += data.LineSpace;
 			continue;
 		}
 
@@ -286,7 +293,11 @@ void nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, cons
 		outIndices.InsertAt(indices, 6);
 
 		vertexCount += 4;
+
+		charCount++;
 	}
+
+	return charCount;
 }
 
 

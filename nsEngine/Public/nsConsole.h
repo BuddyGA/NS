@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nsGUIFramework.h"
+#include "nsEngineTypes.h"
 
 
 

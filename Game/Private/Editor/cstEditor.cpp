@@ -1,6 +1,9 @@
 #include "cstEditor.h"
 #include "cstGame.h"
 #include "nsRenderManager.h"
+#include "nsPhysicsManager.h"
+#include "nsRenderComponents.h"
+#include "nsPhysicsComponents.h"
 
 
 
@@ -145,7 +148,7 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 				NS_CONSOLE_Log(EditorLog, "Spawn actor from asset [%s]", *DragDropAssetInfo.Name);
 				nsSharedModelAsset ModelAsset = nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name);
 
-				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name, projectedPosition);
+				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name, false, projectedPosition);
 				{
 					nsMeshComponent* meshComp = newActor->AddComponent<nsMeshComponent>("mesh");
 					meshComp->SetMesh(ModelAsset);
@@ -294,6 +297,19 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
 			NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
 		}
+		else if (e.Key == nsEInputKey::KEYBOARD_F8)
+		{
+			if (MainWorld->HasStartedPlay())
+			{
+				nsPhysicsManager::Get().bGlobalSimulate = false;
+				MainWorld->DispatchStopPlay();
+			}
+			else
+			{
+				MainWorld->DispatchStartPlay();
+				nsPhysicsManager::Get().bGlobalSimulate = true;
+			}
+		}
 
 		if (bSceneViewportHovered)
 		{
@@ -374,7 +390,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 					nsPhysicsHitResult hitResult;
 					if (collisionComp->SweepTest(hitResult, -nsVector3::UP, 1000.0f, queryParams))
 					{
-						NS_CONSOLE_Log(EditorLog, "Move actor [%s] down to floor! [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]", 
+						NS_CONSOLE_Log(EditorLog, "Move actor [%s] down to floor. [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]", 
 							*FocusActor->Name, 
 							*hitResult.Actor->Name,
 							hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z,
@@ -390,7 +406,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 					}
 					else
 					{
-						NS_CONSOLE_Warning(EditorLog, "Cannot move actor down to floor. No hit found below!");
+						NS_CONSOLE_Warning(EditorLog, "Cannot move actor [%s] down to floor. No hit found below!", *FocusActor->Name);
 					}
 				}
 			}
@@ -485,7 +501,7 @@ void cstEditor::AddMousePickingForActor(nsActor* actor)
 	if (nsCollisionComponent* collisionComp = actor->GetComponent<nsCollisionComponent>())
 	{
 		nsPhysicsCollisionChannels collisionChannels = collisionComp->GetCollisionChannels();
-		collisionChannels |= nsEPhysicsCollisionChannel::Default | nsEPhysicsCollisionChannel::MousePicking;
+		collisionChannels |= nsEPhysicsCollisionChannel::MousePicking;
 
 		collisionComp->SetCollisionChannels(collisionChannels);
 	}
@@ -500,10 +516,12 @@ void cstEditor::AddMousePickingForActor(nsActor* actor)
 
 			nsConvexMeshCollisionComponent* convexMeshPicking = actor->AddComponent<nsConvexMeshCollisionComponent>("editor_mouse_picking");
 			convexMeshPicking->SetMesh(mesh0);
+			convexMeshPicking->SetSimulatePhysics(false);
+			convexMeshPicking->SetCollisionTest(nsEPhysicsCollisionTest::QUERY_ONLY);
 			convexMeshPicking->SetObjectChannel(nsEPhysicsCollisionChannel::MousePicking);
 
 			nsPhysicsCollisionChannels collisionChannels = convexMeshPicking->GetCollisionChannels();
-			collisionChannels |= nsEPhysicsCollisionChannel::Default | nsEPhysicsCollisionChannel::MousePicking;
+			collisionChannels |= nsEPhysicsCollisionChannel::MousePicking;
 
 			convexMeshPicking->SetCollisionChannels(collisionChannels);
 		}

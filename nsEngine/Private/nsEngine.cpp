@@ -2,7 +2,7 @@
 #include "nsCommandLines.h"
 #include "nsConsole.h"
 #include "nsRenderManager.h"
-#include "nsPhysics.h"
+#include "nsPhysicsManager.h"
 #include "nsAnimation.h"
 #include "nsAssetManager.h"
 #include "nsAssetImporter.h"
@@ -211,7 +211,7 @@ void nsEngine::MainLoop()
 
 		while (PhysicsTimeAccumulator >= PhysicsTimeSteps)
 		{
-			nsPhysicsManager::Get().Update(PhysicsTimeSteps);
+			nsPhysicsManager::Get().Simulate(PhysicsTimeSteps);
 			PhysicsTimeAccumulator -= PhysicsTimeSteps;
 
 			if (++physicsStepCount == 3)

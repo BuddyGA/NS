@@ -6,6 +6,9 @@
 #include "cstEditorGizmo.h"
 
 
+class nsRenderer;
+
+
 
 class cstEditorContextMenu
 {

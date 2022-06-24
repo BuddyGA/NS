@@ -1,5 +1,6 @@
 #include "nsMaterial.h"
 #include "nsShaderManager.h"
+#include "nsTexture.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 

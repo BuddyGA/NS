@@ -1,7 +1,8 @@
 #pragma once
 
+#include "nsVulkan.h"
 #include "nsFont.h"
-#include "nsMaterial.h"
+
 
 
 extern nsLogCategory GUILog;

@@ -338,6 +338,8 @@ bool nsPlatform::String_Compare(const char* cstrA, const char* cstrB, bool bIgno
 				return false;
 			}
 		}
+
+		return true;
 	}
 
 	return strcmp(cstrA, cstrB) == 0;

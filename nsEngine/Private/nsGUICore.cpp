@@ -1,6 +1,8 @@
 #include "nsGUICore.h"
 #include "nsLogger.h"
 #include "nsAlgorithm.h"
+#include "nsTexture.h"
+#include "nsMaterial.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 
@@ -296,14 +298,17 @@ void nsGUIContext::AddDrawText(const char* text, int charLength, const nsPointFl
 	);
 
 	draw.BaseVertex = DrawVertices.GetCount();
-	draw.VertexCount = charLength * 4;
 	draw.BaseIndex = DrawIndices.GetCount();
-	draw.IndexCount = charLength * 6;
+
+	nsPointFloat drawPosition = position;
+	const int charCount = nsFontManager::GenerateVertices(useFont, drawPosition, text, charLength, color, DrawVertices, DrawIndices);
+
+	draw.VertexCount = charCount * 4;
+	draw.IndexCount = charCount * 6;
 	draw.OrderZ = orderZ;
 	draw.bIsText = 1;
 
-	nsPointFloat drawPosition = position;
-	nsFontManager::GenerateVertices(useFont, drawPosition, text, charLength, color, DrawVertices, DrawIndices);
+	
 	DrawBindMaterials.AddUnique(draw.Material);
 }
 

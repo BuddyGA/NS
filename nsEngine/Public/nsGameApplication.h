@@ -6,7 +6,6 @@
 
 
 class nsRenderer;
-class nsWorld;
 
 
 

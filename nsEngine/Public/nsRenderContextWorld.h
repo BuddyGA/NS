@@ -1,7 +1,6 @@
 #pragma once
 
 #include "nsMesh.h"
-#include "nsMaterial.h"
 
 
 
@@ -104,8 +103,6 @@ public:
 };
 
 
-NS_ENGINE_DECLARE_HANDLE(nsRenderContextMeshID, nsRenderContextWorld)
-NS_ENGINE_DECLARE_HANDLE(nsRenderContextPointLightID, nsRenderContextWorld)
 
 
 class NS_ENGINE_API nsRenderContextWorld

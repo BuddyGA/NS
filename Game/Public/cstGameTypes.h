@@ -23,6 +23,7 @@ extern "C" CST_GAME_API nsGameApplication* CreateGameApplication(int windowResX,
 enum class cstEGameState : uint8
 {
 	NONE = 0,
+
 	INTRO,
 	MAIN_MENU,
 	LOADING,

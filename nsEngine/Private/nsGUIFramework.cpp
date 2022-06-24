@@ -1108,9 +1108,9 @@ void nsGUIConsoleWindow::Draw(nsGUIContext& context) noexcept
 
 				if (InputText.Draw(context))
 				{
-					const nsString command = InputText.TextValue.ToLower();
+					const nsString command = InputText.TextValue;
 
-					if (command == "close")
+					if (command.ToLower() == "close")
 					{
 						Close();
 					}

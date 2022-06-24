@@ -1,7 +1,6 @@
 #pragma once
 
-#include "nsMaterial.h"
-#include "nsMesh.h"
+#include "nsEngineTypes.h"
 
 
 

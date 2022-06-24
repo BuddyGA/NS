@@ -9,8 +9,6 @@
 
 #define NS_ENGINE_FRAME_BUFFERING									(3)
 
-#define NS_ENGINE_PHYSICS_USE_PHYSX									(1)
-
 #define NS_ENGINE_MESH_MAX_LODs										(4)
 
 #define NS_ENGINE_TEXTURE_MAX_MIPs									(16)
@@ -82,6 +80,7 @@ public: \
 #include "nsDelegate.h"
 #include "nsThreadPool.h"
 #include "nsStream.h"
+#include "nsObject.h"
 
 
 #ifdef NS_PLATFORM_WINDOWS
@@ -95,12 +94,126 @@ public: \
 
 
 
+NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
+NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
+NS_ENGINE_DECLARE_HANDLE(nsSkeletonID, nsAnimationManager)
+NS_ENGINE_DECLARE_HANDLE(nsAnimationSequenceID, nsAnimationManager)
+NS_ENGINE_DECLARE_HANDLE(nsRenderContextMeshID, nsRenderContextWorld)
+NS_ENGINE_DECLARE_HANDLE(nsRenderContextPointLightID, nsRenderContextWorld)
+NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
+
+
+NS_NODISCARD_INLINE uint64 ns_GetHash(nsMaterialID material) noexcept
+{
+	return material.GetHash();
+}
+
+
+
+namespace physx
+{
+	class PxPhysics;
+	class PxMaterial;
+	class PxCooking;
+	class PxScene;
+	class PxRigidActor;
+	class PxShape;
+};
+
+
+class nsActor;
+class nsLevel;
+class nsWorld;
+class nsActorComponent;
+class nsTransformComponent;
+
+
+
 enum class nsEAxisType : uint8
 {
 	X_Axis = 0,
 	Y_Axis,
 	Z_Axis
 };
+
+
+
+enum class nsEPhysicsShape : uint8
+{
+	NONE = 0,
+	BOX,
+	SPHERE,
+	CAPSULE,
+	CONVEX_MESH,
+	TRIANGLE_MESH,
+	HEIGHTFIELD
+};
+
+
+
+namespace nsEPhysicsCollisionChannel
+{
+	enum Type : uint32
+	{
+		Default = (1 << 0),
+		Character = (1 << 1),
+		Camera = (1 << 2),
+		MousePicking = (1 << 3),
+	};
+};
+
+typedef uint32 nsPhysicsCollisionChannels;
+
+
+
+enum class nsEPhysicsCollisionTest : uint8
+{
+	NONE = 0,
+	COLLISION_ONLY,
+	QUERY_ONLY,
+	COLLISION_AND_QUERY
+};
+
+
+
+struct nsPhysicsQueryParams
+{
+	nsEPhysicsCollisionChannel::Type Channel;
+	nsTArrayInline<nsActor*, 8> IgnoredActors;
+
+
+public:
+	nsPhysicsQueryParams()
+		: Channel(nsEPhysicsCollisionChannel::Default)
+		, IgnoredActors()
+	{
+	}
+
+};
+
+
+
+struct nsPhysicsHitResult
+{
+	nsActor* Actor;
+	nsActorComponent* Component;
+	nsVector3 WorldPosition;
+	nsVector3 WorldNormal;
+	float Distance;
+
+
+public:
+	nsPhysicsHitResult()
+		: Actor(nullptr)
+		, Component(nullptr)
+		, WorldPosition()
+		, WorldNormal()
+		, Distance(0.0f)
+	{
+	}
+
+};
+
 
 
 
@@ -190,10 +303,3 @@ NS_INLINE void ns_DestroyObject(T*& obj) noexcept
 {
 	g_EngineDefaultMemory.DeallocateDestruct<T>(obj);
 }
-
-
-
-class nsActor;
-class nsWorld;
-class nsActorComponent;
-class nsTransformComponent;

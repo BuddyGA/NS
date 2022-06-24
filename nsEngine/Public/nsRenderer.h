@@ -78,17 +78,7 @@ public:
 	~nsRenderer() noexcept;
 
 private:
-	NS_NODISCARD_INLINE bool ShouldResizeTexture(nsTextureID texture) const noexcept
-	{
-		if (!texture.IsValid())
-		{
-			return true;
-		}
-
-		const nsPointInt textureDimension = nsTextureManager::Get().GetTextureDimension(texture);
-		return RenderTargetDimension != textureDimension;
-	}
-
+	NS_NODISCARD bool ShouldResizeTexture(nsTextureID texture) const noexcept;
 
 public:
 	void BeginRender(int frameIndex, float deltaTime) noexcept;

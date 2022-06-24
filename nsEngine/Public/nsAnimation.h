@@ -3,11 +3,6 @@
 #include "nsEngineTypes.h"
 
 
-NS_ENGINE_DECLARE_HANDLE(nsSkeletonID, nsAnimationManager)
-NS_ENGINE_DECLARE_HANDLE(nsAnimationSequenceID, nsAnimationManager)
-
-
-
 
 class NS_ENGINE_API nsAnimationManager
 {

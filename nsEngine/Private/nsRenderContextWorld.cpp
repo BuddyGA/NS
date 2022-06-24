@@ -1,5 +1,6 @@
 #include "nsRenderContextWorld.h"
 #include "nsGeometryFactory.h"
+#include "nsMaterial.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 

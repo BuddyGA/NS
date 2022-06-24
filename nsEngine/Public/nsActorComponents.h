@@ -1,12 +1,12 @@
 #pragma once
 
-#include "nsObject.h"
-#include "nsPhysics.h"
-#include "nsRenderer.h"
-#include "nsAssetTypes.h"
+#include "nsEngineTypes.h"
 
 
 
+// ================================================================================================================================== //
+// ACTOR COMPONENT
+// ================================================================================================================================== //
 class NS_ENGINE_API nsActorComponent : public nsObject
 {
 	NS_DECLARE_OBJECT()
@@ -14,17 +14,19 @@ class NS_ENGINE_API nsActorComponent : public nsObject
 protected:
 	nsActor* Actor;
 	bool bAddedToLevel;
+	bool bStartedPlay;
 
 
 public:
 	nsActorComponent();
 	virtual void OnInitialize() {}
-	virtual void OnStartPlay() {}
-	virtual void OnStopPlay() {}
-	virtual void OnTickUpdate(float deltaTime) {}
-	virtual void OnDestroy();
 	virtual void OnAddedToLevel();
 	virtual void OnRemovedFromLevel();
+	virtual void OnStartPlay();
+	virtual void OnStopPlay();
+	virtual void OnTickUpdate(float deltaTime) {}
+	virtual void OnDestroy();
+	virtual void OnStaticChanged() {}
 	virtual bool IsFullyLoaded() { return true; }
 	NS_NODISCARD nsWorld* GetWorld() const;
 
@@ -41,6 +43,10 @@ public:
 
 
 
+
+// ================================================================================================================================== //
+// TRANSFORM COMPONENT
+// ================================================================================================================================== //
 enum class nsETransformAttachmentMode : uint8
 {
 	RESET_TRANSFORM = 0,
@@ -266,151 +272,6 @@ public:
 	NS_INLINE void AddWorldScale(nsVector3 delta)
 	{
 		SetWorldScale(delta + GetWorldScale());
-	}
-
-};
-
-
-
-class NS_ENGINE_API nsCollisionComponent : public nsTransformComponent
-{
-	NS_DECLARE_OBJECT()
-
-protected:
-	nsPhysicsObjectID PhysicsObject;
-	nsEPhysicsCollisionChannel::Type ObjectChannel;
-	nsPhysicsCollisionChannels CollisionChannels;
-	bool bIsTrigger;
-
-
-public:
-	nsCollisionComponent();
-	virtual void OnDestroy() override;
-	virtual void OnAddedToLevel() override;
-	virtual void OnRemovedFromLevel() override;
-	virtual void OnTransformChanged() override;
-
-	void SetObjectChannel(nsEPhysicsCollisionChannel::Type newObjectChannel);
-	void SetCollisionChannels(nsPhysicsCollisionChannels newCollisionChannels);
-	bool AdjustPositionIfOverlappedWith(nsActor* actorToTest);
-	virtual void UpdateCollisionVolume() = 0;
-	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
-	
-
-	NS_NODISCARD_INLINE nsEPhysicsCollisionChannel::Type GetObjectChannel() const
-	{
-		return ObjectChannel;
-	}
-
-
-	NS_NODISCARD_INLINE nsPhysicsCollisionChannels GetCollisionChannels() const
-	{
-		return CollisionChannels;
-	}
-
-};
-
-
-
-class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
-{
-	NS_DECLARE_OBJECT()
-
-public:
-	nsVector3 HalfExtent;
-
-
-public:
-	nsBoxCollisionComponent();
-	virtual void OnInitialize() override;
-	virtual void UpdateCollisionVolume() override;
-	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-
-};
-
-
-
-
-class NS_ENGINE_API nsConvexMeshCollisionComponent : public nsCollisionComponent
-{
-	NS_DECLARE_OBJECT()
-
-private:
-	nsMeshID Mesh;
-
-
-public:
-	nsConvexMeshCollisionComponent();
-	virtual void UpdateCollisionVolume() override;
-	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-
-	void SetMesh(nsMeshID newMesh);
-
-};
-
-
-
-
-class NS_ENGINE_API nsRenderComponent : public nsTransformComponent
-{
-	NS_DECLARE_OBJECT()
-
-private:
-	bool bIsVisible;
-
-
-public:
-	nsRenderComponent();
-
-protected:
-	virtual void OnVisibilityChanged() {}
-
-public:
-	void SetVisibility(bool bVisible);
-
-
-	NS_NODISCARD_INLINE bool IsVisible() const
-	{
-		return bIsVisible;
-	}
-
-};
-
-
-
-
-class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
-{
-	NS_DECLARE_OBJECT()
-
-private:
-	nsSharedModelAsset ModelAsset;
-	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESHES> Materials;
-	nsRenderContextMeshID RenderMeshId;
-
-
-public:
-	nsMeshComponent();
-	virtual void OnDestroy() override;
-	virtual void OnAddedToLevel() override;
-	virtual void OnRemovedFromLevel() override;
-
-protected:
-	virtual void OnTransformChanged() override;
-	virtual void OnVisibilityChanged() override;
-
-private:
-	void RegisterMesh();
-	void UnregisterMesh();
-
-public:
-	void SetMesh(nsSharedModelAsset newMesh);
-	void SetMaterial(nsMaterialID newMaterial, int index);
-
-
-	NS_NODISCARD_INLINE const nsSharedModelAsset& GetModelAsset() const
-	{
-		return ModelAsset;
 	}
 
 };

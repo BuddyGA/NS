@@ -3,8 +3,6 @@
 #include "nsVulkan.h"
 
 
-NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
-
 
 enum class nsETextureFormat : uint8
 {

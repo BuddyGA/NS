@@ -1,5 +1,6 @@
 #include "nsWorld.h"
 #include "nsConsole.h"
+#include "nsPhysics_PhysX.h"
 
 
 
@@ -7,7 +8,7 @@ static nsLogCategory WorldLog("nsWorldLog", nsELogVerbosity::LV_DEBUG);
 
 
 
-NS_DEFINE_OBJECT(nsWorld, "World", nsObject);
+NS_DEFINE_OBJECT(nsWorld, nsObject);
 
 nsWorld::nsWorld(nsName name, bool bInitPhysics)
 {
@@ -19,6 +20,7 @@ nsWorld::nsWorld(nsName name, bool bInitPhysics)
 	bHasPhysics = bInitPhysics;
 	bHasStartedPlay = false;
 
+	PhysicsScene = nullptr;
 	Levels.Reserve(8);
 
 	ActorMemory.Initialize("world_actor", NS_MEMORY_SIZE_MiB(1));
@@ -34,10 +36,10 @@ void nsWorld::Initialize()
 {
 	if (bHasPhysics)
 	{
-		PhysicsScene = nsPhysicsManager::Get().CreatePhysicsScene(nsName::Format("%s.physics_scene", *Name));
+		PhysicsScene = nsPhysicsManager::Get().CreateScene(nsName::Format("%s.physics_scene", *Name));
 	}
 
-	CreateLevel(nsName::Format("%s.level_persistent", *Name));
+	CreateLevel("Persistent");
 }
 
 
@@ -82,6 +84,8 @@ void nsWorld::DispatchStartPlay()
 		return;
 	}
 
+	NS_CONSOLE_Log(WorldLog, "Start play!");
+
 	for (int i = 0; i < StartStopPlayActors.GetCount(); ++i)
 	{
 		StartStopPlayActors[i]->OnStartPlay();
@@ -98,6 +102,8 @@ void nsWorld::DispatchStopPlay()
 	{
 		return;
 	}
+
+	NS_CONSOLE_Log(WorldLog, "Stop play!");
 
 	for (int i = 0; i < StartStopPlayActors.GetCount(); ++i)
 	{
@@ -127,16 +133,36 @@ void nsWorld::DispatchTickUpdate(float deltaTime)
 
 void nsWorld::SyncActorTransformsWithPhysics()
 {
-	if (bHasPhysics)
+	if (PhysicsScene == nullptr)
 	{
-		nsPhysicsManager::Get().SyncPhysicsSceneTransforms(PhysicsScene);
+		return;
+	}
+
+	PxU32 numActiveActors = 0;
+	PxActor** activeActors = PhysicsScene->getActiveActors(numActiveActors);
+
+	for (PxU32 i = 0; i < numActiveActors; ++i)
+	{
+		NS_Assert(activeActors[i]->is<PxRigidActor>());
+
+		PxRigidActor* rigidActor = static_cast<PxRigidActor*>(activeActors[i]);
+
+		nsTransformComponent* actorTransformComp = static_cast<nsTransformComponent*>(rigidActor->userData);
+		const PxTransform globalPose = rigidActor->getGlobalPose();
+
+		nsTransform newTransform;
+		newTransform.Position = NS_FromPxVec3(globalPose.p);
+		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
+		newTransform.Scale = actorTransformComp->GetWorldScale();
+
+		actorTransformComp->SetWorldTransform(newTransform);
 	}
 }
 
 
 bool nsWorld::PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	if (!bHasPhysics)
+	if (PhysicsScene == nullptr)
 	{
 		return false;
 	}
@@ -232,28 +258,28 @@ void nsWorld::DestroyLevel(nsName levelName)
 }
 
 
-nsActor* nsWorld::CreateActor(nsName name, const nsTransform& optTransform, nsActor* optParent)
+void nsWorld::InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTransform& optTransform, nsActor* optParent)
 {
 	NS_Validate_IsMainThread();
 
-	nsActor* newActor = ActorMemory.AllocateConstruct<nsActor>();
-	newActor->Name = name;
+	NS_Assert(actor);
 
-	uint32& flags = newActor->Flags;
-	if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(newActor);
-	if (flags & nsEActorFlag::CallTickUpdate) TickUpdateActors.Add(newActor);
+	ActorList.Add(actor);
 
-	newActor->OnInitialize();
-	newActor->SetWorldTransform(optTransform);
-	ActorList.Add(newActor);
+	actor->Name = name;
 
-	return newActor;
-}
+	uint32& flags = actor->Flags;
+	if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(actor);
+	if (flags & nsEActorFlag::CallTickUpdate) TickUpdateActors.Add(actor);
 
+	if (bIsStatic)
+	{
+		flags |= nsEActorFlag::Static;
+	}
 
-nsActor* nsWorld::CreateActor(nsName name, const nsVector3& position, const nsQuaternion& rotation, const nsVector3& scale)
-{
-	return CreateActor(name, nsTransform(position, rotation, scale));
+	actor->SetWorldTransform(optTransform);
+	actor->OnInitialize();
+
 }
 
 

@@ -6,6 +6,8 @@ static nsLogCategory LevelLog("nsLevelLog", nsELogVerbosity::LV_DEBUG);
 
 
 
+NS_DEFINE_OBJECT(nsLevel, nsObject);
+
 nsLevel::nsLevel(nsName name)
 {
 	Name = name;

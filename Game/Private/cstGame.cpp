@@ -1,6 +1,5 @@
 #include "cstGame.h"
 #include "nsRenderManager.h"
-#include "nsPhysics.h"
 
 #if CST_GAME_WITH_EDITOR
 #include "Editor/cstEditor.h"

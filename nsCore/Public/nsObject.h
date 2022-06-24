@@ -13,6 +13,7 @@ private:
 
 public:
 	nsClass(nsName name, const nsClass* parentClass) noexcept;
+	NS_NODISCARD bool IsSubclassOf(const nsClass* parentClass) const noexcept;
 
 
 	NS_INLINE const nsName& GetName() const noexcept
@@ -64,19 +65,7 @@ public:
 	template<typename T>
 	NS_NODISCARD_INLINE bool IsClass() const noexcept
 	{
-		const nsClass* checkClass = GetClass();
-
-		while (checkClass)
-		{
-			if (checkClass == T::Class)
-			{
-				return true;
-			}
-
-			checkClass = checkClass->GetParentClass();
-		}
-
-		return false;
+		return GetClass()->IsSubclassOf(T::Class);
 	}
 
 };
@@ -93,7 +82,22 @@ private:
 
 public:
 	void RegisterObjectClass(const nsClass* objectClass);
-	const nsClass* FindObjectClass(const nsName& name) const;
+	NS_NODISCARD const nsClass* FindObjectClass(const nsName& name) const;
+	NS_NODISCARD nsTArray<const nsClass*> FindAllClasses(const nsClass* baseClass) const;
+
+
+	NS_NODISCARD_INLINE nsTArray<const nsClass*> FindAllClasses(const nsName& name) const
+	{
+		return FindAllClasses(FindObjectClass(name));
+	}
+
+
+	template<typename TObject>
+	NS_NODISCARD_INLINE nsTArray<const nsClass*> FindAllClasses() const
+	{
+		static_assert(std::is_base_of<nsObject, TObject>::value, "FindAllClasses() type of <TObject> must be derived from type <nsObject>!");
+		return FindAllClasses(TObject::Class);
+	}
 
 };
 
@@ -118,8 +122,8 @@ public: \
 	virtual const nsClass* GetClass() const noexcept;
 
 
-#define NS_DEFINE_OBJECT(type, name, baseType) \
-const nsClass* type::Class = new nsClass(name, baseType::Class); \
+#define NS_DEFINE_OBJECT(type, baseType) \
+const nsClass* type::Class = new nsClass(#type, baseType::Class); \
 const nsClass* type::GetClass() const noexcept \
 { \
 	return Class; \

@@ -3,10 +3,6 @@
 #include "nsActorComponents.h"
 
 
-class nsLevel;
-class nsWorld;
-
-
 
 namespace nsEActorFlag
 {
@@ -18,10 +14,11 @@ namespace nsEActorFlag
 		CallTickUpdate			= (1 << 2),
 		CallPhysicsTickUpdate	= (1 << 3),
 		CallPostTickUpdate		= (1 << 4),
-		Initialized				= (1 << 5),
-		AddedToLevel			= (1 << 6),
-		StartedPlay				= (1 << 7),
-		PendingDestroy			= (1 << 8),
+		Static					= (1 << 5),
+		Initialized				= (1 << 6),
+		AddedToLevel			= (1 << 7),
+		StartedPlay				= (1 << 8),
+		PendingDestroy			= (1 << 9),
 	};
 };
 
@@ -29,7 +26,7 @@ typedef uint32 nsActorFlags;
 
 
 
-class NS_ENGINE_API nsActor final : public nsObject
+class NS_ENGINE_API nsActor : public nsObject
 {
 	NS_DECLARE_OBJECT()
 
@@ -58,6 +55,7 @@ public:
 	void OnRemovedFromLevel();
 
 	NS_NODISCARD nsWorld* GetWorld() const;
+	void SetAsStatic(bool bIsStatic);
 	void SetRootComponent(nsTransformComponent* newRootComponent);
 	void AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode);
 	void DetachFromParent();
@@ -195,7 +193,13 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE bool IsPendingDestroy() const noexcept
+	NS_NODISCARD_INLINE bool IsStatic() const
+	{
+		return (Flags & nsEActorFlag::Static);
+	}
+
+
+	NS_NODISCARD_INLINE bool IsPendingDestroy() const
 	{
 		return (Flags & nsEActorFlag::PendingDestroy);
 	}
@@ -223,7 +227,9 @@ public:
 		TComponent* newComponent = ComponentMemory.AllocateConstruct<TComponent>();
 		newComponent->Name = name;
 		newComponent->Actor = this;
-		newComponent->OnInitialize();
+		//newComponent->OnInitialize();
+
+		Components.Add(newComponent);
 
 		if constexpr (std::is_base_of<nsTransformComponent, TComponent>::value)
 		{
@@ -233,9 +239,9 @@ public:
 			}
 		}
 
-		if ((Flags & nsEActorFlag::CallStartStopPlay) && (Flags & nsEActorFlag::StartedPlay))
+		if (Flags & nsEActorFlag::Initialized)
 		{
-			newComponent->OnStartPlay();
+			newComponent->OnInitialize();
 		}
 
 		if (Flags & nsEActorFlag::AddedToLevel)
@@ -243,7 +249,10 @@ public:
 			newComponent->OnAddedToLevel();
 		}
 
-		Components.Add(newComponent);
+		if ((Flags & nsEActorFlag::CallStartStopPlay) && (Flags & nsEActorFlag::StartedPlay))
+		{
+			newComponent->OnStartPlay();
+		}
 
 		return newComponent;
 	}

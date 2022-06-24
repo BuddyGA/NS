@@ -15,7 +15,7 @@ private:
 	bool bHasPhysics;
 	bool bHasStartedPlay;
 
-	nsPhysicsSceneID PhysicsScene;
+	physx::PxScene* PhysicsScene;
 	nsTArray<nsLevel*> Levels;
 
 	nsMemory ActorMemory;
@@ -62,14 +62,35 @@ public:
 	}
 
 
-	nsActor* CreateActor(nsName name, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr);
-	nsActor* CreateActor(nsName name, const nsVector3& position, const nsQuaternion& rotation = nsQuaternion::IDENTITY, const nsVector3& scale = 1.0f);
+private:
+	void InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr);
+
+public:
 	void DestroyActor(nsActor*& actor);
 	void AddActorToLevel(nsActor* actor, nsLevel* level = nullptr);
 	void RemoveActorFromLevel(nsActor* actor);
 
 
-	NS_NODISCARD_INLINE nsPhysicsSceneID GetPhysicsScene() const noexcept
+	template<typename TActor = nsActor>
+	NS_NODISCARD_INLINE TActor* CreateActor(nsName name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr)
+	{
+		static_assert(std::is_base_of<nsActor, TActor>::value, "CreateActor type of <TActor> must be derived from type <nsActor>!");
+
+		TActor* newActor = ActorMemory.AllocateConstruct<TActor>();
+		InitActor(newActor, name, bIsStatic, optTransform, optParent);
+
+		return newActor;
+	}
+
+
+	template<typename TActor = nsActor>
+	NS_NODISCARD_INLINE TActor* CreateActor(nsName name, bool bIsStatic, const nsVector3& position, const nsQuaternion& rotation, const nsVector3& scale = nsVector3(1.0f))
+	{
+		return CreateActor<TActor>(name, bIsStatic, nsTransform(position, rotation, scale));
+	}
+
+
+	NS_NODISCARD_INLINE physx::PxScene* GetPhysicsScene() const noexcept
 	{
 		return PhysicsScene;
 	}
@@ -112,6 +133,12 @@ public:
 	NS_NODISCARD_INLINE float GetDeltaTimeSeconds() const noexcept
 	{
 		return DeltaTimeSeconds;
+	}
+
+
+	NS_NODISCARD_INLINE bool HasStartedPlay() const
+	{
+		return bHasStartedPlay;
 	}
 
 };

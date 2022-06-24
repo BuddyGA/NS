@@ -3,9 +3,6 @@
 #include "nsRenderer.h"
 
 
-class nsWorld;
-
-
 
 class NS_ENGINE_API nsRenderManager
 {

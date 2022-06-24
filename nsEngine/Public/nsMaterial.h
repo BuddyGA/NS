@@ -1,14 +1,6 @@
 #pragma once
 
-#include "nsTexture.h"
-
-
-NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
-
-NS_NODISCARD_INLINE uint64 ns_GetHash(nsMaterialID material) noexcept
-{
-	return material.GetHash();
-}
+#include "nsVulkan.h"
 
 
 

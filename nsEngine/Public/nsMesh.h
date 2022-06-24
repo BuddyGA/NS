@@ -3,8 +3,6 @@
 #include "nsVulkan.h"
 
 
-NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
-
 
 struct nsMeshVertexData
 {

@@ -2,6 +2,7 @@
 #include "nsCommandLines.h"
 #include "nsShaderManager.h"
 #include "nsMesh.h"
+#include "nsTexture.h"
 #include "nsMaterial.h"
 #include "nsFont.h"
 #include "nsRenderer.h"

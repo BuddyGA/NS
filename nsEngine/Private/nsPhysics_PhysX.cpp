@@ -1,7 +1,9 @@
 #include "nsPhysics_PhysX.h"
 #include "nsConsole.h"
 #include "nsActor.h"
-
+#include "nsRenderContextWorld.h"
+#include "physx/foundation/PxAllocatorCallback.h"
+#include "physx/foundation//PxErrorCallback.h"
 
 
 static nsLogCategory PhysXLog("nsPhysXLog", nsELogVerbosity::LV_DEBUG);
@@ -111,51 +113,88 @@ public:
 
 
 
-namespace nsPxHelper
+PxFilterFlags nsPhysXHelper::DefaultSimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
-	NS_INLINE PxFilterFlags DefaultSimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+	// let triggers through
+	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
 	{
-		// let triggers through
-		if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
-		{
-			pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
-			return PxFilterFlag::eDEFAULT;
-		}
-
-		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-
-		if ( (filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1) )
-		{
-			pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
-		}
-		
+		pairFlags = PxPairFlag::eTRIGGER_DEFAULT;
 		return PxFilterFlag::eDEFAULT;
 	}
 
+	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
 
-	NS_NODISCARD_INLINE PxShape* GetActorShape(PxRigidActor* rigidActor)
+	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
 	{
-		NS_Assert(rigidActor);
-
-		PxShape* shape = nullptr;
-		const PxU32 shapeCount = rigidActor->getShapes(&shape, 1, 0);
-		NS_Assert(shape);
-		NS_Assert(shapeCount == 1);
-
-		return shape;
+		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
 	}
 
-};
+	return PxFilterFlag::eDEFAULT;
+}
 
+
+bool nsPhysXHelper::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	NS_Assert(scene);
+
+	PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
+
+	PxQueryFilterData queryFilterData{};
+	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
+	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
+
+	nsPhysX_QueryFilterCallback queryFilterCallback;
+	queryFilterCallback.IgnoredActors = params.IgnoredActors;
+
+	PxSweepBufferN<1> buffer;
+
+	bool bFoundHit = scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
+
+	if (bFoundHit)
+	{
+		const PxSweepHit sweepHit = buffer.block;
+		hitResult.Component = static_cast<nsTransformComponent*>(sweepHit.actor->userData);
+		hitResult.Actor = hitResult.Component->GetActor();
+
+		if (sweepHit.flags & PxHitFlag::ePOSITION)
+		{
+			hitResult.WorldPosition = NS_FromPxVec3(sweepHit.position);
+		}
+
+		if (sweepHit.flags & PxHitFlag::eNORMAL)
+		{
+			hitResult.WorldNormal = NS_FromPxVec3(sweepHit.normal);
+		}
+
+		hitResult.Distance = sweepHit.distance;
+	}
+
+	return bFoundHit;
+}
+
+
+PxShape* nsPhysXHelper::GetActorShape(PxRigidActor* rigidActor)
+{
+	NS_Assert(rigidActor);
+
+	PxShape* shape = nullptr;
+	const PxU32 shapeCount = rigidActor->getShapes(&shape, 1, 0);
+	NS_Assert(shape);
+	NS_Assert(shapeCount == 1);
+
+	return shape;
+}
 
 
 
 static nsPhysX_AllocatorCallback PhysXAllocatorCallback;
 static nsPhysX_ErrorCallback PhysXErrorCallback;
+static PxFoundation* Foundation;
+static PxDefaultCpuDispatcher* CpuDispatcher;
 
 
 
-nsPhysicsManager_PhysX::nsPhysicsManager_PhysX()
+nsPhysicsManager::nsPhysicsManager() noexcept
 {
 	bInitialized = false;
 	Foundation = nullptr;
@@ -163,15 +202,18 @@ nsPhysicsManager_PhysX::nsPhysicsManager_PhysX()
 	Physics = nullptr;
 	DefaultMaterial = nullptr;
 
+#ifndef __NS_ENGINE_SHIPPING__
+	Cooking = nullptr;
+#endif // !__NS_ENGINE_SHIPPING__
+
 	SceneNames.Reserve(8);
 	SceneObjects.Reserve(8);
 
-	ObjectNames.Reserve(128);
-	ObjectRigidActors.Reserve(128);
+	bGlobalSimulate = false;
 }
 
 
-void nsPhysicsManager_PhysX::Initialize()
+void nsPhysicsManager::Initialize()
 {
 	if (bInitialized)
 	{
@@ -194,301 +236,63 @@ void nsPhysicsManager_PhysX::Initialize()
 #ifndef __NS_ENGINE_SHIPPING__
 	Cooking = PxCreateCooking(PX_PHYSICS_VERSION, *Foundation, PxCookingParams(toleranceScale));
 #endif // !__NS_ENGINE_SHIPPING__
-	
+
 	bInitialized = true;
 }
 
 
-void nsPhysicsManager_PhysX::Update(float fixedDeltaTime)
+void nsPhysicsManager::Simulate(float fixedTimeSteps)
 {
-	for (auto it = SceneObjects.CreateIterator(); it; ++it)
+	const float timeSteps = bGlobalSimulate ? fixedTimeSteps : NS_MATH_EPS;
+
+	for (int i = 0; i < SceneObjects.GetCount(); ++i)
 	{
-		PxScene* scene = (*it);
-		scene->simulate(fixedDeltaTime);
+		PxScene* scene = SceneObjects[i];
+		scene->simulate(timeSteps);
 		scene->fetchResults(true);
 	}
 }
 
 
-nsPhysicsSceneID nsPhysicsManager_PhysX::CreatePhysicsScene(nsName name)
+physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 {
-	const int nameId = SceneNames.Add();
-	const int sceneId = SceneObjects.Add();
-	NS_Assert(nameId == sceneId);
+	if (SceneNames.Find(name) != NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Debug(PhysXLog, "Fail to create scene. Scene with name [%s] already exists!", *name);
+		return nullptr;
+	}
 
-	SceneNames[nameId] = name;
+	SceneNames.Add(name);
 
 	PxSceneDesc sceneDesc(Physics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -980.0f, 0.0f);
-	sceneDesc.filterShader = nsPxHelper::DefaultSimulationFilterShader;
+	sceneDesc.filterShader = nsPhysXHelper::DefaultSimulationFilterShader;
 	sceneDesc.cpuDispatcher = CpuDispatcher;
 	sceneDesc.flags = PxSceneFlag::eENABLE_ACTIVE_ACTORS | PxSceneFlag::eEXCLUDE_KINEMATICS_FROM_ACTIVE_ACTORS;
 	sceneDesc.userData = nullptr;
 	
 	PxScene* scene = Physics->createScene(sceneDesc);
-	SceneObjects[sceneId] = scene;
-
+	
 #ifdef __NS_ENGINE_DEBUG_DRAW__
 	scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 #endif // __NS_ENGINE_DEBUG_DRAW__
 
-	return nameId;
+	SceneObjects.Add(scene);
+
+	return scene;
 }
 
 
-void nsPhysicsManager_PhysX::DestroyPhysicsScene(nsPhysicsSceneID& scene)
+void nsPhysicsManager::DestroyScene(physx::PxScene*& scene)
 {
-	if (!IsPhysicsSceneValid(scene))
-	{
-		scene = nsPhysicsSceneID::INVALID;
-		return;
-	}
-
 	NS_ValidateV(0, "Not implemented yet!");
 }
 
 
-bool nsPhysicsManager_PhysX::IsPhysicsSceneValid(nsPhysicsSceneID scene) const
+bool nsPhysicsManager::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return scene.IsValid() && SceneObjects[scene.Id] != nullptr;
-}
-
-
-void nsPhysicsManager_PhysX::SyncPhysicsSceneTransforms(nsPhysicsSceneID scene)
-{
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	PxScene* pxScene = SceneObjects[scene.Id];
-	PxU32 numActiveActors = 0;
-	PxActor** pxActiveActors = pxScene->getActiveActors(numActiveActors);
-
-	for (PxU32 i = 0; i < numActiveActors; ++i)
-	{
-		NS_Assert(pxActiveActors[i]->is<PxRigidActor>());
-
-		PxRigidActor* pxRigidActor = static_cast<PxRigidActor*>(pxActiveActors[i]);
-
-		nsActor* actor = static_cast<nsActor*>(pxRigidActor->userData);
-		NS_Assert(actor);
-
-		const PxTransform globalPose = pxRigidActor->getGlobalPose();
-
-		nsTransform newTransform;
-		newTransform.Position = NS_FromPxVec3(globalPose.p);
-		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
-		newTransform.Scale = actor->GetWorldScale();
-
-		actor->SetWorldTransform(newTransform);
-	}
-}
-
-
-nsName nsPhysicsManager_PhysX::GetPhysicsSceneName(nsPhysicsSceneID scene) const
-{
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	return SceneNames[scene.Id];
-}
-
-
-
-int nsPhysicsManager_PhysX::CreatePhysicsObject(nsName name, bool bIsStatic, nsTransformComponent* transformComponent)
-{
-	NS_Assert(transformComponent);
-
-	const int id = AllocatePhysicsObject();
-
-	ObjectNames[id] = name;
-
-	PxRigidActor* rigidActor = nullptr;
-
-	if (bIsStatic)
-	{
-		PxRigidStatic* rigidStatic = Physics->createRigidStatic(NS_ToPxTransform(transformComponent->GetWorldTransform()));
-		rigidActor = rigidStatic;
-	}
-	else
-	{
-		PxRigidDynamic* rigidDynamic = Physics->createRigidDynamic(NS_ToPxTransform(transformComponent->GetWorldTransform()));
-		PxRigidBodyExt::updateMassAndInertia(*rigidDynamic, 100.0f);
-		rigidActor = rigidDynamic;
-	}
-
-	rigidActor->userData = transformComponent;
-
-	ObjectRigidActors[id] = rigidActor;
-
-	return id;
-}
-
-
-nsPhysicsObjectID nsPhysicsManager_PhysX::CreatePhysicsObject_Box(nsName name, const nsVector3& halfExtent, bool bIsStatic, bool bIsTrigger, nsTransformComponent* transformComponent)
-{
-	const int id = CreatePhysicsObject(name, bIsStatic, transformComponent);
-	PxRigidActor* pxRigidActor = ObjectRigidActors[id];
-	NS_Assert(pxRigidActor);
-
-	PxShape* shape = PxRigidActorExt::createExclusiveShape(*pxRigidActor, PxBoxGeometry(NS_ToPxVec3(halfExtent)), *DefaultMaterial);
-
-	if (bIsTrigger)
-	{
-		shape->setFlag(PxShapeFlag::eSIMULATION_SHAPE, false);
-		shape->setFlag(PxShapeFlag::eTRIGGER_SHAPE, true);
-	}
-	
-	return id;
-}
-
-
-nsPhysicsObjectID nsPhysicsManager_PhysX::CreatePhysicsObject_ConvexMesh(nsName name, const nsTArray<nsVertexMeshPosition>& vertices, bool bIsStatic, nsTransformComponent* transformComponent)
-{
-	NS_Assert(!vertices.IsEmpty());
-
-	const int id = CreatePhysicsObject(name, bIsStatic, transformComponent);
-	PxRigidActor* pxRigidActor = ObjectRigidActors[id];
-	NS_Assert(pxRigidActor);
-
-	PxConvexMeshDesc convexMeshDesc{};
-	convexMeshDesc.flags = PxConvexFlag::eCOMPUTE_CONVEX;
-	convexMeshDesc.points.stride = sizeof(nsVertexMeshPosition);
-	convexMeshDesc.points.data = vertices.GetData();
-	convexMeshDesc.points.count = static_cast<PxU32>(vertices.GetCount());
-	convexMeshDesc.vertexLimit = 16;
-
-	PxDefaultMemoryOutputStream buffer;
-	PxConvexMeshCookingResult::Enum result;
-	const bool bSuccess = Cooking->cookConvexMesh(convexMeshDesc, buffer, &result);
-	NS_ValidateV(bSuccess, "Cooking convex mesh failed!");
-
-	PxDefaultMemoryInputData input(buffer.getData(), buffer.getSize());
-	PxConvexMesh* convexMesh = Physics->createConvexMesh(input);
-
-	PxShape* shape = PxRigidActorExt::createExclusiveShape(*pxRigidActor, PxConvexMeshGeometry(convexMesh), *DefaultMaterial);
-	convexMesh->release();
-
-	return id;
-}
-
-
-void nsPhysicsManager_PhysX::DestroyPhysicsObject(nsPhysicsObjectID& physicsObject)
-{
-	if (!IsPhysicsObjectValid(physicsObject))
-	{
-		physicsObject = nsPhysicsObjectID::INVALID;
-		return;
-	}
-
-	NS_ValidateV(0, "Not implemented yet!");
-}
-
-
-bool nsPhysicsManager_PhysX::IsPhysicsObjectValid(nsPhysicsObjectID physicsObject) const
-{
-	return physicsObject.IsValid() && ObjectRigidActors[physicsObject.Id] != nullptr;
-}
-
-
-void nsPhysicsManager_PhysX::UpdatePhysicsObjectShape_Box(nsPhysicsObjectID physicsObject, const nsVector3& halfExtent)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	PxShape* boxShape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
-	
-	PxBoxGeometry boxGeometry;
-	const bool bValid = boxShape->getBoxGeometry(boxGeometry);
-	NS_Assert(bValid);
-
-	boxGeometry.halfExtents = NS_ToPxVec3(halfExtent);
-	boxShape->setGeometry(boxGeometry);
-}
-
-
-void nsPhysicsManager_PhysX::SetPhysicsObjectChannel(nsPhysicsObjectID physicsObject, nsEPhysicsCollisionChannel::Type objectChannel)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	PxShape* shape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
-
-	PxFilterData simulationFilterData = shape->getSimulationFilterData();
-	simulationFilterData.word0 = static_cast<PxU32>(objectChannel);
-	shape->setSimulationFilterData(simulationFilterData);
-
-	PxFilterData queryFilterData = shape->getQueryFilterData();
-	queryFilterData.word0 = static_cast<PxU32>(objectChannel);
-	shape->setQueryFilterData(queryFilterData);
-}
-
-
-void nsPhysicsManager_PhysX::SetPhysicsObjectCollisionChannels(nsPhysicsObjectID physicsObject, nsPhysicsCollisionChannels collisionChannels)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	PxShape* shape = nsPxHelper::GetActorShape(ObjectRigidActors[physicsObject.Id]);
-
-	PxFilterData simulationFilterData = shape->getSimulationFilterData();
-	simulationFilterData.word1 = static_cast<PxU32>(collisionChannels);
-	shape->setSimulationFilterData(simulationFilterData);
-
-	PxFilterData queryFilterData = shape->getQueryFilterData();
-	queryFilterData.word1 = static_cast<PxU32>(collisionChannels);
-	shape->setQueryFilterData(queryFilterData);
-}
-
-
-void nsPhysicsManager_PhysX::SetPhysicsObjectWorldTransform(nsPhysicsObjectID physicsObject, const nsVector3& worldPosition, const nsQuaternion& worldRotation)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	PxRigidActor* rigidActor = ObjectRigidActors[physicsObject.Id];
-	rigidActor->setGlobalPose(NS_ToPxTransform(nsTransform(worldPosition, worldRotation)));
-}
-
-
-nsName nsPhysicsManager_PhysX::GetPhysicsObjectName(nsPhysicsObjectID physicsObject) const
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-
-	return ObjectNames[physicsObject.Id];
-}
-
-
-void nsPhysicsManager_PhysX::AddPhysicsObjectToScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	PxScene* pxScene = SceneObjects[scene.Id];
-	NS_Assert(pxScene);
-
-	PxRigidActor* pxActor = ObjectRigidActors[physicsObject.Id];
-	NS_Assert(pxActor);
-
-	pxScene->addActor(*pxActor);
-}
-
-
-void nsPhysicsManager_PhysX::RemovePhysicsObjectFromScene(nsPhysicsObjectID physicsObject, nsPhysicsSceneID scene)
-{
-	NS_Assert(IsPhysicsObjectValid(physicsObject));
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	PxScene* pxScene = SceneObjects[scene.Id];
-	NS_Assert(pxScene);
-
-	PxRigidActor* pxActor = ObjectRigidActors[physicsObject.Id];
-	NS_Assert(pxActor);
-
-	pxScene->removeActor(*pxActor);
-}
-
-
-bool nsPhysicsManager_PhysX::SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
-{
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	PxScene* pxScene = SceneObjects[scene.Id];
-	NS_Assert(pxScene);
+	NS_Assert(scene);
 
 	PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
 
@@ -496,11 +300,11 @@ bool nsPhysicsManager_PhysX::SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysics
 	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
 	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
 
-	nsPhysX_QueryFilterCallback queryFilterCallback; 
+	nsPhysX_QueryFilterCallback queryFilterCallback;
 	queryFilterCallback.IgnoredActors = params.IgnoredActors;
 
 	PxRaycastBufferN<1> buffer;
-	bool bFoundHit = pxScene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
+	bool bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
 
 	if (bFoundHit)
 	{
@@ -526,92 +330,27 @@ bool nsPhysicsManager_PhysX::SceneQueryRayCast(nsPhysicsSceneID scene, nsPhysics
 }
 
 
-bool nsPhysicsManager_PhysX::SceneQuerySweep(nsPhysicsSceneID scene, nsPhysicsHitResult& hitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+bool nsPhysicsManager::SceneQuerySweepBox(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	NS_Assert(IsPhysicsSceneValid(scene));
-
-	PxScene* pxScene = SceneObjects[scene.Id];
-	NS_Assert(pxScene);
-
-	PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
-
-	PxQueryFilterData queryFilterData{};
-	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
-	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
-
-	nsPhysX_QueryFilterCallback queryFilterCallback;
-	queryFilterCallback.IgnoredActors = params.IgnoredActors;
-
-	PxSweepBufferN<1> buffer;
-
-	bool bFoundHit = pxScene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
-
-	if (bFoundHit)
-	{
-		const PxSweepHit sweepHit = buffer.block;
-		hitResult.Component = static_cast<nsTransformComponent*>(sweepHit.actor->userData);
-		hitResult.Actor = hitResult.Component->GetActor();
-
-		if (sweepHit.flags & PxHitFlag::ePOSITION)
-		{
-			hitResult.WorldPosition = NS_FromPxVec3(sweepHit.position);
-		}
-
-		if (sweepHit.flags & PxHitFlag::eNORMAL)
-		{
-			hitResult.WorldNormal = NS_FromPxVec3(sweepHit.normal);
-		}
-
-		hitResult.Distance = sweepHit.distance;
-	}
-
-	return bFoundHit;
+	return nsPhysXHelper::SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), worldTransform, direction, distance, params);
 }
 
 
-bool nsPhysicsManager_PhysX::AdjustPhysicsObjectPosition(nsPhysicsObjectID physicsObjectToAdjust, nsPhysicsObjectID physicsObjectAgaints)
+bool nsPhysicsManager::SceneQuerySweepSphere(physx::PxScene* scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	NS_Assert(IsPhysicsObjectValid(physicsObjectToAdjust));
-	NS_Assert(IsPhysicsObjectValid(physicsObjectAgaints));
-
-	PxRigidActor* firstRigidActor = ObjectRigidActors[physicsObjectToAdjust.Id];
-	NS_Assert(firstRigidActor);
-	PxShape* firstShape = nullptr;
-	firstRigidActor->getShapes(&firstShape, 1);
-	NS_Assert(firstShape);
-
-	PxRigidActor* secondRigidActor = ObjectRigidActors[physicsObjectAgaints.Id];
-	NS_Assert(secondRigidActor);
-	PxShape* secondShape = nullptr;
-	secondRigidActor->getShapes(&secondShape, 1);
-	NS_Assert(secondShape);
-
-	PxVec3 direction;
-	float depth;
-	const bool bIsPenetrating = PxGeometryQuery::computePenetration(direction, depth, firstShape->getGeometry().any(), firstRigidActor->getGlobalPose(), secondShape->getGeometry().any(), secondRigidActor->getGlobalPose());
-
-	if (bIsPenetrating)
-	{
-		nsActor* actorToAdjust = static_cast<nsTransformComponent*>(firstRigidActor->userData)->GetActor();
-		nsTransform newTransform = actorToAdjust->GetWorldTransform();
-		newTransform.Position = newTransform.Position + NS_FromPxVec3(direction) * depth;
-		actorToAdjust->SetWorldTransform(newTransform);
-	}
-
-	return bIsPenetrating;
+	return nsPhysXHelper::SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), worldTransform, direction, distance, params);
 }
+
 
 
 
 #ifdef __NS_ENGINE_DEBUG_DRAW__
 
-void nsPhysicsManager_PhysX::DEBUG_Draw(nsRenderContextWorld& renderContextWorld)
+void nsPhysicsManager::DebugDraw(nsRenderContextWorld& renderContextWorld)
 {
-	for (auto it = SceneObjects.CreateConstIterator(); it; ++it)
+	for (int i = 0; i < SceneObjects.GetCount(); ++i)
 	{
-		PxScene* scene = (*it);
-		NS_Assert(scene);
-
+		PxScene* scene = SceneObjects[i];
 		const PxRenderBuffer& renderBuffer = scene->getRenderBuffer();
 		const PxDebugLine* debugLines = renderBuffer.getLines();
 		const PxU32 lineCount = renderBuffer.getNbLines();

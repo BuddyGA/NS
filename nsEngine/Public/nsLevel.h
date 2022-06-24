@@ -4,8 +4,10 @@
 
 
 
-class NS_ENGINE_API nsLevel
+class NS_ENGINE_API nsLevel : public nsObject
 {
+	NS_DECLARE_OBJECT()
+
 private:
 	nsName Name;
 	nsWorld* World;

@@ -93,4 +93,11 @@ void nsUnitTest::TestString()
 
 	TestString_Insert();
 	TestString_Remove();
+
+	// Test name
+	{
+		const nsName nameA = "actorcomponent";
+		const nsName nameB = "ActorComponent";
+		NS_Validate(nameA == nameB);
+	}
 }

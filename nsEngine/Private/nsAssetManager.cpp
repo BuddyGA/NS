@@ -1,6 +1,9 @@
 #include "nsAssetManager.h"
 #include "nsFileSystem.h"
 #include "nsConsole.h"
+#include "nsMesh.h"
+#include "nsTexture.h"
+#include "nsMaterial.h"
 
 
 

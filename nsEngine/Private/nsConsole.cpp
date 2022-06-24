@@ -116,14 +116,15 @@ void nsConsoleManager::ExecuteCommand(const nsString& textCommand)
 		return;
 	}
 
-	const nsTArray<nsString> inputs = textCommand.Splits(' ');
+	const nsString lowerCaseTextCommand = textCommand.ToLower();
+	const nsTArray<nsString> inputs = lowerCaseTextCommand.Splits(' ');
 	const nsString& command = inputs[0];
 	nsConsoleCallbackDelegate* commandCallback = CommandTable.GetValueByKey(command);
 
 	if (commandCallback)
 	{
-		commandCallback->Broadcast(command, inputs.GetCount() > 1 ? &inputs[1] : nullptr, inputs.GetCount() - 1);
 		AddLogEntry(nsString::Format("Command: %s", *textCommand), nsColor::GREEN);
+		commandCallback->Broadcast(command, inputs.GetCount() > 1 ? &inputs[1] : nullptr, inputs.GetCount() - 1);
 	}
 	else
 	{

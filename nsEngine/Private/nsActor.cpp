@@ -3,21 +3,25 @@
 #include "nsConsole.h"
 
 
+#define NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME	"default_root_component"
+
+
 static nsLogCategory ActorLog("ActorLog", nsELogVerbosity::LV_DEBUG);
 
 nsMemory nsActor::ComponentMemory("actor_components", NS_MEMORY_SIZE_MiB(1));
 
 
 
-NS_DEFINE_OBJECT(nsActor, "Actor", nsObject);
+NS_DEFINE_OBJECT(nsActor, nsObject);
 
 nsActor::nsActor()
+	: Level(nullptr)
+	, Flags(nsEActorFlag::CallStartStopPlay)
+	, Parent(nullptr)
+	, RootComponent(nullptr)
 {
-	Level = nullptr;
-	Flags = 0;
-	Parent = nullptr;
 	Components.Reserve(4);
-	RootComponent = nullptr;
+	RootComponent = AddComponent<nsTransformComponent>(NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME);
 }
 
 
@@ -29,7 +33,12 @@ void nsActor::OnInitialize()
 	}
 
 	Flags |= nsEActorFlag::Initialized;
-	RootComponent = AddComponent<nsTransformComponent>("default_root_component");
+	//RootComponent = AddComponent<nsTransformComponent>("default_root_component");
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnInitialize();
+	}
 }
 
 
@@ -139,8 +148,32 @@ void nsActor::OnRemovedFromLevel()
 
 nsWorld* nsActor::GetWorld() const
 {
-	NS_Assert(Level);
-	return Level->GetWorld();
+	return Level ? Level->GetWorld() : nullptr;
+}
+
+
+void nsActor::SetAsStatic(bool bIsStatic)
+{
+	const bool bWasStatic = (Flags & nsEActorFlag::Static);
+
+	if (bWasStatic == bIsStatic)
+	{
+		return;
+	}
+
+	if (bIsStatic)
+	{
+		Flags |= nsEActorFlag::Static;
+	}
+	else
+	{
+		Flags &= ~nsEActorFlag::Static;
+	}
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnStaticChanged();
+	}
 }
 
 
@@ -173,7 +206,7 @@ void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
 		}
 	}
 
-	if (RootComponent->Name == "default_root_component")
+	if (RootComponent->Name == NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME)
 	{
 		Components[0] = Components[newRootIndex];
 		Components[newRootIndex] = RootComponent;

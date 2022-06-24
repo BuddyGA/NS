@@ -515,9 +515,9 @@ public:
 		return n;
 	}
 
-	NS_NODISCARD_INLINE bool IsZero() const noexcept
+	NS_NODISCARD_INLINE bool IsZero(float eps = NS_MATH_EPS) const noexcept
 	{
-		return nsMath::FloatEquals(X, 0.0f, NS_MATH_EPS_LOW_P) && nsMath::FloatEquals(Y, 0.0f, NS_MATH_EPS_LOW_P);
+		return nsMath::FloatEquals(X, 0.0f, eps) && nsMath::FloatEquals(Y, 0.0f, eps);
 	}
 
 
@@ -530,6 +530,17 @@ public:
 	NS_NODISCARD static NS_INLINE nsVector2 Lerp(const nsVector2& a, const nsVector2& b, float t) noexcept
 	{
 		return a + (b - a) * t;
+	}
+
+
+	NS_NODISCARD static NS_INLINE nsVector2 Project(const nsVector2& a, const nsVector2& b) noexcept
+	{
+		if (b.IsZero())
+		{
+			return nsVector2::ZERO;
+		}
+
+		return b * (nsVector2::DotProduct(a, b) / b.GetMagnitudeSqr());
 	}
 
 };
@@ -725,9 +736,9 @@ public:
 		return n;
 	}
 
-	NS_NODISCARD_INLINE bool IsZero() const noexcept
+	NS_NODISCARD_INLINE bool IsZero(float eps = NS_MATH_EPS) const noexcept
 	{
-		return nsMath::FloatEquals(X, 0.0f, NS_MATH_EPS_LOW_P) && nsMath::FloatEquals(Y, 0.0f, NS_MATH_EPS_LOW_P) && nsMath::FloatEquals(Z, 0.0f, NS_MATH_EPS_LOW_P);
+		return nsMath::FloatEquals(X, 0.0f, eps) && nsMath::FloatEquals(Y, 0.0f, eps) && nsMath::FloatEquals(Z, 0.0f, eps);
 	}
 
 	NS_NODISCARD_INLINE bool IsEquals(const nsVector3& other, float eps = NS_MATH_EPS_LOW_P) const noexcept
@@ -754,6 +765,16 @@ public:
 			a.Z * b.X - a.X * b.Z,
 			a.X * b.Y - a.Y * b.X
 		);
+	}
+
+	NS_NODISCARD static NS_INLINE nsVector3 Project(const nsVector3& a, const nsVector3& b) noexcept
+	{
+		if (b.IsZero())
+		{
+			return nsVector3::ZERO;
+		}
+
+		return b * (nsVector3::DotProduct(a, b) / b.GetMagnitudeSqr());
 	}
 
 	NS_NODISCARD static NS_INLINE nsVector3 Lerp(const nsVector3& a, const nsVector3& b, float t) noexcept

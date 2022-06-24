@@ -1,8 +1,10 @@
 #include "nsRenderer.h"
-#include "API_VK/nsVulkanFunctions.h"
 #include "nsTexture.h"
+#include "nsMaterial.h"
+#include "nsMesh.h"
 #include "nsGUICore.h"
-#include "nsPhysics.h"
+#include "nsPhysicsManager.h"
+#include "API_VK/nsVulkanFunctions.h"
 
 
 
@@ -44,6 +46,18 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 nsRenderer::~nsRenderer() noexcept
 {
 	NS_ValidateV(0, "Not implemented yet!");
+}
+
+
+bool nsRenderer::ShouldResizeTexture(nsTextureID texture) const noexcept
+{
+	if (!texture.IsValid())
+	{
+		return true;
+	}
+
+	const nsPointInt textureDimension = nsTextureManager::Get().GetTextureDimension(texture);
+	return RenderTargetDimension != textureDimension;
 }
 
 
@@ -96,10 +110,12 @@ void nsRenderer::BeginRender(int frameIndex, float deltaTime) noexcept
 
 		if (RenderContextWorld)
 		{
+		#ifdef __NS_ENGINE_DEBUG_DRAW__
 			if (DebugDrawFlags & nsERenderDebugDraw::Collision)
 			{
-				nsPhysicsManager::Get().DEBUG_Draw(*RenderContextWorld);
+				nsPhysicsManager::Get().DebugDraw(*RenderContextWorld);
 			}
+		#endif // __NS_ENGINE_DEBUG_DRAW__
 
 			RenderContextWorld->UpdateResourcesAndBuildDrawCalls(FrameIndex);
 		}
@@ -472,7 +488,7 @@ void nsRenderer::ExecuteRenderPass_Final(VkCommandBuffer commandBuffer) noexcept
 
 void nsRenderer::ExecuteDrawCalls() noexcept
 {
-	// TODO: Update each render pass output layout based on RenderPassFlags
+	// TODO: Update each render pass output layout based on RenderPassFlags. This is useful for debugging when we turn on/off render pass
 
 
 	VkCommandBuffer commandBuffer = nsVulkan::AllocateGraphicsCommandBuffer();

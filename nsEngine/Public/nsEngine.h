@@ -3,7 +3,6 @@
 #include "nsEngineTypes.h"
 
 
-class nsWorld;
 class nsGameApplication;
 
 
