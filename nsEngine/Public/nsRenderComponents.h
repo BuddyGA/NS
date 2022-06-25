@@ -45,7 +45,7 @@ class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 
 private:
 	nsSharedModelAsset ModelAsset;
-	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESHES> Materials;
+	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESH> Materials;
 	nsRenderContextMeshID RenderMeshId;
 
 

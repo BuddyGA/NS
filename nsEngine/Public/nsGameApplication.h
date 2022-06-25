@@ -18,9 +18,9 @@ protected:
 	nsGUIContext GUIContext;
 	nsGUIConsoleWindow ConsoleWindow;
 
+	/*
 	nsGUIWindow TestWindow0;
 	nsGUITable TestTable;
-	/*
 	nsGUIWindow TestWindow1;
 	*/
 
@@ -35,6 +35,7 @@ public:
 	virtual void HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount) noexcept;
 	virtual void StartPlay() noexcept;
 	virtual void TickUpdate(float deltaTime) noexcept;
+	virtual void PhysicsTickUpdate(float fixedDeltaTime) noexcept;
 	virtual void PostPhysicsUpdate() noexcept;
 	virtual void PreRender() noexcept;
 	void DrawGUI() noexcept;

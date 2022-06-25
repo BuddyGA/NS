@@ -158,6 +158,7 @@
     <ClInclude Include="Public\nsCoreTypes.h" />
     <ClInclude Include="Public\nsObject.h" />
     <ClInclude Include="Public\nsPlatform.h" />
+    <ClInclude Include="Public\nsProperty.h" />
     <ClInclude Include="Public\nsStream.h" />
     <ClInclude Include="Public\nsString.h" />
     <ClInclude Include="Public\nsThreadPool.h" />

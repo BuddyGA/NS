@@ -87,6 +87,17 @@ void nsActor::OnTickUpdate(float deltaTime)
 }
 
 
+void nsActor::OnPhysicsTickUpdate(float fixedDeltaTime)
+{
+	NS_Assert(Flags & nsEActorFlag::CallPhysicsTickUpdate);
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnPhysicsTickUpdate(fixedDeltaTime);
+	}
+}
+
+
 void nsActor::OnDestroy()
 {
 	NS_Assert(Flags & nsEActorFlag::PendingDestroy);

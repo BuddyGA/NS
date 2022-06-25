@@ -60,6 +60,9 @@
     <ClInclude Include="Public\nsObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Public\nsProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Build_Core.cpp">

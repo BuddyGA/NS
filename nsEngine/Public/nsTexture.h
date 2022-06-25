@@ -48,7 +48,7 @@ struct nsTextureData
 	int Width;
 	int Height;
 	nsETextureFormat Format;
-	nsTArrayInline<Mip, NS_ENGINE_TEXTURE_MAX_MIPs> Mips;
+	nsTArrayInline<Mip, NS_ENGINE_TEXTURE_MAX_MIP> Mips;
 	bool bIsRenderTarget;
 	bool bIsDepth;
 	bool bIsStencil;
@@ -70,7 +70,7 @@ struct nsTextureResource
 {
 	nsVulkanTexture* Texture;
 	nsVulkanTextureView* TextureView;
-	nsTArrayInline<nsVulkanTextureView*, NS_ENGINE_TEXTURE_MAX_MIPs> SubresourceViews;
+	nsTArrayInline<nsVulkanTextureView*, NS_ENGINE_TEXTURE_MAX_MIP> SubresourceViews;
 };
 
 

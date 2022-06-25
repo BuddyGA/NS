@@ -545,7 +545,7 @@ void nsTextureManager::Update() noexcept
 	// Copy staging buffer to texture regions
 	{
 		uint64 stagingOffset = 0;
-		nsTArrayInline<VkBufferImageCopy, NS_ENGINE_TEXTURE_MAX_MIPs> copyRegions;
+		nsTArrayInline<VkBufferImageCopy, NS_ENGINE_TEXTURE_MAX_MIP> copyRegions;
 
 		for (int i = 0; i < textureToLoads.GetCount(); ++i)
 		{

@@ -64,6 +64,12 @@ void nsMeshManager::Initialize() noexcept
 		nsGeometryFactory::AddMeshBox(lod0.Positions, lod0.Attributes, lod0.Indices, nsVector3(-50.0f), nsVector3(50.0f), nsVector2(1.0f));
 	}
 
+	// Platform
+	{
+		DefaultPlatform = CreateMesh("mesh_default_platform");
+		nsMeshVertexData& lod0 = MeshLodGroups[DefaultPlatform.Id][0];
+		nsGeometryFactory::AddMeshBox(lod0.Positions, lod0.Attributes, lod0.Indices, nsVector3(-256.0f, -8.0f, -128.0f), nsVector3(256.0f, 8.0f, 128.0f), nsVector2(4.0f));
+	}
 
 	bInitialized = true;
 }

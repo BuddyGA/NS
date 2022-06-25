@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cstGameTypes.h"
+#include "cstPlayer.h"
 
 
 
@@ -9,6 +9,7 @@ class cstGame : public nsGameApplication
 private:
 	cstEGameState CurrentState;
 	cstEGameState PendingChangeState;
+	cstPlayerController* PlayerController;
 
 
 public:
@@ -16,6 +17,7 @@ public:
 	virtual void Initialize() noexcept override;
 	virtual void Shutdown() noexcept override;
 	virtual void TickUpdate(float deltaTime) noexcept;
+	virtual void PhysicsTickUpdate(float fixedDeltaTime) noexcept;
 	virtual void PreRender() noexcept override;
 
 protected:

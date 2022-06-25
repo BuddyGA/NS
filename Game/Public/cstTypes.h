@@ -19,6 +19,11 @@
 extern "C" CST_GAME_API nsGameApplication* CreateGameApplication(int windowResX, int windowResY, nsEWindowFullscreenMode fullscreenMode) noexcept;
 
 
+extern nsLogCategory cstGameLog;
+extern nsLogCategory cstPlayerLog;
+extern nsLogCategory cstCharacterLog;
+
+
 
 enum class cstEGameState : uint8
 {
@@ -34,3 +39,7 @@ enum class cstEGameState : uint8
 	EDITING,
 #endif // NS_GAME_WITH_EDITOR
 };
+
+
+
+class cstCharacter;

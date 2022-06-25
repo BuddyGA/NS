@@ -1086,6 +1086,11 @@ void nsGUIConsoleWindow::Draw(nsGUIContext& context) noexcept
 				PrevLogEntryCount = logEntries.GetCount();
 
 				// Log area
+				if (logEntries.IsEmpty())
+				{
+					context.ResetRegionData(*LogAreaName);
+				}
+
 				const nsGUIRect logAreaRect(0.0f, 0.0f, contentRect.GetWidth(), contentRect.GetHeight() - InputTextHeight - 4.0f);
 				const nsGUIScrollOptions scrollOptions = bScrollToEndLine ? (nsEGUIScrollOption::Scrollable_Y | nsEGUIScrollOption::AutoScroll_Y) : nsEGUIScrollOption::Scrollable_Y;
 				context.BeginRegion(*LogAreaName, logAreaRect, nsPointFloat(2.0f), nsEGUIElementLayout::VERTICAL, scrollOptions, "console_logs");

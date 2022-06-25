@@ -108,7 +108,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 
 	if (srcMipSet.m_nMipLevels <= 1 && option.bGenerateMipMaps)
 	{
-		const int mipMinSize = CMP_CalcMinMipSize(srcMipSet.dwHeight, srcMipSet.dwWidth, NS_ENGINE_TEXTURE_MAX_MIPs);
+		const int mipMinSize = CMP_CalcMinMipSize(srcMipSet.dwHeight, srcMipSet.dwWidth, NS_ENGINE_TEXTURE_MAX_MIP);
 		CMP_GenerateMIPLevels(&srcMipSet, mipMinSize);
 	}
 
@@ -207,7 +207,7 @@ struct nsGLTF_Animation
 struct nsGLTF_Model
 {
 	nsName Name;
-	nsTArrayInline<nsGLTF_Mesh, NS_ENGINE_ASSET_MODEL_MAX_MESHES> Meshes;
+	nsTArrayInline<nsGLTF_Mesh, NS_ENGINE_ASSET_MODEL_MAX_MESH> Meshes;
 };
 
 

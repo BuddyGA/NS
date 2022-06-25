@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Public\cstGameTypes.h">
+    <ClInclude Include="Public\cstTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\cstGame.h">
@@ -42,6 +42,9 @@
     <ClInclude Include="Public\cstCharacter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Public\cstPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Build_Game.cpp">
@@ -66,6 +69,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\cstCharacter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

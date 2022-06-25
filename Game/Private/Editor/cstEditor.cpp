@@ -236,17 +236,9 @@ void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 			}
 			else if (!ActorGizmo.IsUpdating() && bSceneViewportHovered)
 			{
-				const nsVector2 mousePosition(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
-				nsVector3 worldOrigin;
-				nsVector3 worldDirection;
-				MainViewport->ProjectToWorld(mousePosition, worldOrigin, worldDirection);
-
-				float nearClip, farClip;
-				MainViewport->GetClip(nearClip, farClip);
-
 				nsPhysicsHitResult hitResult;
-				const bool bHit = MainWorld->PhysicsRayCast(hitResult, worldOrigin, worldDirection, farClip);
-				SelectFocusActor(bHit ? hitResult.Actor : nullptr);
+				const bool bFoundHit = nsPhysicsManager::Get().SceneQueryMousePicking(MainWorld->GetPhysicsScene(), hitResult, nsVector2(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y)), MainViewport);
+				SelectFocusActor(bFoundHit ? hitResult.Actor : nullptr);
 			}
 
 			ActorGizmo.EndTransform();
@@ -301,13 +293,11 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		{
 			if (MainWorld->HasStartedPlay())
 			{
-				nsPhysicsManager::Get().bGlobalSimulate = false;
 				MainWorld->DispatchStopPlay();
 			}
 			else
 			{
 				MainWorld->DispatchStartPlay();
-				nsPhysicsManager::Get().bGlobalSimulate = true;
 			}
 		}
 
@@ -377,38 +367,9 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 				MainWorld->DestroyActor(FocusActor);
 				SelectFocusActor(nullptr);
 			}
-			else if (e.Key == nsEInputKey::KEYBOARD_Z && FocusActor)
+			else if (e.Key == nsEInputKey::KEYBOARD_Z)
 			{
-				// Move actor to floor if there's any hit on down sweep test
-				if (nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>())
-				{
-					nsTransform focusActorTransform = FocusActor->GetWorldTransform();
-
-					nsPhysicsQueryParams queryParams;
-					queryParams.IgnoredActors.Add(FocusActor);
-
-					nsPhysicsHitResult hitResult;
-					if (collisionComp->SweepTest(hitResult, -nsVector3::UP, 1000.0f, queryParams))
-					{
-						NS_CONSOLE_Log(EditorLog, "Move actor [%s] down to floor. [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]", 
-							*FocusActor->Name, 
-							*hitResult.Actor->Name,
-							hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z,
-							hitResult.Distance
-						);
-
-						if (hitResult.Distance > 0.0f)
-						{
-							focusActorTransform.Position.Y = hitResult.WorldPosition.Y;
-							FocusActor->SetWorldTransform(focusActorTransform);
-							collisionComp->AdjustPositionIfOverlappedWith(hitResult.Actor);
-						}
-					}
-					else
-					{
-						NS_CONSOLE_Warning(EditorLog, "Cannot move actor [%s] down to floor. No hit found below!", *FocusActor->Name);
-					}
-				}
+				MoveFocusActorDownToFloor();
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_0)
 			{
@@ -491,44 +452,6 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 }
 
 
-void cstEditor::AddMousePickingForActor(nsActor* actor)
-{
-	if (actor == nullptr)
-	{
-		return;
-	}
-
-	if (nsCollisionComponent* collisionComp = actor->GetComponent<nsCollisionComponent>())
-	{
-		nsPhysicsCollisionChannels collisionChannels = collisionComp->GetCollisionChannels();
-		collisionChannels |= nsEPhysicsCollisionChannel::MousePicking;
-
-		collisionComp->SetCollisionChannels(collisionChannels);
-	}
-	else if (nsMeshComponent* meshComp = actor->GetComponent<nsMeshComponent>())
-	{
-		const nsSharedModelAsset& modelAsset = meshComp->GetModelAsset();
-
-		if (modelAsset.IsValid())
-		{
-			const nsMeshID mesh0 = modelAsset.GetMeshes()[0];
-			NS_Assert(mesh0 != nsMeshID::INVALID);
-
-			nsConvexMeshCollisionComponent* convexMeshPicking = actor->AddComponent<nsConvexMeshCollisionComponent>("editor_mouse_picking");
-			convexMeshPicking->SetMesh(mesh0);
-			convexMeshPicking->SetSimulatePhysics(false);
-			convexMeshPicking->SetCollisionTest(nsEPhysicsCollisionTest::QUERY_ONLY);
-			convexMeshPicking->SetObjectChannel(nsEPhysicsCollisionChannel::MousePicking);
-
-			nsPhysicsCollisionChannels collisionChannels = convexMeshPicking->GetCollisionChannels();
-			collisionChannels |= nsEPhysicsCollisionChannel::MousePicking;
-
-			convexMeshPicking->SetCollisionChannels(collisionChannels);
-		}
-	}
-}
-
-
 void cstEditor::SelectFocusActor(nsActor* newActor)
 {
 	if (newActor && newActor != FocusActor)
@@ -553,6 +476,99 @@ void cstEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 	bIsDraggingAssetSpawned = false;
 
 	NS_CONSOLE_Debug(EditorLog, "Begin drag-drop asset [%s]", *assetInfo.Name);
+}
+
+
+void cstEditor::AddMousePickingForActor(nsActor* actor)
+{
+	if (actor == nullptr)
+	{
+		return;
+	}
+
+	nsCollisionComponent* collisionComp = actor->GetComponent<nsCollisionComponent>();
+
+	if (collisionComp == nullptr)
+	{
+		if (nsMeshComponent* meshComp = actor->GetComponent<nsMeshComponent>())
+		{
+			const nsSharedModelAsset& modelAsset = meshComp->GetModelAsset();
+
+			if (modelAsset.IsValid())
+			{
+				const nsMeshID mesh0 = modelAsset.GetMeshes()[0];
+				NS_Assert(mesh0 != nsMeshID::INVALID);
+
+				nsConvexMeshCollisionComponent* convexMeshPicking = actor->AddComponent<nsConvexMeshCollisionComponent>("editor_mouse_picking");
+				convexMeshPicking->SetMesh(mesh0);
+				convexMeshPicking->SetSimulatePhysics(false);
+				convexMeshPicking->SetCollisionTest(nsEPhysicsCollisionTest::QUERY_ONLY);
+				convexMeshPicking->SetObjectChannel(nsEPhysicsCollisionChannel::MousePicking);
+				convexMeshPicking->SetCollisionChannels(nsEPhysicsCollisionChannel::NONE);
+			}
+		}
+	}
+}
+
+
+void cstEditor::MoveFocusActorDownToFloor()
+{
+	if (FocusActor == nullptr)
+	{
+		return;
+	}
+
+	nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>();
+	if (collisionComp == nullptr)
+	{
+		return;
+	}
+
+	nsTransform focusActorTransform = FocusActor->GetWorldTransform();
+
+	nsPhysicsQueryParams queryParams;
+	queryParams.IgnoredActors.Add(FocusActor);
+
+	bool bFoundFloor = false;
+	bool bAlreadyOnFloor = false;
+	nsPhysicsHitResult hitResult;
+	float distance = 100.0f;
+
+	for (int i = 0; i < 10; ++i)
+	{
+		if (collisionComp->SweepTest(hitResult, -nsVector3::UP, distance, queryParams))
+		{
+			if (hitResult.Distance == 0.0f)
+			{
+				bAlreadyOnFloor = true;
+				continue;
+			}
+
+			bFoundFloor = true;
+			bAlreadyOnFloor = false;
+			break;
+		}
+
+		distance += 100.0f;
+	}
+	
+	if (bFoundFloor)
+	{
+		NS_CONSOLE_Log(EditorLog, "Move actor [%s] down to floor. [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]",
+			*FocusActor->Name,
+			*hitResult.Actor->Name,
+			hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z,
+			hitResult.Distance
+		);
+
+		focusActorTransform.Position.Y = hitResult.WorldPosition.Y;
+		FocusActor->SetWorldTransform(focusActorTransform);
+		collisionComp->AdjustPositionIfOverlappedWith(hitResult.Actor);
+	}
+	else if (!bAlreadyOnFloor)
+	{
+		NS_CONSOLE_Warning(EditorLog, "Cannot move actor [%s] down to floor. No hit found below!", *FocusActor->Name);
+	}
 }
 
 

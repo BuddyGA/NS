@@ -1,11 +1,13 @@
 #pragma once
 
+#include "cstTypes.h"
 #include "nsActor.h"
 #include "nsPhysicsComponents.h"
+#include "nsRenderComponents.h"
 
 
 
-class cstCharacterAttribute 
+class cstCharacterAttributes
 {
 public:
 	// Strength (PATK)
@@ -58,7 +60,7 @@ public:
 
 
 public:
-	cstCharacterAttribute()
+	cstCharacterAttributes()
 	{
 		STR = 5;
 		VIT = 5;
@@ -88,11 +90,25 @@ class cstCharacter : public nsActor
 	NS_DECLARE_OBJECT()
 
 private:
-	nsCharacterMovementComponent* CharMovementComp;
-	cstCharacterAttribute Attribute;
+	//nsCapsuleCollisionComponent* CapsuleComponent;
+	nsCharacterMovementComponent* MovementComponent;
+	nsMeshComponent* MeshComponent;
+	cstCharacterAttributes Attributes;
+
+	nsTArray<nsPhysicsHitResult> MoveHitResults;
 
 
 public:
 	cstCharacter();
+	virtual void OnInitialize() override;
+	virtual void OnDestroy() override;
+	void Move(float deltaTime, const nsVector3& worldDirection);
+
+
+public:
+	NS_NODISCARD_INLINE const cstCharacterAttributes& GetAttributes() const
+	{
+		return Attributes;
+	}
 
 };

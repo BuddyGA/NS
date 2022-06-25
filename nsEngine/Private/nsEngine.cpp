@@ -26,7 +26,6 @@ nsEngine::nsEngine() noexcept
 	, DeltaTimeSeconds(0.0f)
 	, FpsTimeMs(0.0f)
 	, Fps(0.0f)
-	, PhysicsTimeAccumulator(0.0f)
 {
 	Worlds.Reserve(4);
 	PhysicsTimeSteps = 0.016667f;
@@ -206,19 +205,17 @@ void nsEngine::MainLoop()
 
 	// Update physics
 	{
-		PhysicsTimeAccumulator += DeltaTimeSeconds;
-		int physicsStepCount = 0;
-
-		while (PhysicsTimeAccumulator >= PhysicsTimeSteps)
+		if (Game)
 		{
-			nsPhysicsManager::Get().Simulate(PhysicsTimeSteps);
-			PhysicsTimeAccumulator -= PhysicsTimeSteps;
-
-			if (++physicsStepCount == 3)
-			{
-				break;
-			}
+			Game->PhysicsTickUpdate(PhysicsTimeSteps);
 		}
+
+		for (int i = 0; i < Worlds.GetCount(); ++i)
+		{
+			Worlds[i]->DispatchPhysicsTickUpdate(PhysicsTimeSteps);
+		}
+
+		nsPhysicsManager::Get().Simulate(PhysicsTimeSteps);
 	}
 
 

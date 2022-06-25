@@ -22,7 +22,7 @@ struct nsMeshVertexData
 
 };
 
-typedef nsTArrayInline<nsMeshVertexData, NS_ENGINE_MESH_MAX_LODs> nsMeshLODGroup;
+typedef nsTArrayInline<nsMeshVertexData, NS_ENGINE_MESH_MAX_LOD> nsMeshLODGroup;
 
 
 
@@ -119,6 +119,7 @@ private:
 	nsMeshID DefaultFloor;
 	nsMeshID DefaultWall;
 	nsMeshID DefaultBox;
+	nsMeshID DefaultPlatform;
 
 
 public:
@@ -240,6 +241,12 @@ public:
 	NS_NODISCARD_INLINE nsMeshID GetDefaultMesh_Box() const noexcept
 	{
 		return DefaultBox;
+	}
+
+
+	NS_NODISCARD_INLINE nsMeshID GetDefaultMesh_Platform() const noexcept
+	{
+		return DefaultPlatform;
 	}
 
 

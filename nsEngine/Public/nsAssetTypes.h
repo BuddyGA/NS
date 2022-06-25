@@ -247,7 +247,7 @@ public:
 
 
 
-typedef nsTArrayInline<nsMeshID, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMeshes;
+typedef nsTArrayInline<nsMeshID, NS_ENGINE_ASSET_MODEL_MAX_MESH> nsAssetModelMeshes;
 //typedef nsTArrayInline<nsSharedMaterialAsset, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMaterials;
 
 

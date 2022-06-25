@@ -4,6 +4,10 @@
 
 
 
+extern nsLogCategory nsComponentLog;
+
+
+
 // ================================================================================================================================== //
 // ACTOR COMPONENT
 // ================================================================================================================================== //
@@ -25,6 +29,7 @@ public:
 	virtual void OnStartPlay();
 	virtual void OnStopPlay();
 	virtual void OnTickUpdate(float deltaTime) {}
+	virtual void OnPhysicsTickUpdate(float fixedDeltaTime) {}
 	virtual void OnDestroy();
 	virtual void OnStaticChanged() {}
 	virtual bool IsFullyLoaded() { return true; }
@@ -105,37 +110,25 @@ public:
 
 	NS_INLINE void SetLocalPosition(nsVector3 position)
 	{
-		if (DirtyTransform == EDirtyTransform::LOCAL)
-		{
-			UpdateTransform();
-		}
-
 		LocalTransform.Position = position;
 		DirtyTransform = EDirtyTransform::WORLD;
+		UpdateTransform();
 	}
 
 
 	NS_INLINE void SetLocalRotation(nsQuaternion rotation)
 	{
-		if (DirtyTransform == EDirtyTransform::LOCAL)
-		{
-			UpdateTransform();
-		}
-
 		LocalTransform.Rotation = rotation;
 		DirtyTransform = EDirtyTransform::WORLD;
+		UpdateTransform();
 	}
 
 
 	NS_INLINE void SetLocalScale(nsVector3 scale)
 	{
-		if (DirtyTransform == EDirtyTransform::LOCAL)
-		{
-			UpdateTransform();
-		}
-
 		LocalTransform.Scale = scale;
 		DirtyTransform = EDirtyTransform::WORLD;
+		UpdateTransform();
 	}
 
 
@@ -149,37 +142,25 @@ public:
 
 	NS_INLINE void SetWorldPosition(nsVector3 position)
 	{
-		if (DirtyTransform == EDirtyTransform::WORLD)
-		{
-			UpdateTransform();
-		}
-
 		WorldTransform.Position = position;
 		DirtyTransform = EDirtyTransform::LOCAL;
+		UpdateTransform();
 	}
 
 
 	NS_INLINE void SetWorldRotation(nsQuaternion rotation)
 	{
-		if (DirtyTransform == EDirtyTransform::WORLD)
-		{
-			UpdateTransform();
-		}
-
 		WorldTransform.Rotation = rotation;
 		DirtyTransform = EDirtyTransform::LOCAL;
+		UpdateTransform();
 	}
 
 
 	NS_INLINE void SetWorldScale(nsVector3 scale)
 	{
-		if (DirtyTransform == EDirtyTransform::WORLD)
-		{
-			UpdateTransform();
-		}
-
 		WorldTransform.Scale = scale;
 		DirtyTransform = EDirtyTransform::LOCAL;
+		UpdateTransform();
 	}
 
 

@@ -33,12 +33,12 @@ class NS_ENGINE_API nsActor : public nsObject
 protected:
 	nsLevel* Level;
 	nsActorFlags Flags;
+	nsTransformComponent* RootComponent;
 
 private:
 	nsActor* Parent;
 	nsTArray<nsActorComponent*> Components;
 	nsTArrayInline<nsActor*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> Children;
-	nsTransformComponent* RootComponent;
 
 
 	static nsMemory ComponentMemory;
@@ -46,11 +46,12 @@ private:
 
 public:
 	nsActor();
-	void OnInitialize();
-	void OnStartPlay();
-	void OnStopPlay();
-	void OnTickUpdate(float deltaTime);
-	void OnDestroy();
+	virtual void OnInitialize();
+	virtual void OnStartPlay();
+	virtual void OnStopPlay();
+	virtual void OnTickUpdate(float deltaTime);
+	virtual void OnPhysicsTickUpdate(float fixedDeltaTime);
+	virtual void OnDestroy();
 	void OnAddedToLevel();
 	void OnRemovedFromLevel();
 

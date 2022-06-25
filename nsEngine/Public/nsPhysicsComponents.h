@@ -19,6 +19,7 @@ protected:
 	nsEPhysicsCollisionChannel::Type ObjectChannel;
 	nsPhysicsCollisionChannels CollisionChannels;
 	bool bIsTrigger;
+	bool bIsKinematic;
 	bool bSimulatePhysics;
 	bool bEnableGravity;
 
@@ -45,6 +46,7 @@ public:
 	void UpdateCollisionVolume();
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
 	bool AdjustPositionIfOverlappedWith(nsActor* actorToTest);
+	void SetKinematicTarget(nsTransform transform);
 
 
 	NS_INLINE void SetAsTrigger(bool bTrigger)
@@ -53,6 +55,16 @@ public:
 		{
 			bIsTrigger = bTrigger;
 			UpdateCollisionShapeFlags();
+		}
+	}
+
+
+	NS_INLINE void SetAsKinematic(bool bKinematic)
+	{
+		if (bIsKinematic != bKinematic)
+		{
+			bIsKinematic = bKinematic;
+			UpdateCollisionActorSimulation();
 		}
 	}
 
@@ -130,6 +142,18 @@ public:
 		return bIsTrigger;
 	}
 
+
+	NS_NODISCARD_INLINE physx::PxRigidActor* Internal_GetPhysicsActor() const
+	{
+		return PhysicsActor;
+	}
+
+
+	NS_NODISCARD_INLINE physx::PxShape* Internal_GetPhysicsShape() const
+	{
+		return PhysicsShape;
+	}
+
 };
 
 
@@ -180,7 +204,7 @@ protected:
 
 public:
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-	
+
 };
 
 
@@ -232,8 +256,18 @@ public:
 	float CapsuleHeight;
 	float CapsuleRadius;
 	float ContactOffset;
-	float WalkSlopeLimit;
-	float WalkStepHeight;
+	float Acceleration;
+	float Deceleration;
+	float MaxSpeed;
+	float SlopeLimit;
+	float StepHeight;
+
+protected:
+	nsVector3 Velocity;
+	nsPhysicsHitResultMany MoveHitResultMany;
+
+private:
+	bool bIsOnGround;
 
 
 public:
@@ -245,6 +279,13 @@ protected:
 
 public:
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-	void Move(float deltaTime, const nsVector3& worldDirection);
+	void SetupCapsule(float height, float radius);
+
+private:
+	void ResolveCollision(nsTransform& outTransform);
+	bool ApplyGravity(nsTransform& outTransform);
+
+public:
+	virtual void Move(float deltaTime, const nsVector3& worldDirection);
 
 };

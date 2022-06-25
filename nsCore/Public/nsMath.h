@@ -1238,6 +1238,7 @@ public:
 		const float sr = sinf(rollRad * 0.5f);
 
 		nsQuaternion quat;
+		// default
 		quat.X = cr * sp * cy + sr * cp * sy;
 		quat.Y = cr * cp * sy - sr * sp * cy;
 		quat.Z = sr * cp * cy - cr * sp * sy;

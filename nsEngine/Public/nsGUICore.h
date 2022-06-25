@@ -537,6 +537,21 @@ public:
 	}
 
 
+	NS_INLINE void ResetRegionData(const char* regionId) noexcept
+	{
+		if (regionId == nullptr)
+		{
+			return;
+		}
+
+		if (RegionData* data = CachedRegionDatas.GetValueByKey(regionId))
+		{
+			data->ChildContentRect = nsGUIRect();
+			data->ScrollValue = nsPointFloat();
+		}
+	}
+
+
 	NS_NODISCARD_INLINE bool IsCurrentRegionHovered() const noexcept
 	{
 		return LastHoveredRegionId == CurrentRegionId;

@@ -4,7 +4,7 @@
 
 
 
-static nsLogCategory ComponentLog("nsComponentLog", nsELogVerbosity::LV_INFO);
+nsLogCategory nsComponentLog("nsComponentLog", nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -86,7 +86,7 @@ void nsTransformComponent::UpdateTransform()
 
 	if (DirtyTransform == EDirtyTransform::LOCAL)
 	{
-		LocalTransform.Position = Parent ? Parent->WorldTransform.Position - WorldTransform.Position : WorldTransform.Position;
+		LocalTransform.Position = Parent ? WorldTransform.Position - Parent->WorldTransform.Position : WorldTransform.Position;
 		LocalTransform.Rotation = Parent ? LocalTransform.Rotation * Parent->WorldTransform.Rotation.GetConjugate() : WorldTransform.Rotation;
 		LocalTransform.Scale = Parent ? WorldTransform.Scale / Parent->WorldTransform.Scale : WorldTransform.Scale;
 	}
@@ -113,13 +113,13 @@ void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETrans
 {
 	if (parent == nullptr)
 	{
-		NS_CONSOLE_Warning(ComponentLog, "Ignore attach transform component [%s] to parent. parent is NULL!", *Name);
+		NS_CONSOLE_Warning(nsComponentLog, "Ignore attach transform component [%s] to parent. parent is NULL!", *Name);
 		return;
 	}
 
 	if (this == parent)
 	{
-		NS_CONSOLE_Warning(ComponentLog, "Fail attach actor [%s] to parent. Cannot attach to itself!", *Name);
+		NS_CONSOLE_Warning(nsComponentLog, "Fail attach actor [%s] to parent. Cannot attach to itself!", *Name);
 		return;
 	}
 

@@ -14,6 +14,7 @@ nsGameApplication::nsGameApplication(const char* title, int width, int height, n
 {
 	bShowFPS = true;
 
+	/*
 	TestWindow0.Name = "window_test_0";
 	TestWindow0.Title = "Window Test 0";
 	TestWindow0.InitialRect = nsGUIRect(100.0f, 100.0f, 500.0f, 400.0f);
@@ -22,7 +23,6 @@ nsGameApplication::nsGameApplication(const char* title, int width, int height, n
 	TestTable.AddColumn("", 0.45f);
 	TestTable.AddColumn("", 0.1f);
 
-	/*
 	TestWindow1.Name = "window_test_1";
 	TestWindow1.Title = "Window Test 1";
 	TestWindow1.InitialRect = nsGUIRect(100.0f, 100.0f, 500.0f, 400.0f);
@@ -104,6 +104,11 @@ void nsGameApplication::StartPlay() noexcept
 void nsGameApplication::TickUpdate(float deltaTime) noexcept 
 {
 
+}
+
+
+void nsGameApplication::PhysicsTickUpdate(float fixedDeltaTime) noexcept
+{
 }
 
 
@@ -360,8 +365,8 @@ void nsGameApplication::LoadTestLevel_Boxes()
 {
 	nsAssetManager& assetManager = nsAssetManager::Get();
 
-	nsActor* floorActor = MainWorld->CreateActor("floor_actor", true, nsVector3(0.0f, -8.0f, 0.0f));
 	{
+		nsActor* floorActor = MainWorld->CreateActor("floor_actor", true, nsVector3(0.0f, -8.0f, 0.0f));
 		nsBoxCollisionComponent* boxCollisionComp = floorActor->AddComponent<nsBoxCollisionComponent>("box_collision");
 		boxCollisionComp->HalfExtent = nsVector3(1600.0f, 8.0f, 1600.0f);
 
@@ -373,14 +378,46 @@ void nsGameApplication::LoadTestLevel_Boxes()
 	}
 
 
-	nsActor* wallActor = MainWorld->CreateActor("wall_actor", true, nsVector3(-500.0f, 138.0f, 100.0f));
+	nsSharedModelAsset wallModelAsset = assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME);
 	{
-		nsMeshComponent* meshComp = wallActor->AddComponent<nsMeshComponent>("mesh");
-		meshComp->SetMesh(assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME));
-
-		wallActor->SetRootComponent(meshComp);
-		MainWorld->AddActorToLevel(wallActor);
+		nsActor* wall0 = MainWorld->CreateActor("wall_0", true, nsVector3(-500.0f, 138.0f, 100.0f));
+		nsBoxCollisionComponent* boxCollisionComp = wall0->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(256.0f, 128.0f, 8.0f);
+		nsMeshComponent* meshComp = wall0->AddComponent<nsMeshComponent>("mesh");
+		meshComp->SetMesh(wallModelAsset);
+		wall0->SetRootComponent(boxCollisionComp);
+		MainWorld->AddActorToLevel(wall0);
 	}
+	{
+		nsActor* wall1 = MainWorld->CreateActor("wall_1", true, nsVector3(-617.0f, 128.0f, -272.0f));
+		nsBoxCollisionComponent* boxCollisionComp = wall1->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(256.0f, 128.0f, 8.0f);
+		nsMeshComponent* meshComp = wall1->AddComponent<nsMeshComponent>("mesh");
+		meshComp->SetMesh(wallModelAsset);
+		wall1->SetRootComponent(boxCollisionComp);
+		MainWorld->AddActorToLevel(wall1);
+	}
+
+	nsSharedModelAsset platformModelAsset = assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_PLATFORM_NAME);
+	{
+		nsActor* slide0 = MainWorld->CreateActor("slide_0", true, nsVector3(-617.0f, 128.0f, -485.0f), nsQuaternion::FromRotation(0.0f, 0.0f, -30.0f));
+		nsBoxCollisionComponent* boxCollisionComp = slide0->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(256.0f, 8.0f, 128.0f);
+		nsMeshComponent* meshComp = slide0->AddComponent<nsMeshComponent>("mesh");
+		meshComp->SetMesh(platformModelAsset);
+		slide0->SetRootComponent(boxCollisionComp);
+		MainWorld->AddActorToLevel(slide0);
+	}
+	{
+		nsActor* slide1 = MainWorld->CreateActor("slide_1", true, nsVector3(-592.0f, 186.0f, -850.0f), nsQuaternion::FromRotation(0.0f, 0.0f, -45.0f));
+		nsBoxCollisionComponent* boxCollisionComp = slide1->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(256.0f, 8.0f, 128.0f);
+		nsMeshComponent* meshComp = slide1->AddComponent<nsMeshComponent>("mesh");
+		meshComp->SetMesh(platformModelAsset);
+		slide1->SetRootComponent(boxCollisionComp);
+		MainWorld->AddActorToLevel(slide1);
+	}
+
 
 	nsSharedModelAsset boxModelAsset = assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME);
 
@@ -402,6 +439,7 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		MainWorld->AddActorToLevel(capsuleS);
 	}
 
+	/*
 	nsActor* capsuleD = MainWorld->CreateActor("capsule_dynamic", false, nsVector3(-50.0f, 800.0f, -10.0f));
 	{
 		nsCapsuleCollisionComponent* collisionComp = capsuleD->AddComponent<nsCapsuleCollisionComponent>("capsule_collision");
@@ -409,7 +447,7 @@ void nsGameApplication::LoadTestLevel_Boxes()
 
 		MainWorld->AddActorToLevel(capsuleD);
 	}
-	
+	*/
 
 	// ================================================================================================================= //
 	// Random boxes

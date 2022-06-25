@@ -19,7 +19,6 @@ private:
 	float DeltaTimeSeconds;
 	float FpsTimeMs;
 	float Fps;
-	float PhysicsTimeAccumulator;
 	nsTArray<nsWorld*> Worlds;
 
 public:

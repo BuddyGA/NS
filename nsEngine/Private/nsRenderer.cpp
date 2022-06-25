@@ -17,7 +17,7 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 	, RenderFinalTexture(nsERenderFinalTexture::NONE)
 	, RenderContextWorld(nullptr)
 	, GUIContext(nullptr)
-	, DebugDrawFlags(0)
+	, DebugDrawFlags(nsERenderDebugDraw::Collision)
 {
 	RenderPassFlags |= nsERenderPass::Forward;
 

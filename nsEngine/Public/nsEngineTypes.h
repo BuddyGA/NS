@@ -9,9 +9,11 @@
 
 #define NS_ENGINE_FRAME_BUFFERING									(3)
 
-#define NS_ENGINE_MESH_MAX_LODs										(4)
+#define NS_ENGINE_PHYSICS_MAX_HIT_RESULT							(8)
 
-#define NS_ENGINE_TEXTURE_MAX_MIPs									(16)
+#define NS_ENGINE_MESH_MAX_LOD										(4)
+
+#define NS_ENGINE_TEXTURE_MAX_MIP									(16)
 #define NS_ENGINE_TEXTURE_DYNAMIC_INDEXING_BINDING_COUNT			(64)
 #define NS_ENGINE_TEXTURE_DEFAULT_WHITE_NAME						"tex_default_white"
 #define NS_ENGINE_TEXTURE_DEFAULT_BLACK_NAME						"tex_default_black"
@@ -25,11 +27,12 @@
 #define NS_ENGINE_ASSET_FILE_SIGNATURE								(0x0000734E) // Ns
 #define NS_ENGINE_ASSET_FILE_VERSION								(1)
 #define NS_ENGINE_ASSET_FILE_EXTENSION								".nsbin"
-#define NS_ENGINE_ASSET_MATERIAL_MAX_TEXTURES						(8)
-#define NS_ENGINE_ASSET_MODEL_MAX_MESHES							(4)
+#define NS_ENGINE_ASSET_MATERIAL_MAX_TEXTURE						(8)
+#define NS_ENGINE_ASSET_MODEL_MAX_MESH								(4)
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME					"mdl_default_floor"
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME						"mdl_default_wall"
 #define NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME						"mdl_default_box"
+#define NS_ENGINE_ASSET_MODEL_DEFAULT_PLATFORM_NAME					"mdl_default_platform"
 
 #define NS_ENGINE_TRANSFORM_MAX_CHILDREN							(8)
 
@@ -121,11 +124,22 @@ namespace physx
 };
 
 
+class nsViewport;
 class nsActor;
 class nsLevel;
 class nsWorld;
 class nsActorComponent;
 class nsTransformComponent;
+
+
+
+enum class nsETickUpdateFrequency : uint8
+{
+	NONE = 0,
+	PRE_PHYSICS,
+	PHYSICS,
+	POST_PHYSICS
+};
 
 
 
@@ -155,10 +169,11 @@ namespace nsEPhysicsCollisionChannel
 {
 	enum Type : uint32
 	{
-		Default = (1 << 0),
-		Character = (1 << 1),
-		Camera = (1 << 2),
-		MousePicking = (1 << 3),
+		NONE			= (0),
+		Default			= (1 << 0),
+		Character		= (1 << 1),
+		Camera			= (1 << 2),
+		MousePicking	= (1 << 3),
 	};
 };
 
@@ -175,11 +190,13 @@ enum class nsEPhysicsCollisionTest : uint8
 };
 
 
+typedef nsTArrayInline<nsActor*, 8> nsPhysicsQueryIgnoredActors;
+
 
 struct nsPhysicsQueryParams
 {
 	nsEPhysicsCollisionChannel::Type Channel;
-	nsTArrayInline<nsActor*, 8> IgnoredActors;
+	nsPhysicsQueryIgnoredActors IgnoredActors;
 
 
 public:
@@ -200,6 +217,7 @@ struct nsPhysicsHitResult
 	nsVector3 WorldPosition;
 	nsVector3 WorldNormal;
 	float Distance;
+	bool bIsBlock;
 
 
 public:
@@ -209,11 +227,13 @@ public:
 		, WorldPosition()
 		, WorldNormal()
 		, Distance(0.0f)
+		, bIsBlock(false)
 	{
 	}
 
 };
 
+typedef nsTArrayInline<nsPhysicsHitResult, NS_ENGINE_PHYSICS_MAX_HIT_RESULT> nsPhysicsHitResultMany;
 
 
 

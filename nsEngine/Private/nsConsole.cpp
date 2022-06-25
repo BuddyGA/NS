@@ -119,6 +119,14 @@ void nsConsoleManager::ExecuteCommand(const nsString& textCommand)
 	const nsString lowerCaseTextCommand = textCommand.ToLower();
 	const nsTArray<nsString> inputs = lowerCaseTextCommand.Splits(' ');
 	const nsString& command = inputs[0];
+
+	if (command == "clear")
+	{
+		LogChars.Clear();
+		LogEntries.Clear();
+		return;
+	}
+
 	nsConsoleCallbackDelegate* commandCallback = CommandTable.GetValueByKey(command);
 
 	if (commandCallback)

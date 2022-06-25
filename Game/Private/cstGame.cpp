@@ -1,4 +1,5 @@
 #include "cstGame.h"
+#include "cstCharacter.h"
 #include "nsRenderManager.h"
 
 #if CST_GAME_WITH_EDITOR
@@ -7,25 +8,27 @@
 
 
 
-nsGameApplication* CreateGameApplication(int windowResX, int windowResY, nsEWindowFullscreenMode fullscreenMode) noexcept
-{
-	return new cstGame("cst_game", windowResX, windowResY, fullscreenMode);
-}
-
-
-
-
 cstGame::cstGame(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
 	: nsGameApplication(title, width, height, fullscreenMode)
 {
 	CurrentState = cstEGameState::NONE;
 	PendingChangeState = cstEGameState::NONE;
+	PlayerController = nullptr;
 }
 
 
 void cstGame::Initialize() noexcept
 {
 	nsGameApplication::Initialize();
+
+	PlayerController = ns_CreateObject<cstPlayerController>();
+	PlayerController->Viewport = &MainViewport;
+
+	cstCharacter* character = MainWorld->CreateActor<cstCharacter>("character_main", false, nsVector3(0.0f, 100.0f, -300.0f));
+	MainWorld->AddActorToLevel(character);
+
+	PlayerController->Character = character;
+
 
 #if CST_GAME_WITH_EDITOR
 	g_Editor = ns_CreateObject<cstEditor>(this);
@@ -95,6 +98,7 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 
 		case cstEGameState::PLAYING:
 		{
+			PlayerController->TickUpdate(deltaTime);
 			break;
 		}
 
@@ -118,6 +122,15 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 		default:
 			NS_Assert(0);
 			break;
+	}
+}
+
+
+void cstGame::PhysicsTickUpdate(float fixedDeltaTime) noexcept
+{
+	if (PlayerController)
+	{
+		PlayerController->PhysicsTickUpdate(fixedDeltaTime);
 	}
 }
 
@@ -166,6 +179,10 @@ void cstGame::OnMouseMove(const nsMouseMoveEventArgs& e) noexcept
 	{
 		g_Editor->OnMouseMove(e);
 	}
+	else if (CurrentState == cstEGameState::PLAYING)
+	{
+		PlayerController->OnMouseMove(e);
+	}
 #endif // CST_GAME_WITH_EDITOR
 }
 
@@ -200,19 +217,29 @@ void cstGame::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noexcept
 {
 	nsGameApplication::OnKeyboardButton(e);
 
-	if (e.ButtonState == nsEButtonState::PRESSED)
+	if (e.ButtonState == nsEButtonState::RELEASED && e.Key == nsEInputKey::KEYBOARD_F9)
 	{
-		
-	}
-	else
-	{
+		if (CurrentState == cstEGameState::EDITING)
+		{
+			ChangeState(cstEGameState::PLAYING);
+		}
+		else if (CurrentState == cstEGameState::PLAYING)
+		{
+			ChangeState(cstEGameState::EDITING);
+		}
 
+		return;
 	}
+
 
 #if CST_GAME_WITH_EDITOR
 	if (CurrentState == cstEGameState::EDITING)
 	{
 		g_Editor->OnKeyboardButton(e);
+	}
+	else if (CurrentState == cstEGameState::PLAYING)
+	{
+		PlayerController->OnKeyboardButton(e);
 	}
 #endif // CST_GAME_WITH_EDITOR
 }
@@ -244,6 +271,10 @@ void cstGame::HandleGameState_Loading()
 
 void cstGame::HandleGameState_Playing()
 {
+	MainWorld->DispatchStartPlay();
+	PlayerController->SetControlState(cstEPlayerControlState::CONTROLLING_CHARACTER);
+	SetMouseRelativeMode(true);
+	ShowMouseCursor(false);
 }
 
 
@@ -257,6 +288,8 @@ void cstGame::HandleGameState_Cutscene()
 
 void cstGame::HandleGameState_Editing()
 {
+	SetMouseRelativeMode(false);
+	ShowMouseCursor(true);
 	g_Editor->MainViewport = &MainViewport;
 	g_Editor->MainRenderer = MainRenderer;
 	g_Editor->MainWorld = MainWorld;

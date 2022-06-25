@@ -1,6 +1,8 @@
 #include "nsPhysics_PhysX.h"
 #include "nsConsole.h"
 #include "nsActor.h"
+#include "nsViewport.h"
+#include "nsPhysicsComponents.h"
 #include "nsRenderContextWorld.h"
 #include "physx/foundation/PxAllocatorCallback.h"
 #include "physx/foundation//PxErrorCallback.h"
@@ -71,10 +73,17 @@ public:
 class nsPhysX_QueryFilterCallback : public PxQueryFilterCallback
 {
 public:
-	nsTArrayInline<nsActor*, 8> IgnoredActors;
+	nsPhysicsQueryIgnoredActors IgnoredActors;
+	bool bIsMousePicking;
 
 
 public:
+	nsPhysX_QueryFilterCallback()
+	{
+		bIsMousePicking = false;
+	}
+
+
 	/**
 	\brief This filter callback is executed before the exact intersection test if PxQueryFlag::ePREFILTER flag was set.
 
@@ -86,14 +95,15 @@ public:
 	*/
 	virtual PxQueryHitType::Enum preFilter(const PxFilterData& filterData, const PxShape* shape, const PxRigidActor* actor, PxHitFlags& queryFlags) override
 	{
-		nsActor* actorToCheck = static_cast<nsTransformComponent*>(actor->userData)->GetActor();
+		nsActor* actorToCheck = static_cast<nsCollisionComponent*>(actor->userData)->GetActor();
+		NS_Assert(actorToCheck);
 
 		if (IgnoredActors.Find(actorToCheck) != NS_ARRAY_INDEX_INVALID)
 		{
 			return PxQueryHitType::eNONE;
 		}
 
-		return PxQueryHitType::eBLOCK;
+		return bIsMousePicking ? PxQueryHitType::eBLOCK : PxQueryHitType::eTOUCH;
 	}
 
 
@@ -113,7 +123,7 @@ public:
 
 
 
-PxFilterFlags nsPhysXHelper::DefaultSimulationFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
+static PxFilterFlags ns_CollisionFilterShader(PxFilterObjectAttributes attributes0, PxFilterData filterData0, PxFilterObjectAttributes attributes1, PxFilterData filterData1, PxPairFlags& pairFlags, const void* constantBlock, PxU32 constantBlockSize)
 {
 	// let triggers through
 	if (PxFilterObjectIsTrigger(attributes0) || PxFilterObjectIsTrigger(attributes1))
@@ -122,18 +132,58 @@ PxFilterFlags nsPhysXHelper::DefaultSimulationFilterShader(PxFilterObjectAttribu
 		return PxFilterFlag::eDEFAULT;
 	}
 
-	pairFlags = PxPairFlag::eCONTACT_DEFAULT;
-
 	if ((filterData0.word0 & filterData1.word1) && (filterData1.word0 & filterData0.word1))
 	{
-		pairFlags |= PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		pairFlags |= PxPairFlag::eCONTACT_DEFAULT | PxPairFlag::eNOTIFY_TOUCH_FOUND;
+		return PxFilterFlag::eDEFAULT;
 	}
 
-	return PxFilterFlag::eDEFAULT;
+	return PxFilterFlag::eSUPPRESS;
 }
 
 
-bool nsPhysXHelper::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+static void ns_FillRayCastHitResult(nsPhysicsHitResult& outHitResult, const PxRaycastHit& rayCastHit, bool bIsBlock)
+{
+	outHitResult.Component = static_cast<nsCollisionComponent*>(rayCastHit.actor->userData);
+	outHitResult.Actor = outHitResult.Component->GetActor();
+
+	if (rayCastHit.flags & PxHitFlag::ePOSITION)
+	{
+		outHitResult.WorldPosition = NS_FromPxVec3(rayCastHit.position);
+	}
+
+	if (rayCastHit.flags & PxHitFlag::eNORMAL)
+	{
+		outHitResult.WorldNormal = NS_FromPxVec3(rayCastHit.normal);
+	}
+
+	outHitResult.Distance = rayCastHit.distance;
+	outHitResult.bIsBlock = bIsBlock;
+}
+
+
+static void ns_FillSweepHitResult(nsPhysicsHitResult& outHitResult, const PxSweepHit& sweepHit, bool bIsBlock)
+{
+	outHitResult.Component = static_cast<nsCollisionComponent*>(sweepHit.actor->userData);
+	outHitResult.Actor = outHitResult.Component->GetActor();
+
+	if (sweepHit.flags & PxHitFlag::ePOSITION)
+	{
+		outHitResult.WorldPosition = NS_FromPxVec3(sweepHit.position);
+	}
+
+	if (sweepHit.flags & PxHitFlag::eNORMAL)
+	{
+		outHitResult.WorldNormal = NS_FromPxVec3(sweepHit.normal);
+	}
+
+	outHitResult.Distance = sweepHit.distance;
+	outHitResult.bIsBlock = bIsBlock;
+}
+
+
+
+bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
 	NS_Assert(scene);
 
@@ -146,43 +196,80 @@ bool nsPhysXHelper::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& h
 	nsPhysX_QueryFilterCallback queryFilterCallback;
 	queryFilterCallback.IgnoredActors = params.IgnoredActors;
 
-	PxSweepBufferN<1> buffer;
-
-	bool bFoundHit = scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
+	PxRaycastBufferN<1> rayCastBuffer;
+	bool bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, rayCastBuffer, hitFlags, queryFilterData, &queryFilterCallback);
 
 	if (bFoundHit)
 	{
-		const PxSweepHit sweepHit = buffer.block;
-		hitResult.Component = static_cast<nsTransformComponent*>(sweepHit.actor->userData);
-		hitResult.Actor = hitResult.Component->GetActor();
-
-		if (sweepHit.flags & PxHitFlag::ePOSITION)
-		{
-			hitResult.WorldPosition = NS_FromPxVec3(sweepHit.position);
-		}
-
-		if (sweepHit.flags & PxHitFlag::eNORMAL)
-		{
-			hitResult.WorldNormal = NS_FromPxVec3(sweepHit.normal);
-		}
-
-		hitResult.Distance = sweepHit.distance;
+		outHitResult = {};
+		ns_FillRayCastHitResult(outHitResult, rayCastBuffer.hasBlock ? rayCastBuffer.block : rayCastBuffer.getTouch(0), rayCastBuffer.hasBlock);
 	}
 
 	return bFoundHit;
 }
 
 
-PxShape* nsPhysXHelper::GetActorShape(PxRigidActor* rigidActor)
+bool nsPhysX::SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	NS_Assert(rigidActor);
+	NS_ValidateV(0, "Not implemented yet!");
+	return false;
+}
 
-	PxShape* shape = nullptr;
-	const PxU32 shapeCount = rigidActor->getShapes(&shape, 1, 0);
-	NS_Assert(shape);
-	NS_Assert(shapeCount == 1);
 
-	return shape;
+bool nsPhysX::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	NS_Assert(scene);
+
+	const PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
+
+	PxQueryFilterData queryFilterData{};
+	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
+	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
+
+	nsPhysX_QueryFilterCallback queryFilterCallback;
+	queryFilterCallback.IgnoredActors = params.IgnoredActors;
+
+	PxSweepBufferN<1> sweepBuffer;
+	const bool bFoundHit = scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+
+	if (bFoundHit)
+	{
+		outHitResult = {};
+		ns_FillSweepHitResult(outHitResult, sweepBuffer.hasBlock ? sweepBuffer.block : sweepBuffer.getTouch(0), sweepBuffer.hasBlock);
+	}
+	
+	return bFoundHit;
+}
+
+
+bool nsPhysX::SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	NS_Assert(scene);
+
+	const PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
+
+	PxQueryFilterData queryFilterData{};
+	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
+	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
+
+	nsPhysX_QueryFilterCallback queryFilterCallback;
+	queryFilterCallback.IgnoredActors = params.IgnoredActors;
+
+	PxSweepBufferN<NS_ENGINE_PHYSICS_MAX_HIT_RESULT> sweepBuffer;
+	scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+	outHitResultMany.Clear();
+
+	if (sweepBuffer.hasBlock)
+	{
+		ns_FillSweepHitResult(outHitResultMany.Add(), sweepBuffer.block, true);
+	}
+
+	for (PxU32 i = 0; i < sweepBuffer.getNbTouches(); ++i)
+	{
+		ns_FillSweepHitResult(outHitResultMany.Add(), sweepBuffer.getTouch(i), false);
+	}
+
+	return outHitResultMany.GetCount() > 0;
 }
 
 
@@ -266,7 +353,7 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 
 	PxSceneDesc sceneDesc(Physics->getTolerancesScale());
 	sceneDesc.gravity = PxVec3(0.0f, -980.0f, 0.0f);
-	sceneDesc.filterShader = nsPhysXHelper::DefaultSimulationFilterShader;
+	sceneDesc.filterShader = ns_CollisionFilterShader;
 	sceneDesc.cpuDispatcher = CpuDispatcher;
 	sceneDesc.flags = PxSceneFlag::eENABLE_ACTIVE_ACTORS | PxSceneFlag::eEXCLUDE_KINEMATICS_FROM_ACTIVE_ACTORS;
 	sceneDesc.userData = nullptr;
@@ -292,55 +379,46 @@ void nsPhysicsManager::DestroyScene(physx::PxScene*& scene)
 
 bool nsPhysicsManager::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	NS_Assert(scene);
-
-	PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
-
-	PxQueryFilterData queryFilterData{};
-	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
-	queryFilterData.data.word1 = static_cast<PxU32>(params.Channel);
-
-	nsPhysX_QueryFilterCallback queryFilterCallback;
-	queryFilterCallback.IgnoredActors = params.IgnoredActors;
-
-	PxRaycastBufferN<1> buffer;
-	bool bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, buffer, hitFlags, queryFilterData, &queryFilterCallback);
-
-	if (bFoundHit)
-	{
-		const PxRaycastHit rayCastHit = buffer.block;
-
-		hitResult.Component = static_cast<nsTransformComponent*>(rayCastHit.actor->userData);
-		hitResult.Actor = hitResult.Component->GetActor();
-
-		if (rayCastHit.flags & PxHitFlag::ePOSITION)
-		{
-			hitResult.WorldPosition = NS_FromPxVec3(rayCastHit.position);
-		}
-
-		if (rayCastHit.flags & PxHitFlag::eNORMAL)
-		{
-			hitResult.WorldNormal = NS_FromPxVec3(rayCastHit.normal);
-		}
-
-		hitResult.Distance = rayCastHit.distance;
-	}
-
-	return bFoundHit;
+	return nsPhysX::SceneQueryRayCast(scene, hitResult, origin, direction, distance, params);
 }
 
 
 bool nsPhysicsManager::SceneQuerySweepBox(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return nsPhysXHelper::SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), worldTransform, direction, distance, params);
+	return nsPhysX::SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), worldTransform, direction, distance, params);
 }
 
 
 bool nsPhysicsManager::SceneQuerySweepSphere(physx::PxScene* scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return nsPhysXHelper::SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), worldTransform, direction, distance, params);
+	return nsPhysX::SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), worldTransform, direction, distance, params);
 }
 
+
+bool nsPhysicsManager::SceneQueryMousePicking(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const nsVector2& mousePosition, nsViewport* viewport)
+{
+	NS_Assert(viewport);
+
+	bool bFoundHit = false;
+	nsVector3 origin, direction;
+
+	if (viewport->ProjectToWorld(mousePosition, origin, direction))
+	{
+		float nearClip, farClip;
+		viewport->GetClip(nearClip, farClip);
+
+		PxRaycastBuffer rayCastBuffer;
+		bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), farClip, rayCastBuffer, PxHitFlags(0));
+
+		if (bFoundHit)
+		{
+			outHitResult = {};
+			ns_FillRayCastHitResult(outHitResult, rayCastBuffer.block, true);
+		}
+	}
+
+	return bFoundHit;
+}
 
 
 

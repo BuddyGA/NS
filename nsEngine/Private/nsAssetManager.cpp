@@ -55,6 +55,11 @@ void nsAssetManager::Initialize()
 		nsAssetModelMeshes boxMeshes;
 		boxMeshes.Add(boxMesh);
 		SaveModelAsset("mdl_default_box", boxMeshes, "Models", true);
+
+		const nsMeshID platformMesh = meshManager.GetDefaultMesh_Platform();
+		nsAssetModelMeshes platformMeshes;
+		platformMeshes.Add(platformMesh);
+		SaveModelAsset("mdl_default_platform", platformMeshes, "Models", true);
 	}
 
 

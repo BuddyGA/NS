@@ -1,16 +1,33 @@
 #include "nsUnitTest.h"
 #include "nsMath.h"
 
+#define GLM_FORCE_DEPTH_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/random.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 
 static void Test_Rotation()
 {
-	nsVector3 rotation(30.0f, 30.0f, 0.0f);
-	nsQuaternion quat = nsQuaternion::FromRotation(rotation);
+	nsVector3 __rotation(90.0f, -40.0f, 0.0f);
+
+	glm::quat glmQuat(glm::vec3(glm::radians(__rotation.X), glm::radians(__rotation.Y), glm::radians(__rotation.Z)));
+
+	nsQuaternion quat = nsQuaternion::FromRotation(__rotation.X, __rotation.Y, __rotation.Z);
+
+	glm::vec3 glmFromQuat = glm::eulerAngles(glmQuat);
+	glmFromQuat.x = glm::degrees(glmFromQuat.x);
+	glmFromQuat.y = glm::degrees(glmFromQuat.y);
+	glmFromQuat.z = glm::degrees(glmFromQuat.z);
+
 	nsVector3 fromQuat = quat.GetPitchYawRoll();
-	NS_Validate(nsMath::FloatEquals(fromQuat.X, rotation.X, NS_MATH_EPS_LOW_P));
-	NS_Validate(nsMath::FloatEquals(fromQuat.Y, rotation.Y, NS_MATH_EPS_LOW_P));
-	NS_Validate(nsMath::FloatEquals(fromQuat.Z, rotation.Z, NS_MATH_EPS_LOW_P));
+
+	NS_Validate(nsMath::FloatEquals(fromQuat.X, __rotation.X, NS_MATH_EPS_LOW_P));
+	NS_Validate(nsMath::FloatEquals(fromQuat.Y, __rotation.Y, NS_MATH_EPS_LOW_P));
+	NS_Validate(nsMath::FloatEquals(fromQuat.Z, __rotation.Z, NS_MATH_EPS_LOW_P));
 
 
 	// Axis angle

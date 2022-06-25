@@ -2,6 +2,7 @@
 #include "nsPhysics_PhysX.h"
 #include "nsWorld.h"
 #include "nsMesh.h"
+#include "nsConsole.h"
 
 
 
@@ -17,8 +18,9 @@ nsCollisionComponent::nsCollisionComponent()
 	PhysicsShape = nullptr;
 	CollisionTest = nsEPhysicsCollisionTest::COLLISION_AND_QUERY;
 	ObjectChannel = nsEPhysicsCollisionChannel::Default;
-	CollisionChannels = nsEPhysicsCollisionChannel::Default;
+	CollisionChannels = nsEPhysicsCollisionChannel::Default | nsEPhysicsCollisionChannel::Character;
 	bIsTrigger = false;
+	bIsKinematic = false;
 	bSimulatePhysics = true;
 	bEnableGravity = true;
 }
@@ -155,7 +157,8 @@ void nsCollisionComponent::UpdateCollisionActor()
 	}
 	else
 	{
-		PhysicsActor = physics->createRigidDynamic(NS_ToPxTransform(GetWorldTransform()));
+		PxRigidDynamic* rigidDynamic = physics->createRigidDynamic(NS_ToPxTransform(GetWorldTransform()));
+		PhysicsActor = rigidDynamic;
 	}
 
 	PhysicsActor->userData = this;
@@ -174,13 +177,19 @@ void nsCollisionComponent::UpdateCollisionActor()
 
 void nsCollisionComponent::UpdateCollisionActorSimulation()
 {
-	if (PhysicsActor && bAddedToLevel && bStartedPlay)
+	if (PhysicsActor == nullptr || !bAddedToLevel || !bStartedPlay)
 	{
-		PhysicsActor->setActorFlag(PxActorFlag::eDISABLE_SIMULATION, !bSimulatePhysics);
-		PhysicsActor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !bEnableGravity);
-		PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>();
+		return;
+	}
 
-		if (rigidDynamic && (bSimulatePhysics && bEnableGravity))
+	PhysicsActor->setActorFlag(PxActorFlag::eDISABLE_SIMULATION, !bSimulatePhysics);
+	PhysicsActor->setActorFlag(PxActorFlag::eDISABLE_GRAVITY, !bEnableGravity);
+
+	if (PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>())
+	{
+		rigidDynamic->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, bIsKinematic);
+		
+		if (bSimulatePhysics && !bIsKinematic)
 		{
 			PxRigidBodyExt::updateMassAndInertia(*rigidDynamic, 10.0f);
 			rigidDynamic->wakeUp();
@@ -265,18 +274,36 @@ bool nsCollisionComponent::AdjustPositionIfOverlappedWith(nsActor* actorToTest)
 		return false;
 	}
 
+	const PxTransform shapeGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
+	const PxTransform testAgaintsGlobalPose = PxShapeExt::getGlobalPose(*testAgaintsPhysicsShape, *testAgaintsPhysicsActor);
+
 	PxVec3 direction;
 	float depth;
-	const bool bIsPenetrating = PxGeometryQuery::computePenetration(direction, depth, PhysicsShape->getGeometry().any(), PhysicsActor->getGlobalPose(), testAgaintsPhysicsShape->getGeometry().any(), testAgaintsPhysicsActor->getGlobalPose());
+	const bool bIsPenetrating = PxGeometryQuery::computePenetration(direction, depth, PhysicsShape->getGeometry().any(), shapeGlobalPose, testAgaintsPhysicsShape->getGeometry().any(), testAgaintsGlobalPose);
 
 	if (bIsPenetrating)
 	{
 		nsTransform newTransform = Actor->GetWorldTransform();
-		newTransform.Position = newTransform.Position + NS_FromPxVec3(direction) * depth;
+		newTransform.Position += NS_FromPxVec3(direction) * depth;
 		Actor->SetWorldTransform(newTransform);
 	}
 
 	return bIsPenetrating;
+}
+
+
+void nsCollisionComponent::SetKinematicTarget(nsTransform transform)
+{
+	if (PhysicsActor == nullptr || !bIsKinematic)
+	{
+		return;
+	}
+
+	if (PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>())
+	{
+		rigidDynamic->setGlobalPose(NS_ToPxTransform(transform));
+		SetWorldTransform(transform);
+	}
 }
 
 
@@ -295,13 +322,15 @@ nsBoxCollisionComponent::nsBoxCollisionComponent()
 
 void nsBoxCollisionComponent::UpdateCollisionShape()
 {
+	const PxVec3 pxHalfExtent = NS_ToPxVec3(HalfExtent);
+
 	if (PhysicsShape == nullptr)
 	{
-		PhysicsShape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, PxBoxGeometry(NS_ToPxVec3(HalfExtent)), *PhysicsMaterial);
+		PhysicsShape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, PxBoxGeometry(pxHalfExtent), *PhysicsMaterial);
 	}
 	else
 	{
-		PhysicsShape->setGeometry(PxBoxGeometry(NS_ToPxVec3(HalfExtent)));
+		PhysicsShape->setGeometry(PxBoxGeometry(pxHalfExtent));
 	}
 }
 
@@ -315,8 +344,9 @@ bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsV
 
 	PxBoxGeometry boxGeometry;
 	PhysicsShape->getBoxGeometry(boxGeometry);
+	const PxTransform boxGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysXHelper::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, boxGeometry, GetWorldTransform(), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, boxGeometry, NS_FromPxTransform(boxGlobalPose), direction, distance, params);
 }
 
 
@@ -345,7 +375,9 @@ void nsCapsuleCollisionComponent::UpdateCollisionShape()
 		PhysicsShape->setGeometry(PxCapsuleGeometry(Radius, Height * 0.5f));
 	}
 
-	PhysicsShape->setLocalPose(PxTransformFromSegment(PxVec3(0.0f), PxVec3(0.0f, 1.0f, 0.0f)));
+	// By default capsule will extend along the Y-axis (rotate local)
+	PxTransform relativePose(PxQuat(NS_MATH_PI_2, PxVec3(0.0f, 0.0f, 1.0f)));
+	PhysicsShape->setLocalPose(relativePose);
 }
 
 
@@ -358,8 +390,9 @@ bool nsCapsuleCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const
 
 	PxCapsuleGeometry capsuleGeometry;
 	PhysicsShape->getCapsuleGeometry(capsuleGeometry);
+	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysXHelper::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, GetWorldTransform(), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, NS_FromPxTransform(capsuleGlobalPose), direction, distance, params);
 }
 
 
@@ -415,11 +448,12 @@ bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, co
 	{
 		return false;
 	}
-
+	
 	PxConvexMeshGeometry convexMeshGeometry;
 	PhysicsShape->getConvexMeshGeometry(convexMeshGeometry);
+	const PxTransform convexGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysXHelper::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, convexMeshGeometry, GetWorldTransform(), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, convexMeshGeometry, NS_FromPxTransform(convexGlobalPose), direction, distance, params);
 }
 
 
@@ -433,12 +467,17 @@ NS_DEFINE_OBJECT(nsCharacterMovementComponent, nsCollisionComponent);
 nsCharacterMovementComponent::nsCharacterMovementComponent()
 {
 	ObjectChannel = nsEPhysicsCollisionChannel::Character;
-	
+	bIsKinematic = true;
 	CapsuleHeight = 120.0f;
 	CapsuleRadius = 36.0f;
 	ContactOffset = 3.0f;
-	WalkSlopeLimit = 50.0f;
-	WalkStepHeight = 50.0f;
+	Acceleration = 300.0f;
+	Deceleration = 240.0f;
+	MaxSpeed = 300.0f;
+	SlopeLimit = 40.0f;
+	StepHeight = 25.0f;
+	Velocity = nsVector3::ZERO;
+	bIsOnGround = false;
 }
 
 
@@ -447,9 +486,11 @@ void nsCharacterMovementComponent::OnInitialize()
 	nsCollisionComponent::OnInitialize();
 
 	PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>();
-	NS_AssertV(rigidDynamic, "Character movement component requires dynamic (not static) actor!");
-
-	rigidDynamic->setRigidBodyFlag(PxRigidBodyFlag::eKINEMATIC, true);
+	if (rigidDynamic == nullptr)
+	{
+		NS_CONSOLE_Error(nsComponentLog, "nsCharacterMovementComponent requires dynamic actor (not marked as static)!");
+		return;
+	}
 }
 
 
@@ -464,11 +505,68 @@ void nsCharacterMovementComponent::UpdateCollisionShape()
 		PhysicsShape->setGeometry(PxCapsuleGeometry(CapsuleRadius, CapsuleHeight * 0.5f));
 	}
 
-	PhysicsShape->setLocalPose(PxTransformFromSegment(PxVec3(0.0f), PxVec3(0.0f, 1.0f, 0.0f)));
+	// By default capsule will extend along the Y-axis (rotate local)
+	PxTransform relativePose(PxQuat(NS_MATH_PI_2, PxVec3(0.0f, 0.0f, 1.0f)));
+	PhysicsShape->setLocalPose(relativePose);
 }
 
 
 bool nsCharacterMovementComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	if (PhysicsShape == nullptr)
+	{
+		return false;
+	}
+
+	PxCapsuleGeometry capsuleGeometry;
+	PhysicsShape->getCapsuleGeometry(capsuleGeometry);
+	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
+
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, NS_FromPxTransform(capsuleGlobalPose), direction, distance, params);
+}
+
+
+void nsCharacterMovementComponent::SetupCapsule(float height, float radius)
+{
+	CapsuleHeight = height;
+	CapsuleRadius = radius;
+	UpdateCollisionShape();
+}
+
+
+void nsCharacterMovementComponent::ResolveCollision(nsTransform& outTransform)
+{
+	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
+	const PxCapsuleGeometry capsuleGeometryInflated(CapsuleRadius + ContactOffset, CapsuleHeight * 0.5f);
+
+	for (int i = 0; i < MoveHitResultMany.GetCount(); ++i)
+	{
+		const nsPhysicsHitResult& hit = MoveHitResultMany[i];
+
+		nsCollisionComponent* collisionComp = ns_Cast<nsCollisionComponent>(hit.Component);
+		NS_Assert(collisionComp);
+
+		//NS_CONSOLE_Debug(nsComponentLog, "Hit actor [%s] [%s]", *collisionComp->GetActor()->Name, hit.bIsBlock ? "BLOCK" : "TOUCH");
+
+		PxRigidActor* otherActor = collisionComp->Internal_GetPhysicsActor();
+		NS_Assert(otherActor);
+
+		PxShape* otherShape = collisionComp->Internal_GetPhysicsShape();
+		NS_Assert(otherShape);
+
+		const PxTransform otherShapeTransform = PxShapeExt::getGlobalPose(*otherShape, *otherActor);
+		PxVec3 direction;
+		float depth;
+
+		if (PxGeometryQuery::computePenetration(direction, depth, capsuleGeometryInflated, capsuleGlobalPose, otherShape->getGeometry().any(), otherShapeTransform))
+		{
+			outTransform.Position += NS_FromPxVec3(direction) * (depth - ContactOffset);
+		}
+	}
+}
+
+
+bool nsCharacterMovementComponent::ApplyGravity(nsTransform& outTransform)
 {
 	return false;
 }
@@ -476,5 +574,44 @@ bool nsCharacterMovementComponent::SweepTest(nsPhysicsHitResult& hitResult, cons
 
 void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldDirection)
 {
+	nsTransform newActorTransform = Actor->GetWorldTransform();
 
+	nsPhysicsQueryParams queryParams;
+	queryParams.Channel = nsEPhysicsCollisionChannel::Character;
+	queryParams.IgnoredActors.Add(Actor);
+
+	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
+
+
+	// Apply forward/right movement
+	if (!worldDirection.IsZero())
+	{
+		newActorTransform.Position += worldDirection * MaxSpeed * deltaTime;
+		MoveHitResultMany.Clear();
+		nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, PhysicsShape->getGeometry().capsule(), NS_FromPxTransform(capsuleGlobalPose), worldDirection, MaxSpeed * deltaTime, queryParams);
+		ResolveCollision(newActorTransform);
+	}
+
+
+	// apply down (gravity) movement
+	/*
+	if (bEnableGravity)
+	{
+		const nsVector3 gravityMovement = -nsVector3::UP * 980.0f * deltaTime;
+		MoveHitResultMany.Clear();
+
+		if (nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, PhysicsShape->getGeometry().capsule(), NS_FromPxTransform(capsuleGlobalPose), -nsVector3::UP, 980.0f * deltaTime, queryParams))
+		{
+			ResolveCollision(newActorTransform);
+		}
+		else
+		{
+			newActorTransform.Position += gravityMovement;
+		}
+	}
+	*/
+
+	PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>();
+	rigidDynamic->setKinematicTarget(NS_ToPxTransform(newActorTransform));
+	SetWorldTransform(newActorTransform);
 }

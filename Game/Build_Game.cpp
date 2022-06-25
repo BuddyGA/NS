@@ -1,4 +1,4 @@
-#include "cstGameTypes.h"
+#include "cstTypes.h"
 
 /*
 #include "Private/nsGame.cpp"

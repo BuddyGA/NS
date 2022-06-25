@@ -21,7 +21,8 @@ private:
 	nsMemory ActorMemory;
 	nsTArray<nsActor*> ActorList;
 	nsTArray<nsActor*> StartStopPlayActors;
-	nsTArray<nsActor*> TickUpdateActors;
+	nsTArray<nsActor*> PrePhysicsTickUpdateActors;
+	nsTArray<nsActor*> PhysicsTickUpdateActors;
 	nsTArray<nsActor*> PendingDestroyActors;
 
 public:
@@ -36,6 +37,7 @@ public:
 	void DispatchStartPlay();
 	void DispatchStopPlay();
 	void DispatchTickUpdate(float deltaTime);
+	void DispatchPhysicsTickUpdate(float fixedDeltaTime);
 	void SyncActorTransformsWithPhysics();
 	bool PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());
 
