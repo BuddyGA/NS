@@ -346,7 +346,7 @@ bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsV
 	PhysicsShape->getBoxGeometry(boxGeometry);
 	const PxTransform boxGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, boxGeometry, NS_FromPxTransform(boxGlobalPose), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, boxGeometry, boxGlobalPose, NS_ToPxVec3(direction), distance, params);
 }
 
 
@@ -392,7 +392,7 @@ bool nsCapsuleCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const
 	PhysicsShape->getCapsuleGeometry(capsuleGeometry);
 	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, NS_FromPxTransform(capsuleGlobalPose), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, capsuleGlobalPose, NS_ToPxVec3(direction), distance, params);
 }
 
 
@@ -453,7 +453,7 @@ bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, co
 	PhysicsShape->getConvexMeshGeometry(convexMeshGeometry);
 	const PxTransform convexGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, convexMeshGeometry, NS_FromPxTransform(convexGlobalPose), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, convexMeshGeometry, convexGlobalPose, NS_ToPxVec3(direction), distance, params);
 }
 
 
@@ -522,7 +522,7 @@ bool nsCharacterMovementComponent::SweepTest(nsPhysicsHitResult& hitResult, cons
 	PhysicsShape->getCapsuleGeometry(capsuleGeometry);
 	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
-	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, NS_FromPxTransform(capsuleGlobalPose), direction, distance, params);
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, capsuleGeometry, capsuleGlobalPose, NS_ToPxVec3(direction), distance, params);
 }
 
 
@@ -534,13 +534,32 @@ void nsCharacterMovementComponent::SetupCapsule(float height, float radius)
 }
 
 
+bool nsCharacterMovementComponent::SweepCapsuleMovement(const nsTransform& worldTransform, const nsVector3& movement)
+{
+	nsVector3 direction = movement - worldTransform.Position;
+	const float distance = direction.GetMagnitude();
+	direction.Normalize();
+
+	const PxCapsuleGeometry capsuleGeometry(CapsuleRadius, CapsuleHeight * 0.5f);
+	const PxTransform capsuleGlobalPose = NS_ToPxTransform(worldTransform) * PhysicsShape->getLocalPose();
+
+	nsPhysicsQueryParams queryParams;
+	queryParams.Channel = nsEPhysicsCollisionChannel::Character;
+	queryParams.IgnoredActors.Add(Actor);
+
+	MoveHitResultMany.Clear();
+
+	return nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, capsuleGeometry, capsuleGlobalPose, NS_ToPxVec3(direction), distance, queryParams);
+}
+
+
 void nsCharacterMovementComponent::ResolveCollision(nsTransform& outTransform)
 {
-	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 	const PxCapsuleGeometry capsuleGeometryInflated(CapsuleRadius + ContactOffset, CapsuleHeight * 0.5f);
 
 	for (int i = 0; i < MoveHitResultMany.GetCount(); ++i)
 	{
+		const PxTransform capsuleGlobalPose = NS_ToPxTransform(outTransform) * PhysicsShape->getLocalPose();
 		const nsPhysicsHitResult& hit = MoveHitResultMany[i];
 
 		nsCollisionComponent* collisionComp = ns_Cast<nsCollisionComponent>(hit.Component);
@@ -566,52 +585,53 @@ void nsCharacterMovementComponent::ResolveCollision(nsTransform& outTransform)
 }
 
 
-bool nsCharacterMovementComponent::ApplyGravity(nsTransform& outTransform)
-{
-	return false;
-}
-
-
 void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldDirection)
 {
-	nsTransform newActorTransform = Actor->GetWorldTransform();
-
+	nsTransform actorTransform = Actor->GetWorldTransform();
+	PxTransform rigidBodyTransform = PhysicsActor->getGlobalPose();
+	
 	nsPhysicsQueryParams queryParams;
 	queryParams.Channel = nsEPhysicsCollisionChannel::Character;
 	queryParams.IgnoredActors.Add(Actor);
-
-	const PxTransform capsuleGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
 
 
 	// Apply forward/right movement
 	if (!worldDirection.IsZero())
 	{
-		newActorTransform.Position += worldDirection * MaxSpeed * deltaTime;
-		MoveHitResultMany.Clear();
-		nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, PhysicsShape->getGeometry().capsule(), NS_FromPxTransform(capsuleGlobalPose), worldDirection, MaxSpeed * deltaTime, queryParams);
-		ResolveCollision(newActorTransform);
+		const nsVector3 forwardRightMovement = worldDirection * MaxSpeed * deltaTime;
+
+		if (SweepCapsuleMovement(actorTransform, forwardRightMovement))
+		{
+			actorTransform.Position += forwardRightMovement;
+			ResolveCollision(actorTransform);
+		}
+		else
+		{
+			actorTransform.Position += forwardRightMovement;
+		}
 	}
 
 
 	// apply down (gravity) movement
-	/*
 	if (bEnableGravity)
 	{
 		const nsVector3 gravityMovement = -nsVector3::UP * 980.0f * deltaTime;
-		MoveHitResultMany.Clear();
 
-		if (nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, PhysicsShape->getGeometry().capsule(), NS_FromPxTransform(capsuleGlobalPose), -nsVector3::UP, 980.0f * deltaTime, queryParams))
+		if (SweepCapsuleMovement(actorTransform, gravityMovement))
 		{
-			ResolveCollision(newActorTransform);
+			actorTransform.Position += gravityMovement;
+			ResolveCollision(actorTransform);
 		}
 		else
 		{
-			newActorTransform.Position += gravityMovement;
+			actorTransform.Position += gravityMovement;
 		}
 	}
-	*/
 
-	PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>();
-	rigidDynamic->setKinematicTarget(NS_ToPxTransform(newActorTransform));
-	SetWorldTransform(newActorTransform);
+	
+	if (PxRigidDynamic* rigidDynamic = PhysicsActor->is<PxRigidDynamic>())
+	{
+		rigidDynamic->setKinematicTarget(NS_ToPxTransform(actorTransform));
+		SetWorldTransform(actorTransform);
+	}
 }

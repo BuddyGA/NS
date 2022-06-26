@@ -95,7 +95,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)Externals\shaderc\Lib;$(SolutionDir)Externals\Compressonator\Lib;$(SolutionDir)Externals\PhysX\Lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>nsCore.lib;shaderc_shared.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;PhysXExtensions_static_64.lib;PhysXCooking_64.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>nsCore.lib;shaderc_shared.lib;PhysX_64.lib;PhysXCommon_64.lib;PhysXFoundation_64.lib;PhysXExtensions_static_64.lib;PhysXCooking_64.lib;PhysXPvdSDK_static_64.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /y "$(SolutionDir)Externals\shaderc\Lib\shaderc_shared.dll" $(OutDir)shaderc_shared.dll"

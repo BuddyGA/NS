@@ -20,7 +20,7 @@ namespace nsPhysX
 {
 	extern bool SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params);
 	extern bool SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params);
-	extern bool SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params);
-	extern bool SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params);
+	extern bool SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxGeometry& geometry, const PxTransform& transform, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params);
+	extern bool SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxGeometry& geometry, const PxTransform& transform, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params);
 
 };

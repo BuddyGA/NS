@@ -777,6 +777,11 @@ public:
 		return b * (nsVector3::DotProduct(a, b) / b.GetMagnitudeSqr());
 	}
 
+	NS_NODISCARD static NS_INLINE nsVector3 Reflect(const nsVector3& a, const nsVector3& n) noexcept
+	{
+		return a - nsVector3::Project(a, n) * 2.0f;
+	}
+
 	NS_NODISCARD static NS_INLINE nsVector3 Lerp(const nsVector3& a, const nsVector3& b, float t) noexcept
 	{
 		return a + (b - a) * t;

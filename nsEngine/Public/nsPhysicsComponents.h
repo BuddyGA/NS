@@ -282,8 +282,8 @@ public:
 	void SetupCapsule(float height, float radius);
 
 private:
+	bool SweepCapsuleMovement(const nsTransform& worldTransform, const nsVector3& movement);
 	void ResolveCollision(nsTransform& outTransform);
-	bool ApplyGravity(nsTransform& outTransform);
 
 public:
 	virtual void Move(float deltaTime, const nsVector3& worldDirection);

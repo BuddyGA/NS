@@ -216,7 +216,7 @@ bool nsPhysX::SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMan
 }
 
 
-bool nsPhysX::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+bool nsPhysX::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxGeometry& geometry, const PxTransform& transform, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params)
 {
 	NS_Assert(scene);
 
@@ -230,7 +230,7 @@ bool nsPhysX::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitR
 	queryFilterCallback.IgnoredActors = params.IgnoredActors;
 
 	PxSweepBufferN<1> sweepBuffer;
-	const bool bFoundHit = scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+	const bool bFoundHit = scene->sweep(geometry, transform, direction, distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
 
 	if (bFoundHit)
 	{
@@ -242,7 +242,7 @@ bool nsPhysX::SceneQuerySweep(physx::PxScene* scene, nsPhysicsHitResult& outHitR
 }
 
 
-bool nsPhysX::SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxGeometry& geometry, const nsTransform& transform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+bool nsPhysX::SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxGeometry& geometry, const PxTransform& transform, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params)
 {
 	NS_Assert(scene);
 
@@ -256,7 +256,7 @@ bool nsPhysX::SceneQuerySweepMany(physx::PxScene* scene, nsPhysicsHitResultMany&
 	queryFilterCallback.IgnoredActors = params.IgnoredActors;
 
 	PxSweepBufferN<NS_ENGINE_PHYSICS_MAX_HIT_RESULT> sweepBuffer;
-	scene->sweep(geometry, NS_ToPxTransform(transform), NS_ToPxVec3(direction), distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+	scene->sweep(geometry, transform, direction, distance, sweepBuffer, hitFlags, queryFilterData, &queryFilterCallback);
 	outHitResultMany.Clear();
 
 	if (sweepBuffer.hasBlock)
@@ -278,6 +278,7 @@ static nsPhysX_AllocatorCallback PhysXAllocatorCallback;
 static nsPhysX_ErrorCallback PhysXErrorCallback;
 static PxFoundation* Foundation;
 static PxDefaultCpuDispatcher* CpuDispatcher;
+static PxPvd* PVD;
 
 
 
@@ -310,13 +311,20 @@ void nsPhysicsManager::Initialize()
 	NS_CONSOLE_Log(PhysXLog, "Initialize physics manager [PhysX]");
 
 	Foundation = PxCreateFoundation(PX_PHYSICS_VERSION, PhysXAllocatorCallback, PhysXErrorCallback);
+
+#if 0
+	PVD = PxCreatePvd(*Foundation);
+	PxPvdTransport* transport = PxDefaultPvdSocketTransportCreate("127.0.0.1", 5425, 10);
+	PVD->connect(*transport, PxPvdInstrumentationFlag::eALL);
+#endif // 0
+
 	CpuDispatcher = PxDefaultCpuDispatcherCreate(2);
 
 	PxTolerancesScale toleranceScale;
 	toleranceScale.length = 100.0f;
 	toleranceScale.speed = 100.0f;
 
-	Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, toleranceScale, true);
+	Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, toleranceScale, true, PVD);
 
 	DefaultMaterial = Physics->createMaterial(0.5f, 0.5f, 0.5f);
 
@@ -365,6 +373,15 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 	scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
 #endif // __NS_ENGINE_DEBUG_DRAW__
 
+	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
+
+	if (pvdClient)
+	{
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
+		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
+	}
+
 	SceneObjects.Add(scene);
 
 	return scene;
@@ -385,13 +402,13 @@ bool nsPhysicsManager::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResu
 
 bool nsPhysicsManager::SceneQuerySweepBox(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return nsPhysX::SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), worldTransform, direction, distance, params);
+	return nsPhysX::SceneQuerySweep(scene, hitResult, PxBoxGeometry(NS_ToPxVec3(halfExtent)), NS_ToPxTransform(worldTransform), NS_ToPxVec3(direction), distance, params);
 }
 
 
 bool nsPhysicsManager::SceneQuerySweepSphere(physx::PxScene* scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return nsPhysX::SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), worldTransform, direction, distance, params);
+	return nsPhysX::SceneQuerySweep(scene, hitResult, PxSphereGeometry(sphereRadius), NS_ToPxTransform(worldTransform), NS_ToPxVec3(direction), distance, params);
 }
 
 

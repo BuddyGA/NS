@@ -10,6 +10,37 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 
+NS_INLINE void DecomposeVector(nsVector3& normalCompo, nsVector3& tangentCompo, const nsVector3& outwardDir, const nsVector3& outwardNormal)
+{
+	normalCompo = nsVector3::Project(outwardDir, outwardNormal);
+	tangentCompo = outwardDir - normalCompo;
+}
+
+
+NS_INLINE nsVector3 ReflectVector(const nsVector3& vec, const nsVector3& normal)
+{
+	return vec - nsVector3::Project(vec, normal) * 2.0f;
+}
+
+
+static void Test_Vector()
+{
+	{
+		const nsVector3 testDecompose(150.0f, -980.0f, 150.0f);
+		nsVector3 a, b;
+		DecomposeVector(a, b, testDecompose, nsVector3::UP);
+		NS_Validate(a.IsEquals(nsVector3(0.0f, -980.0f, 0.0f)));
+		NS_Validate(b.IsEquals(nsVector3(150.0f, 0.0f, 150.0f)));
+	}
+
+	{
+		const nsVector3 testReflect(0.0f, -100.0f, 0.0f);
+		const nsVector3 reflected = nsVector3::Reflect(testReflect, nsVector3::UP);
+		NS_Validate(reflected.IsEquals(nsVector3(0.0f, 100.0f, 0.0f)));
+	}
+}	
+
+
 static void Test_Rotation()
 {
 	nsVector3 __rotation(90.0f, -40.0f, 0.0f);
@@ -46,5 +77,6 @@ static void Test_Rotation()
 
 void nsUnitTest::TestMath()
 {
+	Test_Vector();
 	Test_Rotation();
 }
