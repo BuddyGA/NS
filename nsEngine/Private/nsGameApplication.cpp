@@ -397,6 +397,15 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		wall1->SetRootComponent(boxCollisionComp);
 		MainWorld->AddActorToLevel(wall1);
 	}
+	{
+		nsActor* wall2 = MainWorld->CreateActor("wall_2", true, nsVector3(-741.0f, 128.0f, 100.0f), nsQuaternion::FromRotation(0.0f, 90.0f, 0.0f));
+		nsBoxCollisionComponent* boxCollisionComp = wall2->AddComponent<nsBoxCollisionComponent>("box_collision");
+		boxCollisionComp->HalfExtent = nsVector3(256.0f, 128.0f, 8.0f);
+		nsMeshComponent* meshComp = wall2->AddComponent<nsMeshComponent>("mesh");
+		meshComp->SetMesh(wallModelAsset);
+		wall2->SetRootComponent(boxCollisionComp);
+		MainWorld->AddActorToLevel(wall2);
+	}
 
 	nsSharedModelAsset platformModelAsset = assetManager.LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_PLATFORM_NAME);
 	{

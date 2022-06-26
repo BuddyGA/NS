@@ -790,12 +790,10 @@ public:
 	// Returns angle between two vectors in radian
 	NS_NODISCARD static NS_INLINE float AngleBetween(const nsVector3& a, const nsVector3& b) noexcept
 	{
-		NS_Assert(a.IsNormalized());
-		NS_Assert(b.IsNormalized());
+		const nsVector3 na = a.GetNormalized();
+		const nsVector3 nb = b.GetNormalized();
 
-		const float dot = DotProduct(a, b);
-
-		return nsMath::ACos(nsMath::Clamp(dot, -1.0f, 1.0f));
+		return nsMath::ACos(nsVector3::DotProduct(na, nb));
 	}
 
 	NS_NODISCARD static NS_INLINE float DistanceSqr(const nsVector3& a, const nsVector3& b) noexcept

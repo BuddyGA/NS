@@ -267,6 +267,7 @@ protected:
 	nsPhysicsHitResultMany MoveHitResultMany;
 
 private:
+	float CurrentSlopeAngle;
 	bool bIsOnGround;
 
 
@@ -282,8 +283,9 @@ public:
 	void SetupCapsule(float height, float radius);
 
 private:
-	bool SweepCapsuleMovement(const nsTransform& worldTransform, const nsVector3& movement);
-	void ResolveCollision(nsTransform& outTransform);
+	bool SweepCapsule(const nsTransform& worldTransform, const nsVector3& moveDirection);
+	nsPhysicsHitResult SweepCapsuleAndFindClosestHit(const nsTransform& worldTransform, const nsVector3& moveDirection);
+	nsVector3 MoveAlongSurface(const nsVector3& currentPosition, const nsVector3& targetPosition, const nsVector3& surfaceNormal);
 
 public:
 	virtual void Move(float deltaTime, const nsVector3& worldDirection);

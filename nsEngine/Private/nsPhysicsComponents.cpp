@@ -477,6 +477,7 @@ nsCharacterMovementComponent::nsCharacterMovementComponent()
 	SlopeLimit = 40.0f;
 	StepHeight = 25.0f;
 	Velocity = nsVector3::ZERO;
+	CurrentSlopeAngle = 0.0f;
 	bIsOnGround = false;
 }
 
@@ -534,11 +535,9 @@ void nsCharacterMovementComponent::SetupCapsule(float height, float radius)
 }
 
 
-bool nsCharacterMovementComponent::SweepCapsuleMovement(const nsTransform& worldTransform, const nsVector3& movement)
+bool nsCharacterMovementComponent::SweepCapsule(const nsTransform& worldTransform, const nsVector3& moveDirection)
 {
-	nsVector3 direction = movement - worldTransform.Position;
-	const float distance = direction.GetMagnitude();
-	direction.Normalize();
+	NS_Assert(!moveDirection.IsZero());
 
 	const PxCapsuleGeometry capsuleGeometry(CapsuleRadius, CapsuleHeight * 0.5f);
 	const PxTransform capsuleGlobalPose = NS_ToPxTransform(worldTransform) * PhysicsShape->getLocalPose();
@@ -548,66 +547,92 @@ bool nsCharacterMovementComponent::SweepCapsuleMovement(const nsTransform& world
 	queryParams.IgnoredActors.Add(Actor);
 
 	MoveHitResultMany.Clear();
+	nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, capsuleGeometry, capsuleGlobalPose, NS_ToPxVec3(moveDirection.GetNormalized()), moveDirection.GetMagnitude() + ContactOffset, queryParams);
 
-	return nsPhysX::SceneQuerySweepMany(GetWorld()->GetPhysicsScene(), MoveHitResultMany, capsuleGeometry, capsuleGlobalPose, NS_ToPxVec3(direction), distance, queryParams);
+	return MoveHitResultMany.GetCount() > 0;
 }
 
 
-void nsCharacterMovementComponent::ResolveCollision(nsTransform& outTransform)
+nsPhysicsHitResult nsCharacterMovementComponent::SweepCapsuleAndFindClosestHit(const nsTransform& worldTransform, const nsVector3& moveDirection)
 {
-	const PxCapsuleGeometry capsuleGeometryInflated(CapsuleRadius + ContactOffset, CapsuleHeight * 0.5f);
+	float distance = moveDirection.GetMagnitude();
 
-	for (int i = 0; i < MoveHitResultMany.GetCount(); ++i)
+	if (distance == 0.0f)
 	{
-		const PxTransform capsuleGlobalPose = NS_ToPxTransform(outTransform) * PhysicsShape->getLocalPose();
-		const nsPhysicsHitResult& hit = MoveHitResultMany[i];
+		return nsPhysicsHitResult();
+	}
 
-		nsCollisionComponent* collisionComp = ns_Cast<nsCollisionComponent>(hit.Component);
-		NS_Assert(collisionComp);
+	SweepCapsule(worldTransform, moveDirection);
+	nsPhysicsHitResult closestHit;
 
-		//NS_CONSOLE_Debug(nsComponentLog, "Hit actor [%s] [%s]", *collisionComp->GetActor()->Name, hit.bIsBlock ? "BLOCK" : "TOUCH");
+	for (int hitIndex = 0; hitIndex < MoveHitResultMany.GetCount(); ++hitIndex)
+	{
+		const nsPhysicsHitResult& hit = MoveHitResultMany[hitIndex];
 
-		PxRigidActor* otherActor = collisionComp->Internal_GetPhysicsActor();
-		NS_Assert(otherActor);
-
-		PxShape* otherShape = collisionComp->Internal_GetPhysicsShape();
-		NS_Assert(otherShape);
-
-		const PxTransform otherShapeTransform = PxShapeExt::getGlobalPose(*otherShape, *otherActor);
-		PxVec3 direction;
-		float depth;
-
-		if (PxGeometryQuery::computePenetration(direction, depth, capsuleGeometryInflated, capsuleGlobalPose, otherShape->getGeometry().any(), otherShapeTransform))
+		if ((hit.Distance - ContactOffset) < distance)
 		{
-			outTransform.Position += NS_FromPxVec3(direction) * (depth - ContactOffset);
+			distance = hit.Distance - ContactOffset;
+			closestHit = hit;
 		}
 	}
+
+	closestHit.Distance = distance;
+
+	return closestHit;
+}
+
+
+nsVector3 nsCharacterMovementComponent::MoveAlongSurface(const nsVector3& currentPosition, const nsVector3& targetPosition, const nsVector3& surfaceNormal)
+{
+	const nsVector3 direction = targetPosition - currentPosition;
+	const nsVector3 reflect = nsVector3::Reflect(direction, surfaceNormal);
+	const nsVector3 project = nsVector3::Project(reflect, surfaceNormal);
+	const nsVector3 tangent = reflect - project;
+
+	return currentPosition + tangent.GetNormalized() * direction.GetMagnitude();
 }
 
 
 void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldDirection)
 {
 	nsTransform actorTransform = Actor->GetWorldTransform();
-	PxTransform rigidBodyTransform = PhysicsActor->getGlobalPose();
 	
-	nsPhysicsQueryParams queryParams;
-	queryParams.Channel = nsEPhysicsCollisionChannel::Character;
-	queryParams.IgnoredActors.Add(Actor);
-
 
 	// Apply forward/right movement
 	if (!worldDirection.IsZero())
 	{
-		const nsVector3 forwardRightMovement = worldDirection * MaxSpeed * deltaTime;
+		nsVector3 moveDirection = worldDirection * MaxSpeed * deltaTime;
 
-		if (SweepCapsuleMovement(actorTransform, forwardRightMovement))
+		if (!SweepCapsule(actorTransform, moveDirection))
 		{
-			actorTransform.Position += forwardRightMovement;
-			ResolveCollision(actorTransform);
+			actorTransform.Position += moveDirection;
 		}
 		else
 		{
-			actorTransform.Position += forwardRightMovement;
+			nsVector3 currentPosition = actorTransform.Position;
+			nsVector3 targetPosition = actorTransform.Position + moveDirection;
+			int iteration = 0;
+
+			while (iteration < 5)
+			{
+				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, moveDirection);
+
+				if (hit.Distance > 0.0f)
+				{
+					currentPosition += moveDirection.GetNormalized() * hit.Distance;
+				}
+
+				targetPosition = MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal);
+				moveDirection = targetPosition - currentPosition;
+				actorTransform.Position = currentPosition;
+
+				++iteration;
+
+				if (moveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
+				{
+					break;
+				}
+			}
 		}
 	}
 
@@ -615,16 +640,51 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 	// apply down (gravity) movement
 	if (bEnableGravity)
 	{
-		const nsVector3 gravityMovement = -nsVector3::UP * 980.0f * deltaTime;
+		nsVector3 moveDirection = -nsVector3::UP * 980.0f * deltaTime;
 
-		if (SweepCapsuleMovement(actorTransform, gravityMovement))
+		if (!SweepCapsule(actorTransform, moveDirection))
 		{
-			actorTransform.Position += gravityMovement;
-			ResolveCollision(actorTransform);
+			actorTransform.Position += moveDirection;
 		}
 		else
 		{
-			actorTransform.Position += gravityMovement;
+			nsVector3 currentPosition = actorTransform.Position;
+			nsVector3 targetPosition = actorTransform.Position + moveDirection;
+			int iteration = 0;
+
+			while (iteration < 5)
+			{
+				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, moveDirection);
+
+				if (hit.Distance > 0.0f)
+				{
+					currentPosition += moveDirection.GetNormalized() * hit.Distance;
+				}
+
+				const float dotNormalUp = nsVector3::DotProduct(hit.WorldNormal, nsVector3::UP);
+				const nsVector3 vertDir = dotNormalUp >= 0.0f ? nsVector3::UP : -nsVector3::UP;
+				const float slopeAngleDegree = nsMath::RadToDeg(nsVector3::AngleBetween(hit.WorldNormal, vertDir));
+				//NS_CONSOLE_Debug(nsComponentLog, "CharacterMovement: Down pass. [dotNormalUp: %f][slopeAngleDegree: %f]", dotNormalUp, slopeAngleDegree);
+
+				if (dotNormalUp >= 0.0f)
+				{
+					targetPosition = slopeAngleDegree > SlopeLimit ? MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal) : currentPosition;
+				}
+				else
+				{
+					targetPosition = MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal);
+				}
+
+				moveDirection = targetPosition - currentPosition;
+				actorTransform.Position = currentPosition;
+
+				++iteration;
+
+				if (moveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
+				{
+					break;
+				}
+			}
 		}
 	}
 

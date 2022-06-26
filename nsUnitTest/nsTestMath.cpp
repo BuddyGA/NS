@@ -38,6 +38,16 @@ static void Test_Vector()
 		const nsVector3 reflected = nsVector3::Reflect(testReflect, nsVector3::UP);
 		NS_Validate(reflected.IsEquals(nsVector3(0.0f, 100.0f, 0.0f)));
 	}
+
+	{
+		const nsVector3 first(0.0f, 0.0f, -1.0f);
+		const nsVector3 second(0.0f, 1.0f, 0.0f);
+		const float dot = nsVector3::DotProduct(first, second);
+		const float angle = nsVector3::AngleBetween(first, second);
+		const float radianClamped = nsMath::Clamp(angle, -1.0f, 1.0f);
+		const float degree = nsMath::RadToDeg(angle);
+
+	}
 }	
 
 
