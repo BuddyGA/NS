@@ -133,16 +133,6 @@ class nsTransformComponent;
 
 
 
-enum class nsETickUpdateFrequency : uint8
-{
-	NONE = 0,
-	PRE_PHYSICS,
-	PHYSICS,
-	POST_PHYSICS
-};
-
-
-
 enum class nsEAxisType : uint8
 {
 	X_Axis = 0,

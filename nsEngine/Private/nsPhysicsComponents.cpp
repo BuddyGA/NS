@@ -9,7 +9,8 @@
 // ================================================================================================================================== //
 // COLLISION COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsCollisionComponent, nsTransformComponent);
+NS_CLASS_BEGIN(nsCollisionComponent, nsTransformComponent)
+NS_CLASS_END(nsCollisionComponent)
 
 nsCollisionComponent::nsCollisionComponent()
 {
@@ -312,7 +313,8 @@ void nsCollisionComponent::SetKinematicTarget(nsTransform transform)
 // ================================================================================================================================== //
 // BOX COLLISION COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsBoxCollisionComponent, nsCollisionComponent);
+NS_CLASS_BEGIN(nsBoxCollisionComponent, nsCollisionComponent)
+NS_CLASS_END(nsBoxCollisionComponent)
 
 nsBoxCollisionComponent::nsBoxCollisionComponent()
 {
@@ -355,7 +357,8 @@ bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsV
 // ================================================================================================================================== //
 // CAPSULE COLLISION COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsCapsuleCollisionComponent, nsCollisionComponent);
+NS_CLASS_BEGIN(nsCapsuleCollisionComponent, nsCollisionComponent)
+NS_CLASS_END(nsCapsuleCollisionComponent)
 
 nsCapsuleCollisionComponent::nsCapsuleCollisionComponent()
 {
@@ -401,7 +404,8 @@ bool nsCapsuleCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const
 // ================================================================================================================================== //
 // CONVEX MESH COLLISION COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsConvexMeshCollisionComponent, nsCollisionComponent);
+NS_CLASS_BEGIN(nsConvexMeshCollisionComponent, nsCollisionComponent)
+NS_CLASS_END(nsConvexMeshCollisionComponent)
 
 nsConvexMeshCollisionComponent::nsConvexMeshCollisionComponent()
 {
@@ -462,7 +466,8 @@ bool nsConvexMeshCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, co
 // ================================================================================================================================== //
 // CHARACTER MOVEMENT COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsCharacterMovementComponent, nsCollisionComponent);
+NS_CLASS_BEGIN(nsCharacterMovementComponent, nsCollisionComponent)
+NS_CLASS_END(nsCharacterMovementComponent)
 
 nsCharacterMovementComponent::nsCharacterMovementComponent()
 {
@@ -527,14 +532,6 @@ bool nsCharacterMovementComponent::SweepTest(nsPhysicsHitResult& hitResult, cons
 }
 
 
-void nsCharacterMovementComponent::SetupCapsule(float height, float radius)
-{
-	CapsuleHeight = height;
-	CapsuleRadius = radius;
-	UpdateCollisionShape();
-}
-
-
 bool nsCharacterMovementComponent::SweepCapsule(const nsTransform& worldTransform, const nsVector3& moveDirection)
 {
 	NS_Assert(!moveDirection.IsZero());
@@ -582,9 +579,9 @@ nsPhysicsHitResult nsCharacterMovementComponent::SweepCapsuleAndFindClosestHit(c
 }
 
 
-nsVector3 nsCharacterMovementComponent::MoveAlongSurface(const nsVector3& currentPosition, const nsVector3& targetPosition, const nsVector3& surfaceNormal)
+nsVector3 nsCharacterMovementComponent::GetNewTargetPositionToSlideOnSurface(const nsVector3& currentPosition, const nsVector3& currentTargetPosition, const nsVector3& surfaceNormal)
 {
-	const nsVector3 direction = targetPosition - currentPosition;
+	const nsVector3 direction = currentTargetPosition - currentPosition;
 	const nsVector3 reflect = nsVector3::Reflect(direction, surfaceNormal);
 	const nsVector3 project = nsVector3::Project(reflect, surfaceNormal);
 	const nsVector3 tangent = reflect - project;
@@ -598,37 +595,37 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 	nsTransform actorTransform = Actor->GetWorldTransform();
 	
 
-	// Apply forward/right movement
+	// Apply side (forward/right) movement
 	if (!worldDirection.IsZero())
 	{
-		nsVector3 moveDirection = worldDirection * MaxSpeed * deltaTime;
+		nsVector3 currentMoveDirection = worldDirection * MaxSpeed * deltaTime;
 
-		if (!SweepCapsule(actorTransform, moveDirection))
+		if (!SweepCapsule(actorTransform, currentMoveDirection))
 		{
-			actorTransform.Position += moveDirection;
+			actorTransform.Position += currentMoveDirection;
 		}
 		else
 		{
 			nsVector3 currentPosition = actorTransform.Position;
-			nsVector3 targetPosition = actorTransform.Position + moveDirection;
+			nsVector3 currentTargetPosition = actorTransform.Position + currentMoveDirection;
 			int iteration = 0;
 
 			while (iteration < 5)
 			{
-				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, moveDirection);
+				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, currentMoveDirection);
 
 				if (hit.Distance > 0.0f)
 				{
-					currentPosition += moveDirection.GetNormalized() * hit.Distance;
+					currentPosition += currentMoveDirection.GetNormalized() * hit.Distance;
 				}
 
-				targetPosition = MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal);
-				moveDirection = targetPosition - currentPosition;
+				currentTargetPosition = GetNewTargetPositionToSlideOnSurface(currentPosition, currentTargetPosition, hit.WorldNormal);
+				currentMoveDirection = currentTargetPosition - currentPosition;
 				actorTransform.Position = currentPosition;
 
 				++iteration;
 
-				if (moveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
+				if (currentMoveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
 				{
 					break;
 				}
@@ -640,25 +637,25 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 	// apply down (gravity) movement
 	if (bEnableGravity)
 	{
-		nsVector3 moveDirection = -nsVector3::UP * 980.0f * deltaTime;
+		nsVector3 currentMoveDirection = -nsVector3::UP * 980.0f * deltaTime;
 
-		if (!SweepCapsule(actorTransform, moveDirection))
+		if (!SweepCapsule(actorTransform, currentMoveDirection))
 		{
-			actorTransform.Position += moveDirection;
+			actorTransform.Position += currentMoveDirection;
 		}
 		else
 		{
 			nsVector3 currentPosition = actorTransform.Position;
-			nsVector3 targetPosition = actorTransform.Position + moveDirection;
+			nsVector3 currentTargetPosition = actorTransform.Position + currentMoveDirection;
 			int iteration = 0;
 
 			while (iteration < 5)
 			{
-				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, moveDirection);
+				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, currentMoveDirection);
 
 				if (hit.Distance > 0.0f)
 				{
-					currentPosition += moveDirection.GetNormalized() * hit.Distance;
+					currentPosition += currentMoveDirection.GetNormalized() * hit.Distance;
 				}
 
 				const float dotNormalUp = nsVector3::DotProduct(hit.WorldNormal, nsVector3::UP);
@@ -668,19 +665,19 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 
 				if (dotNormalUp >= 0.0f)
 				{
-					targetPosition = slopeAngleDegree > SlopeLimit ? MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal) : currentPosition;
+					currentTargetPosition = slopeAngleDegree > SlopeLimit ? GetNewTargetPositionToSlideOnSurface(currentPosition, currentTargetPosition, hit.WorldNormal) : currentPosition;
 				}
 				else
 				{
-					targetPosition = MoveAlongSurface(currentPosition, targetPosition, hit.WorldNormal);
+					currentTargetPosition = GetNewTargetPositionToSlideOnSurface(currentPosition, currentTargetPosition, hit.WorldNormal);
 				}
 
-				moveDirection = targetPosition - currentPosition;
+				currentMoveDirection = currentTargetPosition - currentPosition;
 				actorTransform.Position = currentPosition;
 
 				++iteration;
 
-				if (moveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
+				if (currentMoveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
 				{
 					break;
 				}
@@ -694,4 +691,12 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 		rigidDynamic->setKinematicTarget(NS_ToPxTransform(actorTransform));
 		SetWorldTransform(actorTransform);
 	}
+}
+
+
+void nsCharacterMovementComponent::SetupCapsule(float height, float radius)
+{
+	CapsuleHeight = height;
+	CapsuleRadius = radius;
+	UpdateCollisionShape();
 }

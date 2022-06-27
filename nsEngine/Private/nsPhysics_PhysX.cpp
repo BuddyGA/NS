@@ -183,7 +183,7 @@ static void ns_FillSweepHitResult(nsPhysicsHitResult& outHitResult, const PxSwee
 
 
 
-bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const PxVec3& origin, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params)
 {
 	NS_Assert(scene);
 
@@ -197,7 +197,7 @@ bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHi
 	queryFilterCallback.IgnoredActors = params.IgnoredActors;
 
 	PxRaycastBufferN<1> rayCastBuffer;
-	bool bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, rayCastBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+	bool bFoundHit = scene->raycast(origin, direction, distance, rayCastBuffer, hitFlags, queryFilterData, &queryFilterCallback);
 
 	if (bFoundHit)
 	{
@@ -209,7 +209,7 @@ bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHi
 }
 
 
-bool nsPhysX::SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+bool nsPhysX::SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxVec3& origin, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params)
 {
 	NS_ValidateV(0, "Not implemented yet!");
 	return false;
@@ -396,7 +396,7 @@ void nsPhysicsManager::DestroyScene(physx::PxScene*& scene)
 
 bool nsPhysicsManager::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	return nsPhysX::SceneQueryRayCast(scene, hitResult, origin, direction, distance, params);
+	return nsPhysX::SceneQueryRayCast(scene, hitResult, NS_ToPxVec3(origin), NS_ToPxVec3(direction), distance, params);
 }
 
 

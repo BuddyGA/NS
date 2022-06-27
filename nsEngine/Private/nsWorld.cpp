@@ -8,7 +8,8 @@ static nsLogCategory WorldLog("nsWorldLog", nsELogVerbosity::LV_DEBUG);
 
 
 
-NS_DEFINE_OBJECT(nsWorld, nsObject);
+NS_CLASS_BEGIN(nsWorld, nsObject)
+NS_CLASS_END(nsWorld)
 
 nsWorld::nsWorld(nsName name, bool bInitPhysics)
 {

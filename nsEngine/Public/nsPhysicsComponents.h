@@ -280,14 +280,15 @@ protected:
 
 public:
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-	void SetupCapsule(float height, float radius);
 
-private:
+
+protected:
 	bool SweepCapsule(const nsTransform& worldTransform, const nsVector3& moveDirection);
 	nsPhysicsHitResult SweepCapsuleAndFindClosestHit(const nsTransform& worldTransform, const nsVector3& moveDirection);
-	nsVector3 MoveAlongSurface(const nsVector3& currentPosition, const nsVector3& targetPosition, const nsVector3& surfaceNormal);
+	nsVector3 GetNewTargetPositionToSlideOnSurface(const nsVector3& currentPosition, const nsVector3& currentTargetPosition, const nsVector3& surfaceNormal);
 
 public:
 	virtual void Move(float deltaTime, const nsVector3& worldDirection);
+	void SetupCapsule(float height, float radius);
 
 };

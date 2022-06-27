@@ -70,7 +70,7 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 #ifndef __NS_ENGINE_SHIPPING__
 	if (command == "class" && paramCount > 0)
 	{
-		const nsTArray<const nsClass*> classes = nsObjectManager::Get().FindAllClasses(*params[0]);
+		const nsTArray<const nsClass*> classes = nsReflection::FindAllClasses(*params[0]);
 		nsString stringMessage = "Class list:\n";
 
 		for (int i = 0; i < classes.GetCount(); ++i)

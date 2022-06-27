@@ -3,7 +3,8 @@
 
 
 
-NS_DEFINE_OBJECT(cstPlayerController, nsObject);
+NS_CLASS_BEGIN(cstPlayerController, nsObject)
+NS_CLASS_END(cstPlayerController)
 
 cstPlayerController::cstPlayerController()
 {

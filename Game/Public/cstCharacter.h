@@ -11,22 +11,25 @@ class cstCharacterAttributes
 {
 public:
 	// Strength (PATK)
-	uint8 STR;
+	int STR;
 
 	// Vitality (MaxHealth, PDEF)
-	uint8 VIT;
+	int VIT;
 
 	// Intelligence (MaxMana, MATK)
-	uint8 INT;
+	int INT;
 
 	// Mentality (MDEF, CSPD)
-	uint8 MEN;
+	int MEN;
 
-	// Agility (ASPD, MSPD)
-	uint8 AGI;
+	// Dexterity (ASPD)
+	int DEX;
+
+	// Agility (MSPD)
+	int AGI;
 
 	// Luck (Critical%)
-	uint8 LUK;
+	int LUK;
 
 	// Maximum health
 	int MaxHealth;
@@ -58,6 +61,18 @@ public:
 	// Critical rate (%)
 	int CritRate;
 
+	// Poison resistance
+	int PoisonResistance;
+
+	// Burn resistance
+	int BurnResistance;
+
+	// Stun resistance
+	int StunResistance;
+
+	// Slow resistance
+	int SlowResistance;
+
 
 public:
 	cstCharacterAttributes()
@@ -66,6 +81,7 @@ public:
 		VIT = 5;
 		INT = 5;
 		MEN = 5;
+		DEX = 5;
 		AGI = 5;
 		LUK = 5;
 
@@ -79,6 +95,11 @@ public:
 		CSPD = 100;
 		MSPD = 300;
 		CritRate = 5;
+
+		PoisonResistance = 50;
+		BurnResistance = 50;
+		StunResistance = 50;
+		SlowResistance = 50;
 	}
 
 };
@@ -90,12 +111,9 @@ class cstCharacter : public nsActor
 	NS_DECLARE_OBJECT()
 
 private:
-	//nsCapsuleCollisionComponent* CapsuleComponent;
 	nsCharacterMovementComponent* MovementComponent;
 	nsMeshComponent* MeshComponent;
 	cstCharacterAttributes Attributes;
-
-	nsTArray<nsPhysicsHitResult> MoveHitResults;
 
 
 public:

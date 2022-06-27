@@ -11,7 +11,8 @@ nsLogCategory nsComponentLog("nsComponentLog", nsELogVerbosity::LV_DEBUG);
 // ================================================================================================================================== //
 // ACTOR COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsActorComponent, nsObject);
+NS_CLASS_BEGIN(nsActorComponent, nsObject)
+NS_CLASS_END(nsActorComponent)
 
 nsActorComponent::nsActorComponent()
 {
@@ -66,7 +67,8 @@ nsWorld* nsActorComponent::GetWorld() const
 // ================================================================================================================================== //
 // TRANSFORM COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsTransformComponent, nsActorComponent);
+NS_CLASS_BEGIN(nsTransformComponent, nsActorComponent)
+NS_CLASS_END(nsTransformComponent)
 
 nsTransformComponent::nsTransformComponent()
 {

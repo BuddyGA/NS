@@ -180,13 +180,6 @@ struct nsGLTF_Mesh
 	nsTArray<nsVector4> VertexJoints;
 	nsTArray<nsVector4> VertexWeights;
 	nsTArray<uint32> VertexIndices;
-
-public:
-	nsGLTF_Mesh()
-	{
-		Name = "";
-	}
-
 };
 
 

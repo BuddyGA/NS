@@ -7,6 +7,7 @@
 #include "Private/Win64_FileSystem.cpp"
 #endif // NS_PLATFORM_WINDOWS
 
+#include "Private/nsReflection.cpp"
 #include "Private/nsCommandLines.cpp"
 #include "Private/nsFileSystem.cpp"
 #include "Private/nsLogger.cpp"

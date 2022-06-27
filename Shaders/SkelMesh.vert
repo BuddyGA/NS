@@ -4,8 +4,8 @@ layout (location = 0) in vec3 IN_Position;
 layout (location = 1) in vec3 IN_Normal;
 layout (location = 2) in vec3 IN_Tangent;
 layout (location = 3) in vec2 IN_TexCoord;
-layout (location = 4) in vec4 IN_BoneWeights;
-layout (location = 5) in ivec4 IN_BoneIds;
+layout (location = 4) in vec4 IN_BoneVertexIds;
+layout (location = 5) in vec4 IN_BoneVertexWeights;
 
 
 layout (set = 1, binding = 0) uniform UBO_Camera
@@ -39,10 +39,10 @@ layout (location = 4) out vec3 OUT_CameraWorldPosition;
 
 void main()
 {
-	mat4 weightBoneTransform = BoneTransforms[BoneTransformIndex + IN_BoneIds.x] * IN_BoneWeights.x;
-	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneIds.y] * IN_BoneWeights.y;
-	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneIds.z] * IN_BoneWeights.z;
-	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneIds.w] * IN_BoneWeights.w;
+	mat4 weightBoneTransform = BoneTransforms[BoneTransformIndex + IN_BoneVertexIds.x] * IN_BoneVertexWeights.x;
+	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneVertexIds.y] * IN_BoneVertexWeights.y;
+	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneVertexIds.z] * IN_BoneVertexWeights.z;
+	weightBoneTransform += BoneTransforms[BoneTransformIndex + IN_BoneVertexIds.w] * IN_BoneVertexWeights.w;
 
 	mat4 vertexWorldTransform = WorldTransform * weightBoneTransform;
 	vec4 vertexWorldPosition = vertexWorldTransform * vec4(IN_Position, 1.0);

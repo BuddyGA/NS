@@ -8,7 +8,8 @@
 // ================================================================================================================================== //
 // RENDER COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsRenderComponent, nsTransformComponent);
+NS_CLASS_BEGIN(nsRenderComponent, nsTransformComponent)
+NS_CLASS_END(nsRenderComponent)
 
 nsRenderComponent::nsRenderComponent()
 {
@@ -31,7 +32,8 @@ void nsRenderComponent::SetVisibility(bool bVisible)
 // ================================================================================================================================== //
 // MESH COMPONENT
 // ================================================================================================================================== //
-NS_DEFINE_OBJECT(nsMeshComponent, nsRenderComponent);
+NS_CLASS_BEGIN(nsMeshComponent, nsRenderComponent)
+NS_CLASS_END(nsMeshComponent)
 
 nsMeshComponent::nsMeshComponent()
 {

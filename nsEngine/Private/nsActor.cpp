@@ -12,7 +12,9 @@ nsMemory nsActor::ComponentMemory("actor_components", NS_MEMORY_SIZE_MiB(1));
 
 
 
-NS_DEFINE_OBJECT(nsActor, nsObject);
+NS_CLASS_BEGIN(nsActor, nsObject)
+NS_CLASS_END(nsActor)
+
 
 nsActor::nsActor()
 	: Level(nullptr)
