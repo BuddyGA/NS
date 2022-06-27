@@ -169,8 +169,6 @@ void nsMaterialManager::Initialize() noexcept
 			forwardState.ShaderResourceLayout = GetDefaultShaderResourceLayout_Primitive();
 			forwardState.VertexShader = shaderManager.GetShaderModule("primitive");
 			forwardState.FragmentShader = shaderManager.GetShaderModule("color");
-			forwardState.bEnableDepthTest = false;
-			forwardState.bEnableDepthWrite = false;
 
 			// mesh
 			forwardState.SurfaceDomain = nsEMaterialSurfaceDomain::PRIMITIVE_MESH;

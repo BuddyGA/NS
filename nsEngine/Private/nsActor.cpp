@@ -278,6 +278,8 @@ bool nsActor::RemoveComponent(nsActorComponent* component)
 		return false;
 	}
 
+	NS_Validate_IsMainThread();
+
 	const int index = Components.Find(component);
 
 	if (index == NS_ARRAY_INDEX_INVALID)
@@ -286,7 +288,11 @@ bool nsActor::RemoveComponent(nsActorComponent* component)
 		return false;
 	}
 
-	component->OnRemovedFromLevel();
+	if (Flags & nsEActorFlag::AddedToLevel)
+	{
+		component->OnRemovedFromLevel();
+	}
+
 	component->OnDestroy();
 	Components.RemoveAt(index);
 	ComponentMemory.Deallocate(component);

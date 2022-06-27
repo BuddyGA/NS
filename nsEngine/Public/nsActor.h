@@ -222,6 +222,8 @@ public:
 	{
 		static_assert(std::is_base_of<nsActorComponent, TComponent>::value, "AddComponent() type of <TComponent> must be derived from type <nsActorComponent>!");
 
+		NS_Validate_IsMainThread();
+
 		nsActorComponent* checkComponent = FindComponent(name);
 		NS_ValidateV(checkComponent == nullptr, "Actor [%s] already had component with name [%s]!", *Name, *name);
 
@@ -259,6 +261,7 @@ public:
 	}
 
 
+	/*
 	template<typename TComponent = nsActorComponent>
 	NS_INLINE bool RemoveComponent()
 	{
@@ -273,7 +276,7 @@ public:
 				check->OnRemovedFromLevel();
 				check->OnDestroy();
 				Components.RemoveAt(i);
-				ComponentMemory.Deallocate(check);
+				ComponentMemory.DeallocateDestruct<TComponent>(check);
 
 				return true;
 			}
@@ -281,6 +284,7 @@ public:
 
 		return false;
 	}
+	*/
 
 
 	template<typename TComponent = nsActorComponent>

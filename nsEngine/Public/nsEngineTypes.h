@@ -304,6 +304,7 @@ extern NS_ENGINE_API nsMemory g_EngineDefaultMemory;
 template<typename T, typename...TConstructorArgs>
 NS_NODISCARD_INLINE T* ns_CreateObject(TConstructorArgs&&... args) noexcept
 {
+	NS_Validate_IsMainThread();
 	return g_EngineDefaultMemory.AllocateConstruct<T>(std::forward<TConstructorArgs>(args)...);
 }
 
@@ -311,5 +312,6 @@ NS_NODISCARD_INLINE T* ns_CreateObject(TConstructorArgs&&... args) noexcept
 template<typename T>
 NS_INLINE void ns_DestroyObject(T*& obj) noexcept
 {
+	NS_Validate_IsMainThread();
 	g_EngineDefaultMemory.DeallocateDestruct<T>(obj);
 }

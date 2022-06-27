@@ -324,7 +324,10 @@ nsBoxCollisionComponent::nsBoxCollisionComponent()
 
 void nsBoxCollisionComponent::UpdateCollisionShape()
 {
-	const PxVec3 pxHalfExtent = NS_ToPxVec3(HalfExtent);
+	PxVec3 pxHalfExtent = NS_ToPxVec3(HalfExtent);
+	pxHalfExtent.x += 1.0f;
+	pxHalfExtent.y += 1.0f;
+	pxHalfExtent.z += 1.0f;
 
 	if (PhysicsShape == nullptr)
 	{

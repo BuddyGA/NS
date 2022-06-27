@@ -6,26 +6,77 @@
 
 
 
-struct nsType
+namespace nsEType
 {
-	const char* Name;
-	int Size;
+	enum Info
+	{
+		Void = 0,
+		Pointer,
+		Bool,
+		Int,
+		Float,
+		String,
+		Name,
+		Vector2,
+		Vector3,
+		Array,
+
+		COUNT
+	};
 };
 
 
-constexpr nsType nsTypeVoid({ "void", 0 });
-constexpr nsType nsTypeBool({ "bool", sizeof(bool) });
-constexpr nsType nsTypeInt({ "int", sizeof(int) });
-constexpr nsType nsTypeFloat({ "float", sizeof(float) });
-constexpr nsType nsTypeString({ "nsString", sizeof(nsString) });
-constexpr nsType nsTypeName({ "nsName", sizeof(nsName) });
-constexpr nsType nsTypeVector2({ "nsVector2", sizeof(nsVector2) });
-constexpr nsType nsTypeVector3({ "nsVector3", sizeof(nsVector3) });
-constexpr nsType nsTypePointer({ "pointer", sizeof(void*) });
+constexpr const char* NS_TYPE_NAMES[nsEType::COUNT] =
+{
+	"void",
+	"pointer",
+	"bool",
+	"int",
+	"float",
+	"nsString",
+	"nsName",
+	"nsVector2",
+	"nsVector3",
+	"nsTArray",
+};
+
+
+struct nsType
+{
+	int Size;
+	nsEType::Info Info;
+
+
+public:
+	nsType(int size, nsEType::Info info) noexcept
+		: Size(size)
+		, Info(info)
+	{
+	}
+
+
+	NS_NODISCARD_INLINE const char* GetName() const noexcept
+	{
+		return NS_TYPE_NAMES[Info];
+	}
+
+
+	NS_INLINE bool operator==(const nsType& rhs) noexcept
+	{
+		return Size == rhs.Size && Info == rhs.Info;
+	}
+
+
+	NS_INLINE bool operator!=(const nsType& rhs) noexcept
+	{
+		return !(*this == rhs);
+	}
+
+};
 
 
 
-class NS_CORE_API nsProperty
+class nsProperty
 {
 	NS_DECLARE_NOCOPY(nsProperty)
 
@@ -33,16 +84,111 @@ private:
 	nsName Name;
 	nsType Type;
 	int Offset;
-	bool bIsSerializable;
-
+	uint32 bIsSerializable : 1;
+	
 
 public:
-	nsProperty(nsName name, const nsType& type, int offset, bool bSerializable) noexcept
+	nsProperty(nsName name, nsType type, int offset, bool bSerializable) noexcept
 		: Name(name)
 		, Type(type)
 		, Offset(offset)
 		, bIsSerializable(bSerializable)
 	{
+	}
+
+
+	template<typename T>
+	NS_INLINE void SetValue(void* obj, const T& newValue)
+	{
+		NS_Assert(sizeof(T) == Type.Size);
+		T& currentValue = *reinterpret_cast<T*>(static_cast<uint8*>(obj) + Offset);
+		currentValue = newValue;
+	}
+
+
+	template<typename T>
+	NS_NODISCARD_INLINE const T& GetValue(const void* obj) const
+	{
+		NS_Assert(sizeof(T) == Type.Size);
+		return *reinterpret_cast<const T*>(static_cast<const uint8*>(obj) + Offset);
+	}
+
+
+	NS_NODISCARD_INLINE const nsName& GetName() const noexcept
+	{
+		return Name;
+	}
+
+
+	NS_NODISCARD_INLINE const nsType& GetType() const noexcept
+	{
+		return Type;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsVoid() const noexcept
+	{
+		return Type.Info == nsEType::Void;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsPointer() const noexcept
+	{
+		return Type.Info == nsEType::Pointer;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsBool() const noexcept
+	{
+		return Type.Info == nsEType::Bool;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsInt() const noexcept
+	{
+		return Type.Info == nsEType::Int;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsFloat() const noexcept
+	{
+		return Type.Info == nsEType::Float;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsString() const noexcept
+	{
+		return Type.Info == nsEType::String;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsName() const noexcept
+	{
+		return Type.Info == nsEType::Name;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsVector2() const noexcept
+	{
+		return Type.Info == nsEType::Vector2;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsVector3() const noexcept
+	{
+		return Type.Info == nsEType::Vector3;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsArray() const noexcept
+	{
+		return Type.Info == nsEType::Array;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsSerializable() const noexcept
+	{
+		return bIsSerializable;
 	}
 
 };
@@ -51,7 +197,7 @@ typedef nsTArrayInline<nsProperty*, 32> nsPropertyList;
 
 
 
-class NS_CORE_API nsClass
+class nsClass
 {
 private:
 	nsName Name;
@@ -63,9 +209,46 @@ protected:
 
 
 public:
-	nsClass(nsName name, const nsClass* parentClass) noexcept;
-	NS_NODISCARD bool IsSubclassOf(const nsClass* parentClass) const noexcept;
-	NS_NODISCARD const nsPropertyList& GetProperties() const noexcept;
+	nsClass(nsName name, const nsClass* parentClass) noexcept
+		: Name(name)
+		, ParentClass(parentClass)
+		, bIsAbstract(false)
+	{
+	}
+
+
+	NS_NODISCARD_INLINE bool IsSubclassOf(const nsClass* parentClass) const noexcept
+	{
+		if (parentClass == nullptr)
+		{
+			return false;
+		}
+
+		if (this == parentClass)
+		{
+			return true;
+		}
+
+		const nsClass* thisParentClass = ParentClass;
+
+		while (thisParentClass)
+		{
+			if (thisParentClass == parentClass)
+			{
+				return true;
+			}
+
+			thisParentClass = thisParentClass->ParentClass;
+		}
+
+		return false;
+	}
+
+
+	NS_NODISCARD_INLINE const nsPropertyList& GetProperties() const noexcept
+	{
+		return Properties;
+	}
 
 
 	NS_NODISCARD_INLINE bool IsAbstract() const noexcept
@@ -105,18 +288,19 @@ public:
 namespace nsReflection
 {
 	template<typename T>
-	constexpr const nsType& GetType() noexcept
+	constexpr nsType CreateType() noexcept
 	{
-		if constexpr (std::is_same<T, bool>::value) return nsTypeBool;
-		if constexpr (std::is_same<T, int>::value) return nsTypeInt;
-		if constexpr (std::is_same<T, float>::value) return nsTypeFloat;
-		if constexpr (std::is_same<T, nsString>::value) return nsTypeString;
-		if constexpr (std::is_same<T, nsName>::value) return nsTypeName;
-		if constexpr (std::is_same<T, nsVector2>::value) return nsTypeVector2;
-		if constexpr (std::is_same<T, nsVector3>::value) return nsTypeVector3;
-		if constexpr (std::is_pointer<T>::value) return nsTypePointer;
+		if constexpr (std::is_pointer<T>::value) return nsType(sizeof(T*), nsEType::Pointer);
+		if constexpr (std::is_same<T, bool>::value) return nsType(sizeof(bool), nsEType::Bool);
+		if constexpr (std::is_same<T, int>::value) return nsType(sizeof(int), nsEType::Int);
+		if constexpr (std::is_same<T, float>::value) return nsType(sizeof(float), nsEType::Float);
+		if constexpr (std::is_same<T, nsString>::value) return nsType(sizeof(nsString), nsEType::String);
+		if constexpr (std::is_same<T, nsName>::value) return nsType(sizeof(nsName), nsEType::Name);
+		if constexpr (std::is_same<T, nsVector2>::value) return nsType(sizeof(nsVector2), nsEType::Vector2);
+		if constexpr (std::is_same<T, nsVector3>::value) return nsType(sizeof(nsVector3), nsEType::Vector3);
+		if constexpr (std::is_same<T, nsTArray<T>>::value) return nsType(sizeof(nsTArray<T>), nsEType::Array);
 
-		return nsTypeVoid;
+		return nsType(0, nsEType::Void);
 	}
 
 
@@ -134,8 +318,8 @@ namespace nsReflection
 		return newClass;
 	}
 
-	extern NS_NODISCARD NS_CORE_API const nsClass* FindClass(const nsName& name);
-	extern NS_NODISCARD NS_CORE_API nsTArray<const nsClass*> FindAllClasses(const nsClass* baseClass);
+	NS_NODISCARD extern NS_CORE_API const nsClass* FindClass(const nsName& name);
+	NS_NODISCARD extern NS_CORE_API nsTArray<const nsClass*> FindAllClasses(const nsClass* baseClass);
 
 
 	NS_NODISCARD_INLINE nsTArray<const nsClass*> FindAllClasses(const nsName& name)
@@ -151,16 +335,12 @@ namespace nsReflection
 	}
 
 
-	extern NS_CORE_API nsProperty* CreateProperty(nsName name, const nsType& type, int offset, bool bSerializable) noexcept;
+	NS_NODISCARD extern NS_CORE_API nsProperty* CreateProperty(nsName name, const nsType& type, int offset, bool bSerializable) noexcept;
 
 };
 
 
-#define NS_CreateProperty(name, classType, propertyType, bSerializable) nsReflection::CreateProperty(#name, nsReflection::GetType<propertyType>(), offsetof(classType, name), bSerializable)
-
-
-#define NS_PROPERTY(...)
-#define NS_CLASS(...)
+#define NS_CreateProperty(name, classType, propertyType, bSerializable) nsReflection::CreateProperty(#name, nsReflection::CreateType<propertyType>(), offsetof(classType, name), bSerializable)
 
 
 
@@ -181,8 +361,8 @@ public:																					\
 		: nsTClass(#classType, parentClassType::Class)									\
 	{																	
 
-#define NS_CLASS_Property(classType, propertyName, propertyType, serializable)			\
-		Properties.Add(NS_CreateProperty(propertyName, classType, propertyType, true));	\
+#define NS_CLASS_AddProperty(classType, propertyName, propertyType, isSerializable)					\
+		Properties.Add(NS_CreateProperty(propertyName, classType, propertyType, isSerializable));	\
 
 #define NS_CLASS_END(classType)															\
 	}																					\

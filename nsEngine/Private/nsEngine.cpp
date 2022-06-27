@@ -12,7 +12,7 @@
 
 
 static nsLogCategory EngineLog("nsEngineLog", nsELogVerbosity::LV_DEBUG);
-nsMemory g_EngineDefaultMemory("engine_default_heap", NS_MEMORY_SIZE_MiB(1), 16);
+nsMemory g_EngineDefaultMemory("engine_default", NS_MEMORY_SIZE_MiB(1), 16);
 
 
 

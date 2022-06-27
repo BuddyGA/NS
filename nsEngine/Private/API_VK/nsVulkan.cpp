@@ -136,7 +136,7 @@ NS_VK_DEFINE_FUNCTION(vkCmdInsertDebugUtilsLabelEXT);
 
 nsLogCategory VulkanLog("nsVulkanLog", nsELogVerbosity::LV_DEBUG);
 
-static nsMemory VulkanMemory("vulkan_default_heap", NS_MEMORY_SIZE_KiB(128), 16);
+static nsMemory VulkanMemory("vulkan_default", NS_MEMORY_SIZE_KiB(128), 16);
 static nsModuleHandle Module;
 static VkInstance Instance;
 static VkDebugUtilsMessengerEXT DebugUtilsMessenger;
@@ -246,8 +246,23 @@ static VkBool32 ns_VulkanDebugMessengerCallback(VkDebugUtilsMessageSeverityFlagB
 		}
 	}
 
-	NS_LogError(VulkanLog, *message);
-	NS_ValidateV(0, "Vulkan validation error!");
+	if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		NS_LogWarning(VulkanLog, *message);
+	}
+	else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+	{
+		NS_LogInfo(VulkanLog, *message);
+	}
+	else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		NS_LogError(VulkanLog, *message);
+		NS_ValidateV(0, "Vulkan validation error!");
+	}
+	else
+	{
+		NS_LogDebug(VulkanLog, *message);
+	}
 
 	return VK_FALSE;
 }

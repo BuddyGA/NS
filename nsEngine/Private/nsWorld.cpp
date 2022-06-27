@@ -244,6 +244,8 @@ nsLevel* nsWorld::CreateLevel(nsName levelName)
 		return nullptr;
 	}
 
+	NS_Validate_IsMainThread();
+
 	if (FindLevel(levelName))
 	{
 		NS_CONSOLE_Warning(WorldLog, "Fail to add level. Level with name [%s] already exists!", *levelName);
@@ -262,6 +264,8 @@ nsLevel* nsWorld::CreateLevel(nsName levelName)
 
 void nsWorld::DestroyLevel(nsName levelName)
 {
+	NS_Validate_IsMainThread();
+
 	nsLevel* level = FindLevel(levelName);
 
 	if (level == nullptr)
@@ -310,6 +314,8 @@ void nsWorld::DestroyActor(nsActor*& actor)
 	{
 		return;
 	}
+
+	NS_Validate_IsMainThread();
 
 	if (actor->Flags & nsEActorFlag::PendingDestroy)
 	{
