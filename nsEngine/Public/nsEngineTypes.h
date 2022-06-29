@@ -7,41 +7,89 @@
 #endif // __NS_ENGINE_BUILD__
 
 
+// Frame buffering count
 #define NS_ENGINE_FRAME_BUFFERING									(3)
 
-#define NS_ENGINE_PHYSICS_MAX_HIT_RESULT							(8)
-
-#define NS_ENGINE_MESH_MAX_LOD										(4)
-
-#define NS_ENGINE_TEXTURE_MAX_MIP									(16)
-#define NS_ENGINE_TEXTURE_DYNAMIC_INDEXING_BINDING_COUNT			(64)
-#define NS_ENGINE_TEXTURE_DEFAULT_WHITE_NAME						"tex_default_white"
-#define NS_ENGINE_TEXTURE_DEFAULT_BLACK_NAME						"tex_default_black"
-
-#define NS_ENGINE_MATERIAL_UNIFORM_SIZE								(256)
-#define NS_ENGINE_MATERIAL_DEFAULT_PHONG_NAME						"mat_default_phong"
-#define NS_ENGINE_MATERIAL_DEFAULT_PHONG_CHECKER_NAME				"mat_default_phong_checker"
-#define NS_ENGINE_MATERIAL_DEFAULT_GUI_NAME							"mat_default_gui"
-#define NS_ENGINE_MATERIAL_DEFAULT_FONT_NAME						"mat_default_font"
-
-#define NS_ENGINE_ASSET_FILE_SIGNATURE								(0x0000734E) // Ns
-#define NS_ENGINE_ASSET_FILE_VERSION								(1)
-#define NS_ENGINE_ASSET_FILE_EXTENSION								".nsbin"
-#define NS_ENGINE_ASSET_MATERIAL_MAX_TEXTURE						(8)
-#define NS_ENGINE_ASSET_MODEL_MAX_MESH								(4)
-#define NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME					"mdl_default_floor"
-#define NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME						"mdl_default_wall"
-#define NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME						"mdl_default_box"
-#define NS_ENGINE_ASSET_MODEL_DEFAULT_PLATFORM_NAME					"mdl_default_platform"
-
+// Maximum children count in transform hierarchy
 #define NS_ENGINE_TRANSFORM_MAX_CHILDREN							(8)
 
+// Maximum hits on physics raycast, sweep, overlap
+#define NS_ENGINE_PHYSICS_MAX_HIT_RESULT							(8)
+
+// Maximum mesh LODs
+#define NS_ENGINE_MESH_MAX_LOD										(4)
+
+// Maximum texture mips
+#define NS_ENGINE_TEXTURE_MAX_MIP									(16)
+
+// Maximum descriptor indexing for texture (bindless)
+#define NS_ENGINE_TEXTURE_DYNAMIC_INDEXING_BINDING_COUNT			(64)
+
+// Default texture name (white)
+#define NS_ENGINE_TEXTURE_DEFAULT_WHITE_NAME						"tex_default_white"
+
+// Default texture name (black)
+#define NS_ENGINE_TEXTURE_DEFAULT_BLACK_NAME						"tex_default_black"
+
+// Maximum material uniform buffer size in bytes
+#define NS_ENGINE_MATERIAL_UNIFORM_SIZE								(256)
+
+// Default material name (phong)
+#define NS_ENGINE_MATERIAL_DEFAULT_PHONG_NAME						"mat_default_phong"
+
+// Default material name (phong-checker)
+#define NS_ENGINE_MATERIAL_DEFAULT_PHONG_CHECKER_NAME				"mat_default_phong_checker"
+
+// Default material name (GUI)
+#define NS_ENGINE_MATERIAL_DEFAULT_GUI_NAME							"mat_default_gui"
+
+// Default material name (font)
+#define NS_ENGINE_MATERIAL_DEFAULT_FONT_NAME						"mat_default_font"
+
+// Maximum bones per skeleton
+#define NS_ENGINE_ANIMATION_SKELETON_MAX_BONE						(64)
+
+// Maximum key frames per animation sequence
+#define NS_ENGINE_ANIMATION_SEQUENCE_MAX_KEY_FRAME					(64)
+
+// Asset file signature (magic number) 
+#define NS_ENGINE_ASSET_FILE_SIGNATURE								(0x0000734E) // Ns
+
+// Asset file version
+#define NS_ENGINE_ASSET_FILE_VERSION								(1)
+
+// Asset file extension
+#define NS_ENGINE_ASSET_FILE_EXTENSION								".nsbin"
+
+// Maximum texture count in material asset
+#define NS_ENGINE_ASSET_MATERIAL_MAX_TEXTURE						(8)
+
+// Maximum mesh count in model asset
+#define NS_ENGINE_ASSET_MODEL_MAX_MESH								(4)
+
+// Default model name (floor)
+#define NS_ENGINE_ASSET_MODEL_DEFAULT_FLOOR_NAME					"mdl_default_floor"
+
+// Default model name (wall)
+#define NS_ENGINE_ASSET_MODEL_DEFAULT_WALL_NAME						"mdl_default_wall"
+
+// Default model name (box)
+#define NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME						"mdl_default_box"
+
+// Default model name (platform)
+#define NS_ENGINE_ASSET_MODEL_DEFAULT_PLATFORM_NAME					"mdl_default_platform"
+
+// Enable/disable game module hotreload
 #define NS_ENGINE_GAME_MODULE_HOTRELOAD								(1)
 
+// Vendor ID (AMD)
+#define NS_VENDOR_ID_AMD											(0x1002)
 
-#define NS_VENDOR_ID_AMD				(0x1002)
-#define NS_VENDOR_ID_NVIDIA				(0x10DE)
-#define NS_VENDOR_ID_INTEL				(0x8086)
+// Vendor ID (NVIDIA)
+#define NS_VENDOR_ID_NVIDIA											(0x10DE)
+
+// Vendor ID (INTEL)
+#define NS_VENDOR_ID_INTEL											(0x8086)
 
 constexpr const char* ns_VendorName(int vendorId)
 {
@@ -51,6 +99,7 @@ constexpr const char* ns_VendorName(int vendorId)
 
 	return "Others";
 }
+
 
 
 #define NS_ENGINE_DECLARE_HANDLE(type, managerClass) \
@@ -96,11 +145,11 @@ public: \
 #include <vulkan/vk_mem_alloc.h>
 
 
-
 NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
 NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
-NS_ENGINE_DECLARE_HANDLE(nsSkeletonID, nsAnimationManager)
+NS_ENGINE_DECLARE_HANDLE(nsAnimationSkeletonID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationSequenceID, nsAnimationManager)
+NS_ENGINE_DECLARE_HANDLE(nsAnimationInstanceID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsRenderContextMeshID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsRenderContextPointLightID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
@@ -271,11 +320,11 @@ struct nsVertexMeshAttribute
 	nsVector2 TexCoord;
 };
 
+
 struct nsVertexMeshSkin
 {
-	float BoneWeights[4];
-	int BoneIds[4];
-	int BoneCount;
+	nsVector4 Weights;
+	uint32 Joints;
 };
 
 

@@ -166,3 +166,21 @@ void nsMeshComponent::SetMaterial(nsMaterialID newMaterial, int index)
 	Materials[index] = newMaterial;
 	RegisterMesh();
 }
+
+
+
+
+// ================================================================================================================================== //
+// SKELETAL MESH COMPONENT
+// ================================================================================================================================== //
+NS_CLASS_BEGIN(nsSkeletalMeshComponent, nsMeshComponent)
+NS_CLASS_END(nsSkeletalMeshComponent)
+
+nsSkeletalMeshComponent::nsSkeletalMeshComponent()
+{
+}
+
+
+void nsSkeletalMeshComponent::SetSkeleton(nsSharedSkeletonAsset newSkeleton)
+{
+}

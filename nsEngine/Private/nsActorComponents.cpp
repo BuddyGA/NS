@@ -111,7 +111,7 @@ void nsTransformComponent::UpdateTransform()
 }
 
 
-void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode)
+void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode, nsName socketName)
 {
 	if (parent == nullptr)
 	{
@@ -133,7 +133,7 @@ void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETrans
 	DetachFromParent();
 	Parent = parent;
 	Parent->Children.Add(this);
-
+	
 	if (attachmentMode == nsETransformAttachmentMode::RESET_TRANSFORM)
 	{
 		LocalTransform = nsTransform();
@@ -148,6 +148,8 @@ void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETrans
 		DirtyTransform = EDirtyTransform::LOCAL;
 	}
 
+	Parent->OnChildtAttached(this, attachmentMode, socketName);
+
 	UpdateTransform();
 }
 
@@ -159,6 +161,7 @@ void nsTransformComponent::DetachFromParent()
 		return;
 	}
 
+	Parent->OnChildDetached(this);
 	Parent->Children.Remove(this);
 	Parent = nullptr;
 	DirtyTransform = EDirtyTransform::LOCAL;

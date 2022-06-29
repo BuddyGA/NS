@@ -86,6 +86,7 @@ public:
 	void ExecuteRenderPass_Shadow(VkCommandBuffer commandBuffer) noexcept;
 
 private:
+	void RenderPassForward_SkelMesh(VkCommandBuffer commandBuffer);
 	void RenderPassForward_Mesh(VkCommandBuffer commandBuffer);
 	void RenderPassForward_Wireframe(VkCommandBuffer commandBuffer);
 	void RenderPassForward_PrimitiveBatch(VkCommandBuffer commandBuffer);

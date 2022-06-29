@@ -4,6 +4,7 @@
 #include "nsMesh.h"
 #include "nsTexture.h"
 #include "nsMaterial.h"
+#include "nsAnimation.h"
 
 
 
@@ -24,6 +25,7 @@ void nsAssetManager::Initialize()
 
 	nsFileSystem::FolderCreate(EngineAssetsPath);
 	nsFileSystem::FolderCreate(GameAssetsPath);
+
 
 	// Initialize engine texture assets
 	{
@@ -94,14 +96,9 @@ void nsAssetManager::RegisterAsset(const nsString& assetFile)
 	{
 		case nsEAssetType::TEXTURE:
 		{
-			NS_AssertV(TextureAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Texture asset with name [%s] already exists!", *name);
+			NS_AssertV(TextureAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Texture asset with name [%s] already registered!", *name);
 			NS_CONSOLE_Log(AssetLog, "Register texture asset [%s]", *name);
-
-			TextureAsset.Names.Add(name);
-			TextureAsset.Paths.Add(path);
-			TextureAsset.Flags.Add(AssetFlag_Unloaded);
-			TextureAsset.RefCounts.Add(0);
-			TextureAsset.Handles.Add(nsTextureID::INVALID);
+			TextureAsset.Add(name, path, AssetFlag_Unloaded, nsTextureID::INVALID);
 
 			break;
 		}
@@ -114,14 +111,18 @@ void nsAssetManager::RegisterAsset(const nsString& assetFile)
 
 		case nsEAssetType::MODEL:
 		{
-			NS_AssertV(ModelAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Mesh asset with name [%s] already exists!", *name);
+			NS_AssertV(ModelAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Mesh asset with name [%s] already registered!", *name);
 			NS_CONSOLE_Log(AssetLog, "Register mesh asset [%s]", *name);
+			ModelAsset.Add(name, path, AssetFlag_Unloaded, nsAssetModelMeshes());
 
-			ModelAsset.Names.Add(name);
-			ModelAsset.Paths.Add(path);
-			ModelAsset.Flags.Add(AssetFlag_Unloaded);
-			ModelAsset.RefCounts.Add(0);
-			ModelAsset.Meshes.Add();
+			break;
+		}
+
+		case nsEAssetType::SKELETON:
+		{
+			NS_AssertV(SkeletonAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Skeleton asset with name [%s] already registered!", *name);
+			NS_CONSOLE_Log(AssetLog, "Register texture asset [%s]", *name);
+			SkeletonAsset.Add(name, path, AssetFlag_Unloaded, nsAnimationSkeletonID::INVALID);
 
 			break;
 		}
@@ -253,12 +254,7 @@ void nsAssetManager::SaveTextureAsset(nsName name, nsTextureID texture, const ns
 	}
 
 	NS_CONSOLE_Log(AssetLog, "Texture [%s] saved to asset file [%s]", *assetName, *assetFile);
-
-	TextureAsset.Names.Add(assetName);
-	TextureAsset.Paths.Add(assetPath);
-	TextureAsset.Flags.Add(AssetFlag_Loaded);
-	TextureAsset.RefCounts.Add(0);
-	TextureAsset.Handles.Add(texture);
+	TextureAsset.Add(assetName, assetPath, AssetFlag_Loaded, texture);
 }
 
 
@@ -320,22 +316,14 @@ nsSharedTextureAsset nsAssetManager::LoadTextureAsset(const nsName& name)
 
 void nsAssetManager::Internal_AddTextureAssetReference(int index, nsTextureID texture)
 {
-	NS_Assert(index >= 0 && index < TextureAsset.Handles.GetCount());
-	NS_Assert(texture == TextureAsset.Handles[index]);
-
-	TextureAsset.RefCounts[index]++;
+	TextureAsset.AddReference(index, texture);
 }
 
 
 void nsAssetManager::Internal_RemoveTextureAssetReference(int index, nsTextureID texture)
 {
-	NS_Assert(index >= 0 && index < TextureAsset.Handles.GetCount());
-	NS_Assert(texture == TextureAsset.Handles[index]);
-
-	if (--TextureAsset.RefCounts[index] <= 0)
+	if (TextureAsset.RemoveReference(index, texture) == 0)
 	{
-		TextureAsset.RefCounts[index] = 0;
-		TextureAsset.Flags[index] |= AssetFlag_PendingUnload;
 		NS_CONSOLE_Debug(AssetLog, "Mark texture asset [%s] pending unload (RefCount = 0)", *TextureAsset.Names[index]);
 	}
 }
@@ -429,82 +417,18 @@ nsSharedMaterialAsset nsAssetManager::LoadMaterialAsset(const nsName& name)
 
 void nsAssetManager::Internal_AddMaterialAssetReference(int index, nsMaterialID material)
 {
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-
-	MaterialAsset.RefCounts[index]++;
+	MaterialAsset.AddReference(index, material);
 }
 
 
 void nsAssetManager::Internal_RemoveMaterialAssetReference(int index, nsMaterialID material)
 {
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-
-	if (--MaterialAsset.RefCounts[index] <= 0)
+	if (MaterialAsset.RemoveReference(index, material) == 0)
 	{
-		MaterialAsset.RefCounts[index] = 0;
-		MaterialAsset.Flags[index] |= AssetFlag_PendingUnload;
 		NS_CONSOLE_Debug(AssetLog, "Mark material asset [%s] pending unload (RefCount = 0)", *MaterialAsset.Names[index]);
 	}
 }
 
-/*
-void nsAssetManager::Internal_SetMaterialTextureParameterValue(int index, nsMaterialID material, nsName paramName, const nsSharedTextureAsset& sharedTextureAsset)
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-
-	if (MaterialAsset.ParameterTables[index].TextureParameterValues.Exists(paramName))
-	{
-
-	}
-}
-
-
-nsSharedTextureAsset nsAssetManager::Internal_GetMaterialTextureParamaterValue(int index, nsMaterialID material, nsName paramName) const
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-
-	nsSharedTextureAsset sharedTextureAsset;
-
-	if (MaterialAsset.ParameterTables[index].TextureParameterValues.Exists(paramName))
-	{
-
-	}
-
-	return sharedTextureAsset;
-}
-
-
-void nsAssetManager::Internal_SetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName, float scalar)
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-}
-
-
-float nsAssetManager::Internal_GetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName) const
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-}
-
-
-void nsAssetManager::Internal_SetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName, nsVector4 vector)
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-}
-
-
-nsVector4 nsAssetManager::Internal_GetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName) const
-{
-	NS_Assert(index >= 0 && index < MaterialAsset.Handles.GetCount());
-	NS_Assert(material == MaterialAsset.Handles[index]);
-}
-*/
 
 void nsAssetManager::UpdateMaterialAssets()
 {
@@ -567,12 +491,7 @@ void nsAssetManager::SaveModelAsset(nsName name, const nsAssetModelMeshes& meshe
 	}
 
 	NS_CONSOLE_Log(AssetLog, "Model asset [%s] saved to file [%s]", *name, *assetFile);
-
-	ModelAsset.Names.Add(name);
-	ModelAsset.Paths.Add(assetPath);
-	ModelAsset.Flags.Add(AssetFlag_Loaded);
-	ModelAsset.RefCounts.Add(0);
-	ModelAsset.Meshes.Add(meshes);
+	ModelAsset.Add(name, assetPath, AssetFlag_Loaded, meshes);
 }
 
 
@@ -591,10 +510,10 @@ nsSharedModelAsset nsAssetManager::LoadModelAsset(const nsName& name)
 		return nsSharedModelAsset();
 	}
 
-	if (ModelAsset.Meshes[index].GetCount() > 0)
+	if (ModelAsset.Handles[index].GetCount() > 0)
 	{
 		ModelAsset.Flags[index] = AssetFlag_Loaded;
-		return nsSharedModelAsset(index, name, ModelAsset.Meshes[index]);
+		return nsSharedModelAsset(index, name, ModelAsset.Handles[index]);
 	}
 
 	const nsString assetFile = nsString::Format("%s/%s%s", *ModelAsset.Paths[index], *name, NS_ENGINE_ASSET_FILE_EXTENSION);
@@ -627,7 +546,7 @@ nsSharedModelAsset nsAssetManager::LoadModelAsset(const nsName& name)
 			nsMeshLODGroup& lodGroup = meshManager.GetMeshLodGroup(mesh);
 			reader | lodGroup;
 
-			ModelAsset.Meshes[index].Add(mesh);
+			ModelAsset.Handles[index].Add(mesh);
 		}
 	}
 
@@ -636,14 +555,13 @@ nsSharedModelAsset nsAssetManager::LoadModelAsset(const nsName& name)
 
 	NS_CONSOLE_Debug(AssetLog, "Loaded model asset [%s]", *name);
 
-	return nsSharedModelAsset(index, name, ModelAsset.Meshes[index]);
+	return nsSharedModelAsset(index, name, ModelAsset.Handles[index]);
 }
 
 
 void nsAssetManager::Internal_AddModelAssetReference(int index)
 {
 	NS_Assert(index >= 0 && index < ModelAsset.RefCounts.GetCount());
-
 	ModelAsset.RefCounts[index]++;
 }
 
@@ -674,15 +592,160 @@ void nsAssetManager::UpdateModelAssets()
 			flags = AssetFlag_Unloaded;
 			ModelAsset.RefCounts[i] = 0;
 
-			const int meshCount = ModelAsset.Meshes[i].GetCount();
+			const int meshCount = ModelAsset.Handles[i].GetCount();
 			NS_Assert(meshCount > 0);
 
 			for (int m = 0; m < meshCount; ++m)
 			{
-				nsMeshManager::Get().DestroyMesh(ModelAsset.Meshes[i][m]);
+				nsMeshManager::Get().DestroyMesh(ModelAsset.Handles[i][m]);
 			}
 
-			ModelAsset.Meshes[i].Clear();
+			ModelAsset.Handles[i].Clear();
+		}
+	}
+}
+
+
+
+
+// ====================================================================================================================================================================== //
+// SKELETON
+// ====================================================================================================================================================================== //
+void nsAssetManager::SaveSkeletonAsset(nsName name, nsAnimationSkeletonID skeleton, const nsString& folderPath, bool bIsEngineAsset)
+{
+	nsAnimationManager& animationManager = nsAnimationManager::Get();
+	const nsName assetName = animationManager.GetSkeletonName(skeleton);
+	const nsString assetPath = nsString::Format("%s/%s", bIsEngineAsset ? *EngineAssetsPath : *GameAssetsPath, *folderPath);
+
+	if (TextureAsset.Names.Find(assetName) != NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save skeleton asset. Skeleton asset with name [%s] already exists!", *assetName);
+		return;
+	}
+
+	if (!nsFileSystem::FolderCreate(assetPath))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save skeleton asset. Create folder [%s] failed!", *assetPath);
+		return;
+	}
+
+
+	// Write data
+	nsBinaryStreamWriter writer;
+	{
+		nsAssetFileHeader header;
+		header.Signature = NS_ENGINE_ASSET_FILE_SIGNATURE;
+		header.Version = NS_ENGINE_ASSET_FILE_VERSION;
+		header.Type = static_cast<int>(nsEAssetType::SKELETON);
+		header.Compression = 0;
+
+		writer | header;
+
+		nsAnimationSkeletonData& data = animationManager.GetSkeletonData(skeleton);
+		writer | data;
+	}
+
+
+	const nsString assetFile = nsString::Format("%s/%s%s", *assetPath, *assetName, NS_ENGINE_ASSET_FILE_EXTENSION);
+
+	if (!nsFileSystem::FileWriteBinary(assetFile, writer.GetBuffer()))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save skeleton [%s] to asset file [%s]", *assetName, *assetFile);
+		return;
+	}
+
+	NS_CONSOLE_Log(AssetLog, "Skeleton [%s] saved to asset file [%s]", *assetName, *assetFile);
+	SkeletonAsset.Add(assetName, assetPath, AssetFlag_Loaded, skeleton);
+}
+
+
+nsSharedSkeletonAsset nsAssetManager::LoadSkeletonAsset(const nsName& name)
+{
+	if (name.GetLength() == 0)
+	{
+		return nsSharedSkeletonAsset();
+	}
+
+	const int index = TextureAsset.Names.Find(name);
+
+	if (index == NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to load skeleton asset. Skeleton asset with name [%s] not found!", *name);
+		return nsSharedSkeletonAsset();
+	}
+
+	if (SkeletonAsset.Handles[index] != nsAnimationSkeletonID::INVALID)
+	{
+		SkeletonAsset.Flags[index] = AssetFlag_Loaded;
+		return nsSharedSkeletonAsset(index, name, SkeletonAsset.Handles[index]);
+	}
+
+
+	const nsString assetFile = nsString::Format("%s/%s%s", *SkeletonAsset.Paths[index], *name, NS_ENGINE_ASSET_FILE_EXTENSION);
+
+	nsTArray<uint8> bytes;
+
+	if (!nsFileSystem::FileReadBinary(assetFile, bytes))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to load skeleton asset. Read data from asset file [%s] failed!", *assetFile);
+		return nsSharedSkeletonAsset();
+	}
+
+
+	// Read data
+	nsBinaryStreamReader reader(bytes);
+	{
+		nsAssetFileHeader header{};
+		reader | header;
+
+		NS_Validate(header.Signature == NS_ENGINE_ASSET_FILE_SIGNATURE && header.Type == static_cast<int>(nsEAssetType::SKELETON));
+
+		nsAnimationManager& animationManager = nsAnimationManager::Get();
+		SkeletonAsset.Handles[index] = animationManager.CreateSkeleton(name);
+
+		nsAnimationSkeletonData& data = animationManager.GetSkeletonData(SkeletonAsset.Handles[index]);
+		reader | data;
+	}
+
+
+	TextureAsset.Flags[index] = AssetFlag_Loaded;
+
+	NS_CONSOLE_Debug(AssetLog, "Loaded skeleton asset [%s]", *name);
+
+	return nsSharedSkeletonAsset(index, name, SkeletonAsset.Handles[index]);
+}
+
+
+void nsAssetManager::Internal_AddSkeletonAssetReference(int index, nsAnimationSkeletonID skeleton)
+{
+	SkeletonAsset.AddReference(index, skeleton);
+}
+
+
+void nsAssetManager::Internal_RemoveSkeletonAssetReference(int index, nsAnimationSkeletonID skeleton)
+{
+	if (SkeletonAsset.RemoveReference(index, skeleton) == 0)
+	{
+		NS_CONSOLE_Debug(AssetLog, "Mark skeleton asset [%s] pending unload (RefCount = 0)", *SkeletonAsset.Names[index]);
+	}
+}
+
+
+void nsAssetManager::UpdateSkeletonAssets()
+{
+	for (int i = 0; i < SkeletonAsset.Flags.GetCount(); ++i)
+	{
+		uint8& flags = SkeletonAsset.Flags[i];
+
+		if (flags & AssetFlag_PendingUnload)
+		{
+			NS_Assert(SkeletonAsset.RefCounts[i] == 0);
+			NS_Assert(SkeletonAsset.Handles[i].IsValid());
+
+			flags = AssetFlag_Unloaded;
+			SkeletonAsset.RefCounts[i] = 0;
+			NS_CONSOLE_Debug(AssetLog, "Unloaded skeleton asset [%s]", *SkeletonAsset.Names[i]);
+			nsAnimationManager::Get().DestroySkeleton(SkeletonAsset.Handles[i]);
 		}
 	}
 }

@@ -14,6 +14,8 @@ cstCharacter::cstCharacter()
 	RootComponent = MovementComponent;
 
 	MeshComponent = AddComponent<nsMeshComponent>("mesh");
+	MeshComponent->SetLocalPosition(nsVector3(0.0f, -90.0f, 0.0f));
+	MeshComponent->SetLocalRotation(nsQuaternion::FromRotation(0.0f, 180.0f, 0.0f));
 }
 
 
@@ -21,7 +23,7 @@ void cstCharacter::OnInitialize()
 {
 	nsActor::OnInitialize();
 
-	MeshComponent->SetMesh(nsAssetManager::Get().LoadModelAsset(NS_ENGINE_ASSET_MODEL_DEFAULT_BOX_NAME));
+	MeshComponent->SetMesh(nsAssetManager::Get().LoadModelAsset("mdl_LowPolyChar"));
 }
 
 

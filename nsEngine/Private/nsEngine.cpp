@@ -186,24 +186,24 @@ void nsEngine::MainLoop()
 #endif // NS_ENGINE_GAME_MODULE_HOTRELOAD
 
 
-	if (Game)
+	// Pre physics update
 	{
-		Game->TickUpdate(DeltaTimeSeconds);
+		if (Game)
+		{
+			Game->TickUpdate(DeltaTimeSeconds);
+		}
+
+		for (int i = 0; i < Worlds.GetCount(); ++i)
+		{
+			Worlds[i]->DispatchTickUpdate(DeltaTimeSeconds);
+		}
+
+
+		// TODO: AI update
 	}
+	
 
-	for (int i = 0; i < Worlds.GetCount(); ++i)
-	{
-		Worlds[i]->DispatchTickUpdate(DeltaTimeSeconds);
-	}
-
-
-	// TODO: AI update
-
-
-	nsAnimationManager::Get().Update(DeltaTimeSeconds);
-
-
-	// Update physics
+	// Physics update
 	{
 		if (Game)
 		{
@@ -220,15 +220,23 @@ void nsEngine::MainLoop()
 
 
 	// Post physics update
-	if (Game)
 	{
-		Game->PostPhysicsUpdate();
+		if (Game)
+		{
+			Game->PostPhysicsUpdate();
+		}
 
-		if (!Game->IsMinimized())
+
+		// Update animation
+		nsAnimationManager::Get().Update(DeltaTimeSeconds);
+
+
+		if (Game && !Game->IsMinimized())
 		{
 			Game->DrawGUI();
 		}
 	}
+
 
 
 	for (int i = 0; i < Worlds.GetCount(); ++i)

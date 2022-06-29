@@ -88,9 +88,11 @@ private:
 
 protected:
 	virtual void OnTransformChanged() {}
+	virtual void OnChildtAttached(nsTransformComponent* child, nsETransformAttachmentMode attachmentMode, nsName socketName) {}
+	virtual void OnChildDetached(nsTransformComponent* child) {}
 
 public:
-	void AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode);
+	void AttachToParent(nsTransformComponent* parent, nsETransformAttachmentMode attachmentMode, nsName socketName = nsName::NONE);
 	void DetachFromParent();
 
 

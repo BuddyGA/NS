@@ -43,7 +43,7 @@ class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 {
 	NS_DECLARE_OBJECT()
 
-private:
+protected:
 	nsSharedModelAsset ModelAsset;
 	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESH> Materials;
 	nsRenderContextMeshID RenderMeshId;
@@ -72,5 +72,26 @@ public:
 	{
 		return ModelAsset;
 	}
+
+};
+
+
+
+
+// ================================================================================================================================== //
+// SKELETAL MESH COMPONENT
+// ================================================================================================================================== //
+class NS_ENGINE_API nsSkeletalMeshComponent : public nsMeshComponent
+{
+	NS_DECLARE_OBJECT()
+
+private:
+	nsSharedSkeletonAsset SkeletonAsset;
+	nsAnimationInstanceID AnimationInstance;
+
+
+public:
+	nsSkeletalMeshComponent();
+	void SetSkeleton(nsSharedSkeletonAsset newSkeleton);
 
 };

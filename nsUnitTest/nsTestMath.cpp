@@ -85,8 +85,26 @@ static void Test_Rotation()
 }
 
 
+
+static void Test_Color()
+{
+	const uint8 r = 255;
+	const uint8 g = 20;
+	const uint8 b = 10;
+	const uint8 a = 200;
+
+	const uint32 color = (r << 24) | (g << 16) | (b << 8) | a;
+	const nsColor rgbaColor(color);
+	NS_Validate(rgbaColor.R == 255);
+	NS_Validate(rgbaColor.G == 20);
+	NS_Validate(rgbaColor.B == 10);
+	NS_Validate(rgbaColor.A == 200);
+}
+
+
 void nsUnitTest::TestMath()
 {
+	Test_Color();
 	Test_Vector();
 	Test_Rotation();
 }

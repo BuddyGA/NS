@@ -432,7 +432,7 @@ void nsConvexMeshCollisionComponent::UpdateCollisionShape()
 		convexMeshDesc.points.stride = sizeof(nsVertexMeshPosition);
 		convexMeshDesc.points.data = vertices.GetData();
 		convexMeshDesc.points.count = static_cast<PxU32>(vertices.GetCount());
-		convexMeshDesc.vertexLimit = 16;
+		convexMeshDesc.vertexLimit = 32;
 
 		PxDefaultMemoryOutputStream buffer;
 		PxConvexMeshCookingResult::Enum result;
@@ -613,13 +613,16 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 			nsVector3 currentTargetPosition = actorTransform.Position + currentMoveDirection;
 			int iteration = 0;
 
-			while (iteration < 5)
+			while (iteration < 4)
 			{
 				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, currentMoveDirection);
 
 				if (hit.Distance > 0.0f)
 				{
 					currentPosition += currentMoveDirection.GetNormalized() * hit.Distance;
+					const float dot = nsVector3::DotProduct(currentMoveDirection.GetNormalized(), hit.WorldNormal);
+					const float angle = nsMath::RadToDeg(nsMath::ACos(dot));
+					//NS_CONSOLE_Debug(nsComponentLog, "Collide [dot: %f, angleDegree: %f]", dot, angle);
 				}
 
 				currentTargetPosition = GetNewTargetPositionToSlideOnSurface(currentPosition, currentTargetPosition, hit.WorldNormal);
@@ -631,7 +634,7 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 				if (currentMoveDirection.GetMagnitudeSqr() < NS_MATH_EPS_LOW_P * NS_MATH_EPS_LOW_P)
 				{
 					break;
-				}
+				} 
 			}
 		}
 	}
@@ -652,7 +655,7 @@ void nsCharacterMovementComponent::Move(float deltaTime, const nsVector3& worldD
 			nsVector3 currentTargetPosition = actorTransform.Position + currentMoveDirection;
 			int iteration = 0;
 
-			while (iteration < 5)
+			while (iteration < 4)
 			{
 				const nsPhysicsHitResult hit = SweepCapsuleAndFindClosestHit(actorTransform, currentMoveDirection);
 

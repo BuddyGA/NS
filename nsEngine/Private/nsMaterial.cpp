@@ -28,11 +28,11 @@ static void ns_GetVertexAttributeBindings(nsEMaterialSurfaceDomain surfaceDomain
 			break;
 		}
 
-		case nsEMaterialSurfaceDomain::SURFACE:
+		case nsEMaterialSurfaceDomain::MESH:
 		{
 			outVertexBindings.Add({ 0, sizeof(nsVertexMeshPosition), VK_VERTEX_INPUT_RATE_VERTEX });
 			outVertexBindings.Add({ 1, sizeof(nsVertexMeshAttribute), VK_VERTEX_INPUT_RATE_VERTEX });
-
+			
 			outVertexAttributes.Add({ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Position
 			outVertexAttributes.Add({ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Normal;
 			outVertexAttributes.Add({ 2, 1, VK_FORMAT_R32G32B32_SFLOAT, 12 }); // Tangent;
@@ -127,7 +127,7 @@ void nsMaterialManager::Initialize() noexcept
 		forwardState.RenderPass = nsVulkanRenderPass::GetDefault_Forward();
 		forwardState.ShaderResourceLayout = GetDefaultShaderResourceLayout_Forward();
 		forwardState.VertexShader = shaderManager.GetShaderModule("mesh");
-		forwardState.SurfaceDomain = nsEMaterialSurfaceDomain::SURFACE;
+		forwardState.SurfaceDomain = nsEMaterialSurfaceDomain::MESH;
 		forwardState.BlendMode = nsEBlendMode::NONE;
 		forwardState.CullMode = VK_CULL_MODE_BACK_BIT;
 		forwardState.bEnableDepthTest = true;
@@ -447,7 +447,7 @@ nsMaterialID nsMaterialManager::CreateMaterial(nsName name, nsMaterialPipelineSt
 
 		case nsEMaterialSurfaceDomain::PRIMITIVE_MESH:
 		case nsEMaterialSurfaceDomain::PRIMITIVE_MESH_2D:
-		case nsEMaterialSurfaceDomain::SURFACE:
+		case nsEMaterialSurfaceDomain::MESH:
 		case nsEMaterialSurfaceDomain::GUI:
 		case nsEMaterialSurfaceDomain::POST_PROCESS:
 		{
@@ -639,7 +639,7 @@ void nsMaterialManager::Update() noexcept
 			const int id = frame.MaterialToBinds[i].Id;
 			const nsMaterialPipelineState& pso = MaterialPipelineStates[id];
 
-			if (pso.SurfaceDomain != nsEMaterialSurfaceDomain::SURFACE)
+			if (pso.SurfaceDomain != nsEMaterialSurfaceDomain::MESH)
 			{
 				continue;
 			}

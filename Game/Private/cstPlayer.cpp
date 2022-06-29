@@ -108,7 +108,7 @@ void cstPlayerController::TickUpdate(float deltaTime)
 		const nsTransform characterTransform = Character->GetWorldTransform();
 		CameraTransform.Rotation = nsQuaternion::FromRotation(CameraRotation.X, CameraRotation.Y, 0.0f);
 
-		const nsVector3 cameraPivotPosition = characterTransform.Position + nsVector3(0.0f, 100.0f, 0.0f);
+		const nsVector3 cameraPivotPosition = characterTransform.Position + nsVector3(0.0f, 50.0f, 0.0f);
 		CameraTransform.Position = cameraPivotPosition - CameraTransform.GetAxisForward() * 300.0f;
 
 		if (Viewport)
@@ -126,12 +126,6 @@ void cstPlayerController::PhysicsTickUpdate(float fixedDeltaTime)
 		return;
 	}
 
-	if (nsMath::Abs(MovementAxis.X) > 0.0f || nsMath::Abs(MovementAxis.Z) > 0.0f)
-	{
-		// Update movement
-		
-	}
-	
 	nsVector3 moveDirection;
 	moveDirection += CameraTransform.GetAxisRight() * MovementAxis.X;
 	moveDirection += CameraTransform.GetAxisForward() * MovementAxis.Z;

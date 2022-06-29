@@ -157,9 +157,6 @@ private:
 	int AssetId;
 	nsName Name;
 	nsMaterialID Material;
-	nsTMap<nsName, nsSharedTextureAsset> TextureParameters;
-	nsTMap<nsName, float> ScalarParameters;
-	nsTMap<nsName, nsVector4> VectorParameters;
 
 
 public:
@@ -175,14 +172,6 @@ private:
 public:
 	void Release() noexcept;
 
-	/*
-	void SetTextureParameterValue(nsName paramName, nsSharedTextureAsset texture) noexcept;
-	NS_NODISCARD nsSharedTextureAsset GetTextureParamaterValue(nsName paramName) const noexcept;
-	void SetScalarParameterValue(nsName paramName, float value) noexcept;
-	NS_NODISCARD float GetScalarParameterValue(nsName paramName) const noexcept;
-	void SetVectorParameterValue(nsName paramName, nsVector4 value) noexcept;
-	NS_NODISCARD nsVector4 GetVectorParameterValue(nsName paramName) const noexcept;
-	*/
 
 	NS_NODISCARD_INLINE bool IsValid() const noexcept
 	{
@@ -248,7 +237,6 @@ public:
 
 
 typedef nsTArrayInline<nsMeshID, NS_ENGINE_ASSET_MODEL_MAX_MESH> nsAssetModelMeshes;
-//typedef nsTArrayInline<nsSharedMaterialAsset, NS_ENGINE_ASSET_MODEL_MAX_MESHES> nsAssetModelMaterials;
 
 
 class NS_ENGINE_API nsSharedModelAsset
@@ -257,7 +245,6 @@ private:
 	int AssetId;
 	nsName Name;
 	nsAssetModelMeshes Meshes;
-	//nsAssetModelMaterials Materials;
 
 
 public:
@@ -333,4 +320,91 @@ public:
 
 
 	friend class nsAssetManager;
+};
+
+
+
+
+class NS_ENGINE_API nsSharedSkeletonAsset
+{
+private:
+	int AssetId;
+	nsName Name;
+	nsAnimationSkeletonID Skeleton;
+
+
+public:
+	nsSharedSkeletonAsset() noexcept;
+	nsSharedSkeletonAsset(const nsSharedSkeletonAsset& other) noexcept;
+	nsSharedSkeletonAsset(nsSharedSkeletonAsset&& other) noexcept;
+	~nsSharedSkeletonAsset() noexcept;
+
+private:
+	nsSharedSkeletonAsset(int assetId, nsName name, nsAnimationSkeletonID skeleton) noexcept;
+	void Copy(const nsSharedSkeletonAsset& other) noexcept;
+
+public:
+	void Release() noexcept;
+
+
+	NS_NODISCARD_INLINE bool IsValid() const noexcept
+	{
+		return AssetId != -1 && Skeleton.IsValid();
+	}
+
+
+	NS_NODISCARD_INLINE nsName GetName() const noexcept
+	{
+		return Name;
+	}
+
+
+	NS_NODISCARD_INLINE nsAnimationSkeletonID GetSkeleton() const noexcept
+	{
+		return Skeleton;
+	}
+
+
+	NS_INLINE nsSharedSkeletonAsset& operator=(const nsSharedSkeletonAsset& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			Copy(rhs);
+		}
+
+		return *this;
+	}
+
+
+	NS_INLINE nsSharedSkeletonAsset& operator=(nsSharedSkeletonAsset&& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			Release();
+			AssetId = rhs.AssetId;
+			Name = rhs.Name;
+			Skeleton = rhs.Skeleton;
+			rhs.AssetId = -1;
+			rhs.Name = "";
+			rhs.Skeleton = nsAnimationSkeletonID::INVALID;
+		}
+
+		return *this;
+	}
+
+
+	NS_INLINE bool operator==(const nsSharedSkeletonAsset& rhs) const noexcept
+	{
+		return AssetId == rhs.AssetId && Skeleton == rhs.Skeleton;
+	}
+
+
+	NS_INLINE bool operator!=(const nsSharedSkeletonAsset& rhs) const noexcept
+	{
+		return !(*this == rhs);
+	}
+
+
+	friend class nsAssetManager;
+
 };

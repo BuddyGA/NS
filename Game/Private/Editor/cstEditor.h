@@ -67,7 +67,7 @@ private:
 
 	nsTransform CameraTransform;
 	nsVector3 CameraMoveAxis;
-	nsVector2 CameraRotation;
+	nsVector3 CameraRotation;
 	float CameraScrollValue;
 	bool bMovingCamera;
 

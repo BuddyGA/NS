@@ -34,6 +34,12 @@ public:
 	void Initialize() noexcept;
 
 	void ImportAssetFromImageFile(const nsAssetImportOption_Image& option, const nsString& dstFolderPath) noexcept;
+
+
+private:
+	void ImportAssetFromModelFile_GLB(const nsAssetImportOption_Model& option, const nsString& dstFolderPath);
+
+public:
 	void ImportAssetFromModelFile(const nsAssetImportOption_Model& option, const nsString& dstFolderPath) noexcept;
 
 	NS_DECLARE_SINGLETON(nsAssetImporter)

@@ -167,6 +167,15 @@ void nsRenderer::ExecuteRenderPass_Shadow(VkCommandBuffer commandBuffer) noexcep
 }
 
 
+void nsRenderer::RenderPassForward_SkelMesh(VkCommandBuffer commandBuffer)
+{
+	if (RenderContextWorld == nullptr)
+	{
+		return;
+	}
+}
+
+
 void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 {
 	if (RenderContextWorld == nullptr)
@@ -420,6 +429,7 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 		}
 		else
 		{
+			RenderPassForward_SkelMesh(commandBuffer);
 			RenderPassForward_Mesh(commandBuffer);
 		}
 

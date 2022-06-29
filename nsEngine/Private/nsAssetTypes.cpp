@@ -168,68 +168,6 @@ void nsSharedMaterialAsset::Release() noexcept
 	Material = nsMaterialID::INVALID;
 }
 
-/*
-void nsSharedMaterialAsset::SetTextureParameterValue(nsName paramName, nsSharedTextureAsset texture) noexcept
-{
-	if (!IsValid())
-	{
-		return;
-	}
-}
-
-
-nsSharedTextureAsset nsSharedMaterialAsset::GetTextureParamaterValue(nsName paramName) const noexcept
-{
-	nsSharedTextureAsset texture;
-
-	if (!IsValid())
-	{
-		return texture;
-	}
-
-	texture;
-}
-
-
-void nsSharedMaterialAsset::SetScalarParameterValue(nsName paramName, float value) noexcept
-{
-	if (!IsValid())
-	{
-		return;
-	}
-}
-
-
-float nsSharedMaterialAsset::GetScalarParameterValue(nsName paramName) const noexcept
-{
-	float scalar = 0.0f;
-
-	if (!IsValid())
-	{
-		return scalar;
-	}
-}
-
-
-void nsSharedMaterialAsset::SetVectorParameterValue(nsName paramName, nsVector4 value) noexcept
-{
-	if (!IsValid())
-	{
-		return;
-	}
-}
-
-
-nsVector4 nsSharedMaterialAsset::GetVectorParameterValue(nsName paramName) const noexcept
-{
-	nsVector4 vector;
-
-	if (!IsValid())
-	{
-		return vector;
-	}
-}
-*/
 
 
 
@@ -311,4 +249,86 @@ void nsSharedModelAsset::Release() noexcept
 	AssetId = -1;
 	Name = "";
 	Meshes.Clear();
+}
+
+
+
+
+// ====================================================================================================================================================================== //
+// SHARED ASSET - SKELETON
+// ====================================================================================================================================================================== //
+nsSharedSkeletonAsset::nsSharedSkeletonAsset() noexcept
+	: AssetId(-1)
+	, Name("")
+	, Skeleton(nsAnimationSkeletonID::INVALID)
+{
+}
+
+
+nsSharedSkeletonAsset::nsSharedSkeletonAsset(const nsSharedSkeletonAsset& other) noexcept
+	: AssetId(-1)
+	, Name("")
+	, Skeleton(nsAnimationSkeletonID::INVALID)
+{
+	Copy(other);
+}
+
+
+nsSharedSkeletonAsset::nsSharedSkeletonAsset(nsSharedSkeletonAsset&& other) noexcept
+	: AssetId(other.AssetId)
+	, Name(other.Name)
+	, Skeleton(other.Skeleton)
+{
+	other.AssetId = -1;
+	other.Name = "";
+	other.Skeleton = nsAnimationSkeletonID::INVALID;
+}
+
+
+nsSharedSkeletonAsset::~nsSharedSkeletonAsset() noexcept
+{
+	Release();
+}
+
+
+nsSharedSkeletonAsset::nsSharedSkeletonAsset(int assetId, nsName name, nsAnimationSkeletonID skeleton) noexcept
+	: AssetId(assetId)
+	, Name(name)
+	, Skeleton(skeleton)
+{
+	if (AssetId != -1)
+	{
+		NS_Assert(Skeleton.IsValid());
+		nsAssetManager::Get().Internal_AddSkeletonAssetReference(AssetId, Skeleton);
+	}
+}
+
+
+void nsSharedSkeletonAsset::Copy(const nsSharedSkeletonAsset& other) noexcept
+{
+	Release();
+
+	AssetId = other.AssetId;
+	Name = other.Name;
+	Skeleton = other.Skeleton;
+
+	if (AssetId != -1)
+	{
+		NS_Assert(Skeleton.IsValid());
+		nsAssetManager::Get().Internal_AddSkeletonAssetReference(AssetId, Skeleton);
+	}
+}
+
+
+void nsSharedSkeletonAsset::Release() noexcept
+{
+	if (AssetId != -1)
+	{
+		NS_Assert(Skeleton.IsValid());
+		nsAssetManager::Get().Internal_RemoveSkeletonAssetReference(AssetId, Skeleton);
+	}
+
+	AssetId = -1;
+	Name = "";
+	Skeleton = nsAnimationSkeletonID::INVALID;
 }

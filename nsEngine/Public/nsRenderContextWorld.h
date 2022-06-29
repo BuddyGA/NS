@@ -28,6 +28,7 @@ struct nsRenderMesh
 	nsMatrix4 WorldTransform;
 	nsMaterialID Material;
 	nsMeshID Mesh;
+	int BoneTransformIndex;
 };
 
 

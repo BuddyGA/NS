@@ -150,6 +150,13 @@ public:
 	}
 
 
+	// Get current frame vertex skin buffer
+	NS_NODISCARD_INLINE const nsVulkanBuffer* GetVertexSkinBuffer() const noexcept
+	{
+		return FrameDatas[FrameIndex].VertexSkinBuffer;
+	}
+
+
 	// Get current frame index buffer
 	NS_NODISCARD_INLINE const nsVulkanBuffer* GetIndexBuffer() const noexcept
 	{

@@ -6,14 +6,7 @@
 
 class NS_ENGINE_API nsAssetManager
 {
-	enum AssetFlags : uint8
-	{
-		AssetFlag_None				= (0),
-		AssetFlag_Loading			= (1 << 0),
-		AssetFlag_Loaded			= (1 << 1),
-		AssetFlag_PendingUnload		= (1 << 2),
-		AssetFlag_Unloaded			= (1 << 3),
-	};
+	NS_DECLARE_SINGLETON(nsAssetManager)
 
 private:
 	bool bInitialized;
@@ -47,19 +40,27 @@ public:
 
 
 
-// ================================================================================================ //
-// TEXTURE
-// ================================================================================================ //
-private:
-	struct TextureAssetData
+	enum AssetFlags : uint8
+	{
+		AssetFlag_None				= (0),
+		AssetFlag_Loading			= (1 << 0),
+		AssetFlag_Loaded			= (1 << 1),
+		AssetFlag_PendingUnload		= (1 << 2),
+		AssetFlag_Unloaded			= (1 << 3),
+	};
+
+
+	template<typename THandle>
+	struct TAssetData
 	{
 		nsTArray<nsName> Names;
 		nsTArray<nsString> Paths;
 		nsTArray<uint8> Flags;
 		nsTArray<int> RefCounts;
-		nsTArray<nsTextureID> Handles;
+		nsTArray<THandle> Handles;
 
-		TextureAssetData()
+	public:
+		TAssetData()
 		{
 			Names.Reserve(64);
 			Paths.Reserve(64);
@@ -67,9 +68,50 @@ private:
 			RefCounts.Reserve(64);
 			Handles.Reserve(64);
 		}
+
+
+		NS_INLINE void Add(nsName name, nsString path, uint8 flags, THandle handle)
+		{
+			Names.Add(name);
+			Paths.Add(path);
+			Flags.Add(flags);
+			RefCounts.Add(0);
+			Handles.Add(handle);
+		}
+
+
+		NS_INLINE int AddReference(int index, THandle handle)
+		{
+			NS_Assert(index >= 0 && index < Handles.GetCount());
+			NS_Assert(handle == Handles[index]);
+
+			return ++RefCounts[index];
+		}
+
+
+		NS_INLINE int RemoveReference(int index, THandle handle)
+		{
+			NS_Assert(index >= 0 && index < Handles.GetCount());
+			NS_Assert(handle == Handles[index]);
+
+			if (--RefCounts[index] <= 0)
+			{
+				RefCounts[index] = 0;
+				Flags[index] |= AssetFlag_PendingUnload;
+			}
+
+			return RefCounts[index];
+		}
+
 	};
 
-	TextureAssetData TextureAsset;
+
+
+// ================================================================================================ //
+// TEXTURE
+// ================================================================================================ //
+private:
+	TAssetData<nsTextureID> TextureAsset;
 
 
 public:
@@ -87,34 +129,7 @@ private:
 // MATERIAL
 // ================================================================================================ //
 private:
-	struct MaterialAssetData
-	{
-		struct ParameterTable
-		{
-			nsTMap<nsName, nsSharedTextureAsset> TextureParameterValues;
-			nsTMap<nsName, float> ScalarParameterValues;
-			nsTMap<nsName, nsVector4> VectorParameterValues;
-		};
-
-		nsTArray<nsName> Names;
-		nsTArray<nsString> Paths;
-		nsTArray<uint8> Flags;
-		nsTArray<int> RefCounts;
-		nsTArray<ParameterTable> ParameterTables;
-		nsTArray<nsMaterialID> Handles;
-
-		MaterialAssetData()
-		{
-			Names.Reserve(64);
-			Paths.Reserve(64);
-			Flags.Reserve(64);
-			RefCounts.Reserve(64);
-			ParameterTables.Reserve(64);
-			Handles.Reserve(64);
-		}
-	};
-
-	MaterialAssetData MaterialAsset;
+	TAssetData<nsMaterialID> MaterialAsset;
 
 
 public:
@@ -122,15 +137,6 @@ public:
 	nsSharedMaterialAsset LoadMaterialAsset(const nsName& name);
 	void Internal_AddMaterialAssetReference(int index, nsMaterialID material);
 	void Internal_RemoveMaterialAssetReference(int index, nsMaterialID material);
-
-	/*
-	void Internal_SetMaterialTextureParameterValue(int index, nsMaterialID material, nsName paramName, const nsSharedTextureAsset& sharedTextureAsset);
-	nsSharedTextureAsset Internal_GetMaterialTextureParamaterValue(int index, nsMaterialID material, nsName paramName) const;
-	void Internal_SetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName, float scalar);
-	float Internal_GetMaterialScalarParameterValue(int index, nsMaterialID material, nsName paramName) const;
-	void Internal_SetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName, nsVector4 vector);
-	nsVector4 Internal_GetMaterialVectorParameterValue(int index, nsMaterialID material, nsName paramName) const;
-	*/
 
 private:
 	void UpdateMaterialAssets();
@@ -141,25 +147,7 @@ private:
 // MODEL
 // ================================================================================================ //
 private:
-	struct ModelAssetData
-	{
-		nsTArray<nsName> Names;
-		nsTArray<nsString> Paths;
-		nsTArray<uint8> Flags;
-		nsTArray<int> RefCounts;
-		nsTArray<nsAssetModelMeshes> Meshes;
-
-		ModelAssetData()
-		{
-			Names.Reserve(64);
-			Paths.Reserve(64);
-			Flags.Reserve(64);
-			RefCounts.Reserve(64);
-			Meshes.Reserve(64);
-		}
-	};
-
-	ModelAssetData ModelAsset;
+	TAssetData<nsAssetModelMeshes> ModelAsset;
 
 
 public:
@@ -172,6 +160,21 @@ private:
 	void UpdateModelAssets();
 
 
-	NS_DECLARE_SINGLETON(nsAssetManager)
+
+// ================================================================================================ //
+// SKELETON
+// ================================================================================================ //
+private:
+	TAssetData<nsAnimationSkeletonID> SkeletonAsset;
+
+
+public:
+	void SaveSkeletonAsset(nsName name, nsAnimationSkeletonID skeleton, const nsString& folderPath, bool bIsEngineAsset);
+	nsSharedSkeletonAsset LoadSkeletonAsset(const nsName& name);
+	void Internal_AddSkeletonAssetReference(int index, nsAnimationSkeletonID skeleton);
+	void Internal_RemoveSkeletonAssetReference(int index, nsAnimationSkeletonID skeleton);
+
+private:
+	void UpdateSkeletonAssets();
 
 };

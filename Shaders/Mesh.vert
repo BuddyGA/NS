@@ -6,6 +6,7 @@ layout (location = 2) in vec3 IN_Tangent;
 layout (location = 3) in vec2 IN_TexCoord;
 
 
+
 layout (set = 2, binding = 0) uniform UBO_Camera
 {
 	mat4 CameraView;
@@ -14,10 +15,11 @@ layout (set = 2, binding = 0) uniform UBO_Camera
 };
 
 
-layout (push_constant) uniform PC_WorldTransform
+layout (push_constant) uniform PC_Vertex
 {
 	mat4 WorldTransform;
 };
+
 
 
 layout (location = 0) out vec2 OUT_TexCoord;
@@ -27,9 +29,10 @@ layout (location = 3) out vec3 OUT_ViewPosition;
 layout (location = 4) out vec3 OUT_CameraWorldPosition;
 
 
+
 void main()
 {
-	vec4 vertexWorldPosition = WorldTransform * vec4(IN_Position, 1.0);
+	vec4 vertexWorldPosition = WorldTransform * vec4(IN_Position, 1.0);;
 
 	gl_Position = CameraProjection * CameraView * vertexWorldPosition;
 	OUT_TexCoord = IN_TexCoord;
