@@ -4,6 +4,7 @@
 #include "nsMesh.h"
 #include "nsTexture.h"
 #include "nsMaterial.h"
+#include "nsAnimation.h"
 #include "nsFont.h"
 #include "nsRenderer.h"
 
@@ -46,15 +47,17 @@ void nsRenderManager::Render(float deltaTime) noexcept
 	nsTextureManager::Get().BeginFrame(FrameIndex);
 	nsMaterialManager::Get().BeginFrame(FrameIndex);
 	nsMeshManager::Get().BeginFrame(FrameIndex);
+	nsAnimationManager::Get().BeginFrame(FrameIndex);
 
 	for (int i = 0; i < RegisteredRenderers.GetCount(); ++i)
 	{
 		RegisteredRenderers[i]->BeginRender(FrameIndex, deltaTime);
 	}
 
-	nsMaterialManager::Get().Update();
-	nsTextureManager::Get().Update();
-	nsMeshManager::Get().Update();
+	nsMaterialManager::Get().UpdateRenderResources();
+	nsTextureManager::Get().UpdateRenderResources();
+	nsMeshManager::Get().UpdateRenderResources();
+	nsAnimationManager::Get().UpdateRenderResources();
 
 	for (int i = 0; i < RegisteredRenderers.GetCount(); ++i)
 	{

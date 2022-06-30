@@ -666,7 +666,7 @@ nsSharedSkeletonAsset nsAssetManager::LoadSkeletonAsset(const nsName& name)
 		return nsSharedSkeletonAsset();
 	}
 
-	const int index = TextureAsset.Names.Find(name);
+	const int index = SkeletonAsset.Names.Find(name);
 
 	if (index == NS_ARRAY_INDEX_INVALID)
 	{

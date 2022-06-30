@@ -28,15 +28,21 @@ struct nsRenderMesh
 	nsMatrix4 WorldTransform;
 	nsMaterialID Material;
 	nsMeshID Mesh;
-	int BoneTransformIndex;
+	nsAnimationInstanceID AnimationInstance;
 };
 
+
+struct nsRenderDrawCallPerInstance
+{
+	nsMatrix4 WorldTransform;
+	int BoneTransformIndex;
+};
 
 
 struct nsRenderDrawCallPerMesh
 {
 	nsMeshID Mesh;
-	nsTArray<nsMatrix4> WorldTransforms;
+	nsTArray<nsRenderDrawCallPerInstance> Instances;
 
 
 public:
@@ -131,6 +137,7 @@ private:
 
 	nsTArray<nsMaterialID> DrawBindMaterials;
 	nsTArray<nsMeshBindingInfo> DrawBindMeshes;
+	nsTArray<nsAnimationInstanceID> DrawBindAnimationInstances;
 	nsTArray<nsRenderDrawCallPerMaterial> DrawCallMeshes;
 	nsRenderDrawCallPrimitiveBatch DrawCallPrimitiveBatchMesh;
 	nsRenderDrawCallPrimitiveBatch DrawCallPrimitiveBatchLine;
@@ -154,7 +161,7 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE nsRenderContextMeshID AddRenderMesh(nsMeshID mesh, nsMaterialID material, const nsMatrix4& transform) noexcept
+	NS_NODISCARD_INLINE nsRenderContextMeshID AddRenderMesh(nsMeshID mesh, nsMaterialID material, const nsMatrix4& transform, nsAnimationInstanceID animationInstance) noexcept
 	{
 		NS_Assert(mesh != nsMeshID::INVALID);
 		NS_Assert(material != nsMaterialID::INVALID);
@@ -163,11 +170,12 @@ public:
 		value.WorldTransform = transform;
 		value.Material = material;
 		value.Mesh = mesh;
+		value.AnimationInstance = animationInstance;
 
 		return RenderMeshes.Add(value);
 	}
 
-	NS_INLINE void UpdateRenderMesh(nsRenderContextMeshID id, nsMeshID newMesh, nsMaterialID newMaterial, const nsMatrix4& newTransform) noexcept
+	NS_INLINE void UpdateRenderMesh(nsRenderContextMeshID id, nsMeshID newMesh, nsMaterialID newMaterial, const nsMatrix4& newTransform, nsAnimationInstanceID animationInstance) noexcept
 	{
 		NS_Assert(IsRenderMeshValid(id));
 		NS_Assert(newMesh != nsMeshID::INVALID);
@@ -177,6 +185,7 @@ public:
 		value.WorldTransform = newTransform;
 		value.Material = newMaterial;
 		value.Mesh = newMesh;
+		value.AnimationInstance = animationInstance;
 	}
 
 	NS_INLINE void RemoveRenderMesh(nsRenderContextMeshID& id) noexcept

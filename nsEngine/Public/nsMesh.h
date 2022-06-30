@@ -68,11 +68,13 @@ struct nsMeshBindingInfo
 {
 	nsMeshID Mesh;
 	int Lod;
+	bool bIsSkinned;
 
 public:
 	nsMeshBindingInfo() noexcept
 		: Mesh(nsMeshID::INVALID)
 		, Lod(0)
+		, bIsSkinned(false)
 	{
 	}
 
@@ -83,6 +85,8 @@ public:
 
 class NS_ENGINE_API nsMeshManager
 {
+	NS_DECLARE_SINGLETON(nsMeshManager)
+
 private:
 	struct Frame
 	{
@@ -133,7 +137,7 @@ public:
 
 	void BeginFrame(int frameIndex) noexcept;
 	void BindMeshes(const nsMeshBindingInfo* bindingInfos, int count) noexcept;
-	void Update() noexcept;
+	void UpdateRenderResources() noexcept;
 
 
 	// Get current frame vertex position buffer
@@ -170,7 +174,7 @@ public:
 	}
 
 
-	NS_INLINE int AddMeshLod(nsMeshID mesh, int submesh = 0) noexcept
+	NS_INLINE int AddMeshLod(nsMeshID mesh) noexcept
 	{
 		NS_Assert(IsMeshValid(mesh));
 
@@ -255,8 +259,5 @@ public:
 	{
 		return DefaultPlatform;
 	}
-
-
-	NS_DECLARE_SINGLETON(nsMeshManager)
 
 };

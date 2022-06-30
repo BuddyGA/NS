@@ -197,7 +197,7 @@ public:
 
 	void BeginFrame(int frameIndex) noexcept;
 	void BindMaterials(const nsMaterialID* materials, int count) noexcept;
-	void Update() noexcept;
+	void UpdateRenderResources() noexcept;
 
 
 	NS_NODISCARD_INLINE bool IsMaterialValid(nsMaterialID material) const noexcept

@@ -58,10 +58,8 @@ public:
 protected:
 	virtual void OnTransformChanged() override;
 	virtual void OnVisibilityChanged() override;
-
-private:
-	void RegisterMesh();
-	void UnregisterMesh();
+	virtual void RegisterMesh();
+	virtual void UnregisterMesh();
 
 public:
 	void SetMesh(nsSharedModelAsset newMesh);
@@ -92,6 +90,13 @@ private:
 
 public:
 	nsSkeletalMeshComponent();
+	virtual void OnDestroy() override;
+
+protected:
+	virtual void RegisterMesh() override;
+	virtual void UnregisterMesh() override;
+
+public:
 	void SetSkeleton(nsSharedSkeletonAsset newSkeleton);
 
 };

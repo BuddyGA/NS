@@ -32,10 +32,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{9F33
 		Shaders\Fullscreen.vert = Shaders\Fullscreen.vert
 		Shaders\GUI.vert = Shaders\GUI.vert
 		Shaders\Mesh.vert = Shaders\Mesh.vert
-		MeshWireframe.vert = MeshWireframe.vert
+		Shaders\MeshWireframe.vert = Shaders\MeshWireframe.vert
 		Shaders\PrimitiveBatch.vert = Shaders\PrimitiveBatch.vert
 		Shaders\PrimitiveBatch2D.vert = Shaders\PrimitiveBatch2D.vert
-		Shaders\SkelMesh.vert = Shaders\SkelMesh.vert
 		Shaders\Texture.frag = Shaders\Texture.frag
 		Shaders\TextureColor.frag = Shaders\TextureColor.frag
 	EndProjectSection

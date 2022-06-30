@@ -9,6 +9,7 @@ struct nsAnimationSkeletonData
 	struct Bone
 	{
 		nsMatrix4 InverseBindPoseTransform;
+		nsMatrix4 PoseTransform;
 		nsTransform LocalTransform;
 		int ParentId;
 
@@ -16,6 +17,7 @@ struct nsAnimationSkeletonData
 		friend NS_INLINE void operator|(nsStream& stream, Bone& bone)
 		{
 			stream | bone.InverseBindPoseTransform;
+			stream | bone.PoseTransform;
 			stream | bone.LocalTransform;
 			stream | bone.ParentId;
 		}
@@ -89,11 +91,17 @@ public:
 
 struct nsAnimationInstanceData
 {
-	// Skeleton Id
-	nsAnimationSkeletonID Skeleton;
+	// Skeleton bone names
+	nsTArrayInline<nsName, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> BoneNames;
 
-	// Transform for each bone in skeleton
-	nsTArray<nsMatrix4> PoseTransforms;
+	// Skeleton bone transforms
+	nsTArrayInline<nsAnimationSkeletonData::Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> BoneTransforms;
+
+	// Bone transform index
+	int BoneTransformIndex;
+
+	// Update/pause pose
+	bool bUpdatePose;
 };
 
 
@@ -108,7 +116,8 @@ private:
 
 	struct Frame
 	{
-		nsVulkanBuffer* AnimationPoseTransformStorageBuffer;
+		nsVulkanBuffer* SkeletonPoseTransformStorageBuffer;
+		nsTArray<nsAnimationInstanceID> AnimationInstanceToBinds;
 	};
 
 
@@ -140,10 +149,12 @@ private:
 	nsTArrayFreeList<nsName> InstanceNames;
 	nsTArrayFreeList<uint32> InstanceFlags;
 	nsTArrayFreeList<nsAnimationInstanceData> InstanceDatas;
+	nsTArray<nsMatrix4> InstanceBoneTransforms;
 
 
 public:
 	void Initialize();
+	void UpdateAnimationPose(float deltaTime);
 
 
 	NS_NODISCARD nsAnimationSkeletonID FindSkeleton(const nsName& name) const;
@@ -180,7 +191,7 @@ public:
 	void DestroySequence(nsAnimationSequenceID& sequence);
 	void UpdateSequenceData(nsAnimationSequenceID sequence, const nsAnimationKeyFrame* keyFrames, int keyFrameCount, float duration);
 
-	NS_NODISCARD_INLINE bool IsAnimationSequenceValid(nsAnimationSequenceID sequence) const
+	NS_NODISCARD_INLINE bool IsSequenceValid(nsAnimationSequenceID sequence) const
 	{
 		return sequence.IsValid() && SequenceFlags.IsValid(sequence.Id) && !(SequenceFlags[sequence.Id] & Flag_PendingDestroy);
 	}
@@ -195,9 +206,21 @@ public:
 		return instance.IsValid() && InstanceFlags.IsValid(instance.Id) && !(InstanceFlags[instance.Id] & Flag_PendingDestroy);
 	}
 
+	NS_NODISCARD_INLINE int GetInstanceBoneTransformIndex(nsAnimationInstanceID animationInstance) const
+	{
+		NS_Assert(IsInstanceValid(animationInstance));
+		return InstanceDatas[animationInstance.Id].BoneTransformIndex;
+	}
+
 
 	void BeginFrame(int frameIndex);
 	void BindAnimationInstances(const nsAnimationInstanceID* animationInstances, int count);
-	void Update(float deltaTime);
+	void UpdateRenderResources();
+
+
+	NS_NODISCARD_INLINE nsVulkanBuffer* GetSkeletonPoseTransformStorageBuffer() const
+	{
+		return FrameDatas[FrameIndex].SkeletonPoseTransformStorageBuffer;
+	}
 
 };

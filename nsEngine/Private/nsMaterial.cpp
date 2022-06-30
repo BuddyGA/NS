@@ -32,11 +32,19 @@ static void ns_GetVertexAttributeBindings(nsEMaterialSurfaceDomain surfaceDomain
 		{
 			outVertexBindings.Add({ 0, sizeof(nsVertexMeshPosition), VK_VERTEX_INPUT_RATE_VERTEX });
 			outVertexBindings.Add({ 1, sizeof(nsVertexMeshAttribute), VK_VERTEX_INPUT_RATE_VERTEX });
-			
+			outVertexBindings.Add({ 2, sizeof(nsVertexMeshSkin), VK_VERTEX_INPUT_RATE_VERTEX });
+
+			// Binding-0: Position
 			outVertexAttributes.Add({ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Position
-			outVertexAttributes.Add({ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Normal;
-			outVertexAttributes.Add({ 2, 1, VK_FORMAT_R32G32B32_SFLOAT, 12 }); // Tangent;
-			outVertexAttributes.Add({ 3, 1, VK_FORMAT_R32G32_SFLOAT, 24 }); // TexCoord;
+
+			// Binding-1: Attribute
+			outVertexAttributes.Add({ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Normal
+			outVertexAttributes.Add({ 2, 1, VK_FORMAT_R32G32B32_SFLOAT, 12 }); // Tangent
+			outVertexAttributes.Add({ 3, 1, VK_FORMAT_R32G32_SFLOAT, 24 }); // TexCoord
+
+			// Binding-2: Skin
+			outVertexAttributes.Add({ 4, 2, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }); // Weight
+			outVertexAttributes.Add({ 5, 2, VK_FORMAT_R32_UINT, 16 }); // Joint
 
 			break;
 		}
@@ -66,8 +74,11 @@ static void ns_GetVertexAttributeBindings(nsEMaterialSurfaceDomain surfaceDomain
 		case nsEMaterialSurfaceDomain::WIREFRAME:
 		{
 			outVertexBindings.Add({ 0, sizeof(nsVertexMeshPosition), VK_VERTEX_INPUT_RATE_VERTEX });
+			outVertexBindings.Add({ 1, sizeof(nsVertexMeshSkin), VK_VERTEX_INPUT_RATE_VERTEX });
 
 			outVertexAttributes.Add({ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }); // Position
+			outVertexAttributes.Add({ 1, 1, VK_FORMAT_R32G32B32A32_SFLOAT, 0 }); // Weight
+			outVertexAttributes.Add({ 2, 1, VK_FORMAT_R32_UINT, 0 }); // Joint
 
 			break;
 		}
@@ -289,16 +300,25 @@ const nsVulkanShaderResourceLayout* nsMaterialManager::GetDefaultShaderResourceL
 		// Environment [Set = 1, Binding = 0]
 		_default->AddDescriptorBindingUniform(VK_SHADER_STAGE_FRAGMENT_BIT, 1, 0, 1, false, false);
 
-		// TODO: Light UBO [Set = 2, Binding = 0]
+		// Bone transform SSBO [Set = 2, Binding = 0]
+		_default->AddDescriptorBindingStorage(VK_SHADER_STAGE_VERTEX_BIT, 2, 0, 1, false, false);
 
-		// Camera view UBO [Set = 2, Binding = 0]
-		_default->AddDescriptorBindingUniform(VK_SHADER_STAGE_VERTEX_BIT, 2, 0, 1, false, false);
+		// TODO: Light UBO [Set = 3, Binding = 0]
 
-		// Material UBO [Set = 3, Binding = 0]
-		_default->AddDescriptorBindingStorage(VK_SHADER_STAGE_FRAGMENT_BIT, 3, 0, 1, false, false);
+		// Camera view UBO [Set = 3, Binding = 0]
+		_default->AddDescriptorBindingUniform(VK_SHADER_STAGE_VERTEX_BIT, 3, 0, 1, false, false);
 
-		// Push constant (world transform)
-		_default->AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4));
+		// Material UBO [Set = 4, Binding = 0]
+		_default->AddDescriptorBindingStorage(VK_SHADER_STAGE_FRAGMENT_BIT, 4, 0, 1, false, false);
+
+		// Push constant (vertex)
+		struct PC_Vertex
+		{
+			nsMatrix4 WorldTransform;
+			int BoneTransformIndex;
+		};
+
+		_default->AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PC_Vertex));
 
 		_default->Build();
 	}
@@ -357,11 +377,20 @@ const nsVulkanShaderResourceLayout* nsMaterialManager::GetDefaultShaderResourceL
 	{
 		_default = nsVulkan::CreateShaderResourceLayout("srl_default_wireframe");
 
-		// Camera view UBO [Set = 0, Binding = 0]
-		_default->AddDescriptorBindingUniform(VK_SHADER_STAGE_VERTEX_BIT, 0, 0, 1, false, false);
+		// Bone transforms [Set = 0, Binding = 0]
+		_default->AddDescriptorBindingStorage(VK_SHADER_STAGE_VERTEX_BIT, 0, 0, 1, false, false);
 
-		// Push constant (world transform)
-		_default->AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4));
+		// Camera view UBO [Set = 1, Binding = 0]
+		_default->AddDescriptorBindingUniform(VK_SHADER_STAGE_VERTEX_BIT, 1, 0, 1, false, false);
+
+		// Push constant (vertex)
+		struct PC_Vertex
+		{
+			nsMatrix4 WorldTransform;
+			int BoneTransformIndex;
+		};
+
+		_default->AddPushConstant(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PC_Vertex));
 
 		_default->Build();
 	}
@@ -619,7 +648,7 @@ void nsMaterialManager::BindMaterials(const nsMaterialID* materials, int count) 
 }
 
 
-void nsMaterialManager::Update() noexcept
+void nsMaterialManager::UpdateRenderResources() noexcept
 {
 	Frame& frame = FrameDatas[FrameIndex];
 
@@ -655,7 +684,7 @@ void nsMaterialManager::Update() noexcept
 
 			if (descriptorSet == VK_NULL_HANDLE)
 			{
-				descriptorSet = nsVulkan::CreateDescriptorSet(resource.ShaderResourceLayout, 3);
+				descriptorSet = nsVulkan::CreateDescriptorSet(resource.ShaderResourceLayout, 4);
 			}
 
 			VkDescriptorBufferInfo& bufferInfo = bufferInfos.Add();

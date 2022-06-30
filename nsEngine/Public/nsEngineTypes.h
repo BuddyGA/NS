@@ -102,24 +102,25 @@ constexpr const char* ns_VendorName(int vendorId)
 
 
 
-#define NS_ENGINE_DECLARE_HANDLE(type, managerClass) \
-class type \
-{ \
-private: \
-	int Id; \
-public: \
-	static NS_ENGINE_API type INVALID; \
-private: \
-	type(int id) noexcept : Id(id) {} \
-public: \
-	type() noexcept : Id(-1) {} \
-	NS_NODISCARD_INLINE bool IsValid() const noexcept { return Id != -1; } \
+#define NS_ENGINE_DECLARE_HANDLE(type, managerClass)										\
+class type																					\
+{																							\
+private:																					\
+	int Id;																					\
+public:																						\
+	static NS_ENGINE_API type INVALID;														\
+private:																					\
+	type(int id) noexcept : Id(id) {}														\
+public:																						\
+	type() noexcept : Id(-1) {}																\
+	NS_NODISCARD_INLINE bool IsValid() const noexcept { return Id != -1; }					\
+	NS_NODISCARD_INLINE int GetId() const noexcept { return Id; }							\
 	NS_NODISCARD_INLINE uint64 GetHash() const noexcept { return static_cast<uint64>(Id); } \
-	NS_INLINE bool operator==(const type& rhs) const noexcept { return Id == rhs.Id; } \
-	NS_INLINE bool operator!=(const type& rhs) const noexcept { return Id != rhs.Id; } \
-	NS_INLINE bool operator<(const type& rhs) const noexcept { return Id < rhs.Id; } \
-	NS_INLINE bool operator>(const type& rhs) const noexcept { return Id > rhs.Id; } \
-	friend class managerClass; \
+	NS_INLINE bool operator==(const type& rhs) const noexcept { return Id == rhs.Id; }		\
+	NS_INLINE bool operator!=(const type& rhs) const noexcept { return Id != rhs.Id; }		\
+	NS_INLINE bool operator<(const type& rhs) const noexcept { return Id < rhs.Id; }		\
+	NS_INLINE bool operator>(const type& rhs) const noexcept { return Id > rhs.Id; }		\
+	friend class managerClass;																\
 };
 
 #define NS_ENGINE_DEFINE_HANDLE(type) type type::INVALID

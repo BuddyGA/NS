@@ -13,9 +13,9 @@ cstCharacter::cstCharacter()
 	MovementComponent->CapsuleRadius = 36.0f;
 	RootComponent = MovementComponent;
 
-	MeshComponent = AddComponent<nsMeshComponent>("mesh");
+	MeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
 	MeshComponent->SetLocalPosition(nsVector3(0.0f, -90.0f, 0.0f));
-	MeshComponent->SetLocalRotation(nsQuaternion::FromRotation(0.0f, 180.0f, 0.0f));
+	//MeshComponent->SetLocalRotation(nsQuaternion::FromRotation(0.0f, 180.0f, 0.0f));
 }
 
 
@@ -23,7 +23,9 @@ void cstCharacter::OnInitialize()
 {
 	nsActor::OnInitialize();
 
-	MeshComponent->SetMesh(nsAssetManager::Get().LoadModelAsset("mdl_LowPolyChar"));
+	nsAssetManager& assetManager = nsAssetManager::Get();
+	MeshComponent->SetMesh(assetManager.LoadModelAsset("mdl_LowPolyChar"));
+	MeshComponent->SetSkeleton(assetManager.LoadSkeletonAsset("skl_LowPolyChar_Rig"));
 }
 
 

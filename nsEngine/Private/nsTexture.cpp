@@ -427,7 +427,7 @@ void nsTextureManager::BindTextures(const nsTextureID* textures, int count) noex
 }
 
 
-void nsTextureManager::Update() noexcept
+void nsTextureManager::UpdateRenderResources() noexcept
 {
 	Frame& frame = FrameDatas[FrameIndex];
 

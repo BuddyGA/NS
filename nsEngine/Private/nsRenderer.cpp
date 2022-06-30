@@ -2,6 +2,7 @@
 #include "nsTexture.h"
 #include "nsMaterial.h"
 #include "nsMesh.h"
+#include "nsAnimation.h"
 #include "nsGUICore.h"
 #include "nsPhysicsManager.h"
 #include "API_VK/nsVulkanFunctions.h"
@@ -167,15 +168,6 @@ void nsRenderer::ExecuteRenderPass_Shadow(VkCommandBuffer commandBuffer) noexcep
 }
 
 
-void nsRenderer::RenderPassForward_SkelMesh(VkCommandBuffer commandBuffer)
-{
-	if (RenderContextWorld == nullptr)
-	{
-		return;
-	}
-}
-
-
 void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 {
 	if (RenderContextWorld == nullptr)
@@ -189,16 +181,22 @@ void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 	nsMaterialManager& materialManager = nsMaterialManager::Get();
 
 	// Bind vertex buffers. [0]: Position, [1]: Attribute
-	VkBuffer vertexBuffers[2] = { meshManager.GetVertexPositionBuffer()->GetVkBuffer(), meshManager.GetVertexAttributeBuffer()->GetVkBuffer() };
-	VkDeviceSize vertexOffsets[2] = { 0, 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, vertexOffsets);
+	VkBuffer vertexBuffers[3] = 
+	{ 
+		meshManager.GetVertexPositionBuffer()->GetVkBuffer(), 
+		meshManager.GetVertexAttributeBuffer()->GetVkBuffer(),
+		meshManager.GetVertexSkinBuffer()->GetVkBuffer()
+	};
+
+	VkDeviceSize vertexOffsets[3] = { 0, 0, 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 3, vertexBuffers, vertexOffsets);
 
 	// Bind index buffer
 	VkBuffer indexBuffer = meshManager.GetIndexBuffer()->GetVkBuffer();
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 	const nsVulkanShaderResourceLayout* defaultShaderResourceLayout = materialManager.GetDefaultShaderResourceLayout_Forward();
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 0, 3, frame.ForwardGlobalDescriptorSets, 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 0, 4, frame.ForwardGlobalDescriptorSets, 0, nullptr);
 
 	nsMaterialID boundMaterial = nsMaterialID::INVALID;
 	const nsVulkanShaderPipeline* boundShaderPipeline = nullptr;
@@ -213,7 +211,7 @@ void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 			boundMaterial = perMaterial.Material;
 			const nsMaterialResource& materialResource = materialManager.GetMaterialResource(boundMaterial);
 			const VkDescriptorSet materialDescriptorSet = materialManager.GetMaterialDescriptorSet(boundMaterial);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 3, 1, &materialDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 4, 1, &materialDescriptorSet, 0, nullptr);
 
 			if (boundShaderPipeline != materialResource.ShaderPipeline)
 			{
@@ -228,11 +226,12 @@ void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 		{
 			const nsRenderDrawCallPerMesh& perMesh = drawCallMeshes[j];
 			const nsMeshDrawData& meshDrawData = meshManager.GetMeshDrawData(perMesh.Mesh);
-			const nsTArray<nsMatrix4>& objectTransforms = perMesh.WorldTransforms;
+			const nsTArray<nsRenderDrawCallPerInstance>& drawInstances = perMesh.Instances;
 
-			for (int k = 0; k < objectTransforms.GetCount(); ++k)
+			for (int k = 0; k < drawInstances.GetCount(); ++k)
 			{
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &objectTransforms[k]);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &drawInstances[k].WorldTransform);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(nsMatrix4), sizeof(int), &drawInstances[k].BoneTransformIndex);
 				vkCmdDrawIndexed(commandBuffer, meshDrawData.IndexCount, 1, meshDrawData.BaseIndex, meshDrawData.IndexVertexOffset, 0);
 			}
 		}
@@ -261,7 +260,7 @@ void nsRenderer::RenderPassForward_PrimitiveBatch(VkCommandBuffer commandBuffer)
 		VkBuffer primitiveIndexBuffer = RenderContextWorld->GetPrimitiveIndexBuffer()->GetVkBuffer();
 
 		const nsVulkanShaderResourceLayout* primitiveShaderResourceLayout = materialManager.GetDefaultShaderResourceLayout_Primitive();
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, primitiveShaderResourceLayout->GetVkPipelineLayout(), 0, 1, &frame.ForwardGlobalDescriptorSets[2], 0, nullptr);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, primitiveShaderResourceLayout->GetVkPipelineLayout(), 0, 1, &frame.ForwardGlobalDescriptorSets[3], 0, nullptr);
 
 		if (drawPrimitiveMesh.VertexCount > 0)
 		{
@@ -301,16 +300,21 @@ void nsRenderer::RenderPassForward_Wireframe(VkCommandBuffer commandBuffer)
 	nsMaterialManager& materialManager = nsMaterialManager::Get();
 
 	// Bind vertex buffer
-	const VkBuffer vertexBuffer = meshManager.GetVertexPositionBuffer()->GetVkBuffer();
-	const VkDeviceSize vertexOffset = 0;
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
+	const VkBuffer vertexBuffers[2] =
+	{
+		meshManager.GetVertexPositionBuffer()->GetVkBuffer(),
+		meshManager.GetVertexSkinBuffer()->GetVkBuffer()
+	};
+
+	const VkDeviceSize vertexOffsets[2] = { 0, 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 2, vertexBuffers, vertexOffsets);
 
 	// Bind index buffer
 	VkBuffer indexBuffer = meshManager.GetIndexBuffer()->GetVkBuffer();
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 	const nsVulkanShaderResourceLayout* defaultShaderResourceLayout = materialManager.GetDefaultShaderResourceLayout_Wireframe();
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 0, 1, &frame.ForwardGlobalDescriptorSets[2], 0, nullptr);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultShaderResourceLayout->GetVkPipelineLayout(), 0, 2, &frame.ForwardGlobalDescriptorSets[2], 0, nullptr);
 
 	const nsMaterialID defaultWireframeMaterial = materialManager.GetDefaultMaterial_Wireframe();
 	const nsMaterialResource& materialResource = materialManager.GetMaterialResource(defaultWireframeMaterial);
@@ -326,11 +330,12 @@ void nsRenderer::RenderPassForward_Wireframe(VkCommandBuffer commandBuffer)
 		{
 			const nsRenderDrawCallPerMesh& perMesh = drawCallMeshes[j];
 			const nsMeshDrawData& meshDrawData = meshManager.GetMeshDrawData(perMesh.Mesh);
-			const nsTArray<nsMatrix4>& objectTransforms = perMesh.WorldTransforms;
+			const nsTArray<nsRenderDrawCallPerInstance>& drawInstances = perMesh.Instances;
 
-			for (int k = 0; k < objectTransforms.GetCount(); ++k)
+			for (int k = 0; k < drawInstances.GetCount(); ++k)
 			{
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &objectTransforms[k]);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &drawInstances[k].WorldTransform);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(nsMatrix4), sizeof(int), &drawInstances[k].BoneTransformIndex);
 				vkCmdDrawIndexed(commandBuffer, meshDrawData.IndexCount, 1, meshDrawData.BaseIndex, meshDrawData.IndexVertexOffset, 0);
 			}
 		}
@@ -376,7 +381,8 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 		// Global descriptor sets. 
 		// [0]: Texture (Dynamic indexing) 
 		// [1]: Environment 
-		// [2]: Camera
+		// [2]: BoneTransforms
+		// [3]: Camera
 		frame.ForwardGlobalDescriptorSets[0] = textureManager.GetDescriptorSet();
 
 		if (frame.ForwardGlobalDescriptorSets[1] == VK_NULL_HANDLE)
@@ -384,9 +390,10 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 			NS_Assert(frame.ForwardGlobalDescriptorSets[2] == VK_NULL_HANDLE);
 			frame.ForwardGlobalDescriptorSets[1] = nsVulkan::CreateDescriptorSet(defaultShaderResourceLayout, 1);
 			frame.ForwardGlobalDescriptorSets[2] = nsVulkan::CreateDescriptorSet(defaultShaderResourceLayout, 2);
+			frame.ForwardGlobalDescriptorSets[3] = nsVulkan::CreateDescriptorSet(defaultShaderResourceLayout, 3);
 		}
 
-		VkWriteDescriptorSet writeEnvironmentCameraDescriptorSets[2] = {};
+		VkWriteDescriptorSet writeGlobalDescriptorSets[3] = {};
 		{
 			// Environment
 			VkDescriptorBufferInfo environmentBufferInfo{};
@@ -395,13 +402,29 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 				environmentBufferInfo.offset = 0;
 				environmentBufferInfo.range = sizeof(nsRenderEnvironment);
 
-				writeEnvironmentCameraDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeEnvironmentCameraDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeEnvironmentCameraDescriptorSets[0].dstSet = frame.ForwardGlobalDescriptorSets[1];
-				writeEnvironmentCameraDescriptorSets[0].dstBinding = 0;
-				writeEnvironmentCameraDescriptorSets[0].dstArrayElement = 0;
-				writeEnvironmentCameraDescriptorSets[0].descriptorCount = 1;
-				writeEnvironmentCameraDescriptorSets[0].pBufferInfo = &environmentBufferInfo;
+				writeGlobalDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeGlobalDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeGlobalDescriptorSets[0].dstSet = frame.ForwardGlobalDescriptorSets[1];
+				writeGlobalDescriptorSets[0].dstBinding = 0;
+				writeGlobalDescriptorSets[0].dstArrayElement = 0;
+				writeGlobalDescriptorSets[0].descriptorCount = 1;
+				writeGlobalDescriptorSets[0].pBufferInfo = &environmentBufferInfo;
+			}
+
+			// Bone transforms
+			VkDescriptorBufferInfo boneTransformsBufferInfo{};
+			{
+				boneTransformsBufferInfo.buffer = nsAnimationManager::Get().GetSkeletonPoseTransformStorageBuffer()->GetVkBuffer();
+				boneTransformsBufferInfo.offset = 0;
+				boneTransformsBufferInfo.range = VK_WHOLE_SIZE;
+
+				writeGlobalDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeGlobalDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+				writeGlobalDescriptorSets[1].dstSet = frame.ForwardGlobalDescriptorSets[2];
+				writeGlobalDescriptorSets[1].dstBinding = 0;
+				writeGlobalDescriptorSets[1].dstArrayElement = 0;
+				writeGlobalDescriptorSets[1].descriptorCount = 1;
+				writeGlobalDescriptorSets[1].pBufferInfo = &boneTransformsBufferInfo;
 			}
 
 			// Camera
@@ -411,16 +434,16 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 				cameraViewBufferInfo.offset = 0;
 				cameraViewBufferInfo.range = sizeof(nsRenderCameraView);
 
-				writeEnvironmentCameraDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeEnvironmentCameraDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				writeEnvironmentCameraDescriptorSets[1].dstSet = frame.ForwardGlobalDescriptorSets[2];
-				writeEnvironmentCameraDescriptorSets[1].dstBinding = 0;
-				writeEnvironmentCameraDescriptorSets[1].dstArrayElement = 0;
-				writeEnvironmentCameraDescriptorSets[1].descriptorCount = 1;
-				writeEnvironmentCameraDescriptorSets[1].pBufferInfo = &cameraViewBufferInfo;
+				writeGlobalDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeGlobalDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				writeGlobalDescriptorSets[2].dstSet = frame.ForwardGlobalDescriptorSets[3];
+				writeGlobalDescriptorSets[2].dstBinding = 0;
+				writeGlobalDescriptorSets[2].dstArrayElement = 0;
+				writeGlobalDescriptorSets[2].descriptorCount = 1;
+				writeGlobalDescriptorSets[2].pBufferInfo = &cameraViewBufferInfo;
 			}
 
-			vkUpdateDescriptorSets(nsVulkan::GetVkDevice(), 2, writeEnvironmentCameraDescriptorSets, 0, nullptr);
+			vkUpdateDescriptorSets(nsVulkan::GetVkDevice(), 3, writeGlobalDescriptorSets, 0, nullptr);
 		}
 
 		if (DebugDrawFlags & nsERenderDebugDraw::Wireframe)
@@ -429,7 +452,6 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 		}
 		else
 		{
-			RenderPassForward_SkelMesh(commandBuffer);
 			RenderPassForward_Mesh(commandBuffer);
 		}
 

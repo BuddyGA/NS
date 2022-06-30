@@ -1532,8 +1532,8 @@ public:
 
 public:
 	nsMatrix4() noexcept
-		: M()
 	{
+		nsPlatform::Memory_Zero(M, sizeof(nsMatrix4));
 	}
 
 
@@ -2262,19 +2262,19 @@ public:
 
 	NS_INLINE nsMatrix4 operator+(const nsMatrix4& rhs) const noexcept
 	{
-		return Add(*this, rhs);
+		return nsMatrix4::Add(*this, rhs);
 	}
 
 
 	NS_INLINE nsMatrix4 operator-(const nsMatrix4& rhs) const noexcept
 	{
-		return Subtract(*this, rhs);
+		return nsMatrix4::Subtract(*this, rhs);
 	}
 
 
 	NS_INLINE nsMatrix4 operator*(const nsMatrix4& rhs) const noexcept
 	{
-		return Multiply(*this, rhs);
+		return nsMatrix4::Multiply(*this, rhs);
 	}
 
 

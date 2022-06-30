@@ -1,6 +1,7 @@
 #include "nsRenderComponents.h"
 #include "nsRenderManager.h"
 #include "nsMaterial.h"
+#include "nsAnimation.h"
 
 
 
@@ -112,11 +113,11 @@ void nsMeshComponent::RegisterMesh()
 
 	if (RenderMeshId == nsRenderContextMeshID::INVALID)
 	{
-		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix());
+		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix(), nsAnimationInstanceID::INVALID);
 	}
 	else
 	{
-		renderContext.UpdateRenderMesh(RenderMeshId, meshes[0], Materials[0], GetWorldTransform().ToMatrix());
+		renderContext.UpdateRenderMesh(RenderMeshId, meshes[0], Materials[0], GetWorldTransform().ToMatrix(), nsAnimationInstanceID::INVALID);
 	}
 }
 
@@ -181,6 +182,67 @@ nsSkeletalMeshComponent::nsSkeletalMeshComponent()
 }
 
 
+void nsSkeletalMeshComponent::OnDestroy()
+{
+	nsAnimationManager::Get().DestroyInstance(AnimationInstance);
+	SkeletonAsset = nsSharedSkeletonAsset();
+
+	nsMeshComponent::OnDestroy();
+}
+
+
+void nsSkeletalMeshComponent::RegisterMesh()
+{
+	if (!IsVisible() || !bAddedToLevel || !ModelAsset.IsValid())
+	{
+		return;
+	}
+
+	nsRenderContextWorld& renderContext = nsRenderManager::Get().GetWorldRenderContext(GetWorld());
+
+	if (Materials[0] == nsMaterialID::INVALID)
+	{
+		Materials[0] = nsMaterialManager::Get().GetDefaultMaterial_PhongChecker();
+	}
+
+	const nsAssetModelMeshes& meshes = ModelAsset.GetMeshes();
+
+	if (RenderMeshId == nsRenderContextMeshID::INVALID)
+	{
+		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix(), AnimationInstance);
+	}
+	else
+	{
+		renderContext.UpdateRenderMesh(RenderMeshId, meshes[0], Materials[0], GetWorldTransform().ToMatrix(), AnimationInstance);
+	}
+}
+
+
+void nsSkeletalMeshComponent::UnregisterMesh()
+{
+	if (RenderMeshId == nsRenderContextMeshID::INVALID || !bAddedToLevel)
+	{
+		return;
+	}
+
+	nsRenderContextWorld& renderContext = nsRenderManager::Get().GetWorldRenderContext(GetWorld());
+	renderContext.RemoveRenderMesh(RenderMeshId);
+}
+
+
 void nsSkeletalMeshComponent::SetSkeleton(nsSharedSkeletonAsset newSkeleton)
 {
+	if (SkeletonAsset == newSkeleton)
+	{
+		return;
+	}
+
+	SkeletonAsset = newSkeleton;
+	nsAnimationManager& animationManager = nsAnimationManager::Get();
+	animationManager.DestroyInstance(AnimationInstance);
+
+	if (SkeletonAsset.IsValid())
+	{
+		AnimationInstance = animationManager.CreateInstance("anim_instance", SkeletonAsset.GetSkeleton());
+	}
 }

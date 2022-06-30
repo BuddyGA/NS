@@ -1,6 +1,7 @@
 #include "nsRenderContextWorld.h"
 #include "nsGeometryFactory.h"
 #include "nsMaterial.h"
+#include "nsAnimation.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 
@@ -115,6 +116,7 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 
 	DrawBindMaterials.Clear();
 	DrawBindMeshes.Clear();
+	DrawBindAnimationInstances.Clear();
 	DrawCallMeshes.Clear();
 	DrawCallPrimitiveBatchMesh.Reset();
 	DrawCallPrimitiveBatchLine.Reset();
@@ -154,14 +156,24 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 			nsMeshBindingInfo& bindingInfo = DrawBindMeshes.Add();
 			bindingInfo.Mesh = mesh;
 			bindingInfo.Lod = 0;
+			bindingInfo.bIsSkinned = it->AnimationInstance != nsAnimationInstanceID::INVALID;
 		}
 
 		nsRenderDrawCallPerMesh& perMesh = perMaterial.Meshes[perMeshIndex];
-		perMesh.WorldTransforms.Add(it->WorldTransform);
+		nsRenderDrawCallPerInstance& instance = perMesh.Instances.Add();
+		instance.WorldTransform = it->WorldTransform;
+		instance.BoneTransformIndex = -1;
+
+		if (it->AnimationInstance != nsAnimationInstanceID::INVALID)
+		{
+			DrawBindAnimationInstances.AddUnique(it->AnimationInstance);
+			instance.BoneTransformIndex = nsAnimationManager::Get().GetInstanceBoneTransformIndex(it->AnimationInstance);
+		}
 	}
 
 	nsMaterialManager::Get().BindMaterials(DrawBindMaterials.GetData(), DrawBindMaterials.GetCount());
 	nsMeshManager::Get().BindMeshes(DrawBindMeshes.GetData(), DrawBindMeshes.GetCount());
+	nsAnimationManager::Get().BindAnimationInstances(DrawBindAnimationInstances.GetData(), DrawBindAnimationInstances.GetCount());
 
 	const uint64 primitiveMeshVertexSize = sizeof(nsVertexPrimitive) * PrimitiveBatchMeshVertices.GetCount();
 	const uint64 primitiveMeshIndexSize = sizeof(uint32) * PrimitiveBatchMeshIndices.GetCount();

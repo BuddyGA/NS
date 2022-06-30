@@ -234,7 +234,7 @@ public:
 
 	void BeginFrame(int frameIndex) noexcept;
 	void BindTextures(const nsTextureID* textures, int count) noexcept;
-	void Update() noexcept;
+	void UpdateRenderResources() noexcept;
 
 
 	NS_DECLARE_SINGLETON(nsTextureManager)

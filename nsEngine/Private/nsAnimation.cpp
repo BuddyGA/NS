@@ -38,7 +38,46 @@ void nsAnimationManager::Initialize()
 
 	NS_LogInfo(AnimationLog, "Initialize animation manager");
 
+	for (int i = 0; i < NS_ENGINE_FRAME_BUFFERING; ++i)
+	{
+		Frame& frame = FrameDatas[i];
+		frame.SkeletonPoseTransformStorageBuffer = nsVulkan::CreateStorageBuffer(VMA_MEMORY_USAGE_CPU_TO_GPU, NS_MEMORY_SIZE_MiB(1), nsName::Format("skel_pose_transform_ssbo_%i", i));
+	}
+
 	bInitialized = true;
+}
+
+
+void nsAnimationManager::UpdateAnimationPose(float deltaTime)
+{
+	if (InstanceDatas.IsEmpty())
+	{
+		return;
+	}
+
+	const int count = InstanceDatas.GetCount();
+
+	for (int i = 0; i < count; ++i)
+	{
+		nsAnimationInstanceData& animInstanceData = InstanceDatas[i];
+		
+		if (!animInstanceData.bUpdatePose)
+		{
+			continue;
+		}
+
+		const int boneCount = animInstanceData.BoneTransforms.GetCount();
+
+		for (int j = 0; j < boneCount; ++j)
+		{
+			nsAnimationSkeletonData::Bone& bone = animInstanceData.BoneTransforms[j];
+			const nsAnimationSkeletonData::Bone* parentBone = bone.ParentId == -1 ? nullptr : &animInstanceData.BoneTransforms[bone.ParentId];
+			bone.PoseTransform = parentBone ? bone.LocalTransform.ToMatrixNoScale() * parentBone->PoseTransform : bone.LocalTransform.ToMatrixNoScale();
+
+			const int boneTransformId = animInstanceData.BoneTransformIndex + j;
+			InstanceBoneTransforms[boneTransformId] = bone.InverseBindPoseTransform * bone.PoseTransform;
+		}
+	}
 }
 
 
@@ -140,7 +179,7 @@ void nsAnimationManager::DestroySequence(nsAnimationSequenceID& sequence)
 {
 	NS_Validate_IsMainThread(); 
 
-	if (IsAnimationSequenceValid(sequence))
+	if (IsSequenceValid(sequence))
 	{
 		NS_ValidateV(0, "Not implemented yet!");
 	}
@@ -186,9 +225,18 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 	InstanceNames[nameId] = name;
 	InstanceFlags[flagId] = Flag_Allocated;
 
-	nsAnimationInstanceData& data = InstanceDatas[dataId];
-	data.Skeleton = skeleton;
+	nsAnimationSkeletonData& skeletonData = SkeletonDatas[skeleton.Id];
+	const int boneCount = skeletonData.BoneNames.GetCount();
 
+	nsAnimationInstanceData& data = InstanceDatas[dataId];
+	data.BoneNames = skeletonData.BoneNames;
+	data.BoneTransforms = skeletonData.BoneDatas;
+	data.BoneTransformIndex = InstanceBoneTransforms.GetCount();
+	data.bUpdatePose = true;
+
+	InstanceBoneTransforms.ResizeConstructs(data.BoneTransformIndex + boneCount, nsMatrix4::IDENTITY);
+
+	NS_LogDebug(AnimationLog, "Create animation instance [%s]", *name);
 
 	return nameId;
 }
@@ -210,16 +258,47 @@ void nsAnimationManager::DestroyInstance(nsAnimationInstanceID& instance)
 void nsAnimationManager::BeginFrame(int frameIndex)
 {
 	FrameIndex = frameIndex;
+
+	Frame& frame = FrameDatas[FrameIndex];
+	frame.AnimationInstanceToBinds.Clear();
 }
 
 
 void nsAnimationManager::BindAnimationInstances(const nsAnimationInstanceID* animationInstances, int count)
 {
+	if (animationInstances == nullptr || count <= 0)
+	{
+		return;
+	}
 
+	Frame& frame = FrameDatas[FrameIndex];
+
+	for (int i = 0; i < count; ++i)
+	{
+		const nsAnimationInstanceID& animInstance = animationInstances[i];
+		NS_Assert(IsInstanceValid(animInstance));
+
+		const uint32& flags = InstanceFlags[animInstance.Id];
+		NS_AssertV(!(flags & Flag_PendingDestroy), "Cannot bind animation instance that has marked pending destroy!");
+
+		frame.AnimationInstanceToBinds.Add(animInstance);
+	}
 }
 
 
-void nsAnimationManager::Update(float deltaTime)
+void nsAnimationManager::UpdateRenderResources()
 {
+	Frame& frame = FrameDatas[FrameIndex];
 
+	if (frame.AnimationInstanceToBinds.GetCount() == 0)
+	{
+		return;
+	}
+
+	const uint64 storageBufferSize = sizeof(nsMatrix4) * InstanceBoneTransforms.GetCount();
+	frame.SkeletonPoseTransformStorageBuffer->Resize(storageBufferSize);
+
+	void* map = frame.SkeletonPoseTransformStorageBuffer->MapMemory();
+	nsPlatform::Memory_Copy(map, InstanceBoneTransforms.GetData(), storageBufferSize);
+	frame.SkeletonPoseTransformStorageBuffer->UnmapMemory();
 }

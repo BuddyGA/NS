@@ -1,6 +1,7 @@
 #include "nsMesh.h"
-#include "API_VK/nsVulkanFunctions.h"
+#include "nsAlgorithm.h"
 #include "nsGeometryFactory.h"
+#include "API_VK/nsVulkanFunctions.h"
 
 
 NS_ENGINE_DEFINE_HANDLE(nsMeshID);
@@ -33,10 +34,11 @@ void nsMeshManager::Initialize() noexcept
 	for (int i = 0; i < NS_ENGINE_FRAME_BUFFERING; ++i)
 	{
 		Frame& frame = FrameDatas[i];
-		frame.VertexPositionBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(1), "mesh_vertex_position_buffer");
-		frame.VertexAttributeBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(2), "mesh_vertex_attribute_buffer");
-		frame.IndexBuffer = nsVulkan::CreateIndexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(2), "mesh_index_buffer");
-		frame.StagingBuffer = nsVulkan::CreateStagingBuffer(NS_MEMORY_SIZE_KiB(4), "mesh_staging_buffer");
+		frame.VertexPositionBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(1), nsName::Format("mesh_vtx_position_buffer_%i", i));
+		frame.VertexAttributeBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(2), nsName::Format("mesh_vt_attribute_buffer_%i", i));
+		frame.VertexSkinBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(1), nsName::Format("mesh_vtx_skin_buffer_%i", i));
+		frame.IndexBuffer = nsVulkan::CreateIndexBuffer(VMA_MEMORY_USAGE_GPU_ONLY, NS_MEMORY_SIZE_MiB(2), nsName::Format("mesh_vtx_index_buffer_%i", i));
+		frame.StagingBuffer = nsVulkan::CreateStagingBuffer(NS_MEMORY_SIZE_KiB(4), nsName::Format("mesh_staging_buffer_%i", i));
 	}
 
 
@@ -228,7 +230,7 @@ void nsMeshManager::BindMeshes(const nsMeshBindingInfo* bindingInfos, int count)
 }
 
 
-void nsMeshManager::Update() noexcept
+void nsMeshManager::UpdateRenderResources() noexcept
 {
 	Frame& frame = FrameDatas[FrameIndex];
 
@@ -237,8 +239,13 @@ void nsMeshManager::Update() noexcept
 		return;
 	}
 
+	// Sort meshes, skinned meshes are priority
+	nsAlgorithm::Sort(frame.MeshBindingInfos.GetData(), frame.MeshBindingInfos.GetCount(), [](const nsMeshBindingInfo& a, const nsMeshBindingInfo& b) { return a.bIsSkinned > b.bIsSkinned; });
+
+
 	uint64 vertexPositionBufferSize = 0;
 	uint64 vertexAttributeBufferSize = 0;
+	uint64 vertexSkinBufferSize = 0;
 	uint64 vertexIndexBufferSize = 0;
 	int baseVertex = 0;
 	int baseIndex = 0;
@@ -248,38 +255,54 @@ void nsMeshManager::Update() noexcept
 	{
 		const nsMeshBindingInfo& bindingInfo = frame.MeshBindingInfos[i];
 		const int id = bindingInfo.Mesh.Id;
-		const nsMeshLODGroup& lodGroup = MeshLodGroups[id];
 
+		const nsMeshLODGroup& lodGroup = MeshLodGroups[id];
 		const int lodCount = lodGroup.GetCount();
 		const int maxLodLevel = lodCount > 0 ? (lodCount - 1) : 0;
 		const int selectedLod = nsMath::Clamp(bindingInfo.Lod, 0, maxLodLevel);
-		const nsMeshVertexData& vertexData = lodGroup[selectedLod];
-		const int vertexCount = vertexData.Positions.GetCount();
-		NS_Assert(vertexData.Attributes.GetCount() == vertexCount);
 
-		vertexPositionBufferSize += sizeof(nsVertexMeshPosition) * vertexCount;
-		vertexAttributeBufferSize += sizeof(nsVertexMeshAttribute) * vertexCount;
+		const nsMeshVertexData& vertexData = lodGroup[selectedLod];
+		const int vertexPositionCount = vertexData.Positions.GetCount();
+		const int vertexAttributeCount = vertexData.Attributes.GetCount();
+		NS_Assert(vertexAttributeCount == vertexPositionCount);
+		vertexPositionBufferSize += sizeof(nsVertexMeshPosition) * vertexPositionCount;
+		vertexAttributeBufferSize += sizeof(nsVertexMeshAttribute) * vertexPositionCount;
+
+		if (bindingInfo.bIsSkinned)
+		{
+			if (vertexData.Skins.GetCount() > 0)
+			{
+				const int vertexSkinCount = vertexData.Skins.GetCount();
+				NS_Assert(vertexSkinCount == vertexPositionCount);
+				vertexSkinBufferSize += sizeof(nsVertexMeshSkin) * vertexPositionCount;
+			}
+			else
+			{
+				NS_LogWarning(MeshLog, "Binding mesh [%s] as skinned mesh, but that mesh has emtpy vertex skin data!", *MeshNames[id]);
+			}
+		}
 
 		const int indexCount = vertexData.Indices.GetCount();
 		vertexIndexBufferSize += sizeof(uint32) * indexCount;
 
 		nsMeshDrawData& drawData = MeshDrawDatas[id];
 		drawData.BaseVertex = baseVertex;
-		drawData.VertexCount = vertexCount;
+		drawData.VertexCount = vertexPositionCount;
 		drawData.BaseIndex = baseIndex;
 		drawData.IndexCount = indexCount;
 		drawData.IndexVertexOffset = indexVertexOffset;
 
-		baseVertex += vertexCount;
+		baseVertex += vertexPositionCount;
 		baseIndex += indexCount;
-		indexVertexOffset += vertexCount;
+		indexVertexOffset += vertexPositionCount;
 	}
 
 	frame.VertexPositionBuffer->Resize(vertexPositionBufferSize);
 	frame.VertexAttributeBuffer->Resize(vertexAttributeBufferSize);
+	frame.VertexSkinBuffer->Resize(vertexSkinBufferSize);
 	frame.IndexBuffer->Resize(vertexIndexBufferSize);
 
-	const uint64 stagingBufferSize = vertexPositionBufferSize + vertexAttributeBufferSize + vertexIndexBufferSize;
+	const uint64 stagingBufferSize = vertexPositionBufferSize + vertexAttributeBufferSize + vertexSkinBufferSize + vertexIndexBufferSize;
 	frame.StagingBuffer->Resize(stagingBufferSize);
 
 	uint8* stagingMap = reinterpret_cast<uint8*>(frame.StagingBuffer->MapMemory());
@@ -321,6 +344,33 @@ void nsMeshManager::Update() noexcept
 	NS_Assert(stagingOffset == (vertexPositionBufferSize + vertexAttributeBufferSize));
 
 
+	// Vertex skins copy to staging buffer
+	if (vertexSkinBufferSize > 0)
+	{
+		for (int i = 0; i < frame.MeshBindingInfos.GetCount(); ++i)
+		{
+			const nsMeshBindingInfo& bindingInfo = frame.MeshBindingInfos[i];
+
+			if (!bindingInfo.bIsSkinned)
+			{
+				continue;
+			}
+
+			const int id = bindingInfo.Mesh.Id;
+			const nsMeshLODGroup& lodGroup = MeshLodGroups[id];
+			const int lodCount = lodGroup.GetCount();
+			const int maxLodLevel = lodCount > 0 ? (lodCount - 1) : 0;
+			const int selectedLod = nsMath::Clamp(bindingInfo.Lod, 0, maxLodLevel);
+			const nsMeshVertexData& vertexData = lodGroup[selectedLod];
+			const uint64 vertexSkinSize = sizeof(nsVertexMeshSkin) * vertexData.Skins.GetCount();
+			nsPlatform::Memory_Copy(stagingMap + stagingOffset, vertexData.Skins.GetData(), vertexSkinSize);
+			stagingOffset += vertexSkinSize;
+		}
+
+		NS_Assert(stagingOffset == (vertexPositionBufferSize + vertexAttributeBufferSize + vertexSkinBufferSize));
+	}
+
+
 	// Vertex indices copy to staging buffer
 	for (int i = 0; i < frame.MeshBindingInfos.GetCount(); ++i)
 	{
@@ -336,7 +386,7 @@ void nsMeshManager::Update() noexcept
 		stagingOffset += vertexIndexSize;
 	}
 
-	NS_Assert(stagingOffset == (vertexPositionBufferSize + vertexAttributeBufferSize + vertexIndexBufferSize));
+	NS_Assert(stagingOffset == (vertexPositionBufferSize + vertexAttributeBufferSize + vertexSkinBufferSize + vertexIndexBufferSize));
 
 	frame.StagingBuffer->UnmapMemory();
 
@@ -357,6 +407,15 @@ void nsMeshManager::Update() noexcept
 		copyRegion.dstOffset = 0;
 		copyRegion.size = vertexAttributeBufferSize;
 		vkCmdCopyBuffer(transferCommandBuffer, frame.StagingBuffer->GetVkBuffer(), frame.VertexAttributeBuffer->GetVkBuffer(), 1, &copyRegion);
+
+		// Vertex skin copy
+		if (vertexSkinBufferSize > 0)
+		{
+			copyRegion.srcOffset += copyRegion.size;
+			copyRegion.dstOffset = 0;
+			copyRegion.size = vertexSkinBufferSize;
+			vkCmdCopyBuffer(transferCommandBuffer, frame.StagingBuffer->GetVkBuffer(), frame.VertexSkinBuffer->GetVkBuffer(), 1, &copyRegion);
+		}
 
 		// Vertex index copy
 		copyRegion.srcOffset += copyRegion.size;

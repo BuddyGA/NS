@@ -112,7 +112,7 @@ class cstCharacter : public nsActor
 
 private:
 	nsCharacterMovementComponent* MovementComponent;
-	nsMeshComponent* MeshComponent;
+	nsSkeletalMeshComponent* MeshComponent;
 	cstCharacterAttributes Attributes;
 
 

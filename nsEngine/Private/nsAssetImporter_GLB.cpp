@@ -197,13 +197,15 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 			NS_Validate(mesh.VertexTexCoords_0.GetCount() == mesh.VertexPositions.GetCount());
 
 			// Vertex weights
-			if (ns_GLB_GetVertexData(mesh.VertexWeights, "WEIGHTS_0", binData, jsonData, jsonVertexAttributes))
+			const bool bHasVertexWeights = ns_GLB_GetVertexData(mesh.VertexWeights, "WEIGHTS_0", binData, jsonData, jsonVertexAttributes);
+			if (bHasVertexWeights)
 			{
 				NS_Validate(mesh.VertexWeights.GetCount() == mesh.VertexPositions.GetCount());
 			}
 
 			// Vertex joints
-			if (ns_GLB_GetVertexData(mesh.VertexJoints, "JOINTS_0", binData, jsonData, jsonVertexAttributes))
+			const bool bHasVertexJoints = ns_GLB_GetVertexData(mesh.VertexJoints, "JOINTS_0", binData, jsonData, jsonVertexAttributes);
+			if (bHasVertexJoints)
 			{
 				NS_Validate(mesh.VertexJoints.GetCount() == mesh.VertexPositions.GetCount());
 			}
@@ -263,9 +265,13 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 				attribute.Tangent = vertexTangents[v].ToVector3();
 				attribute.TexCoord = vertexTexCoords[v];
 
-				nsVertexMeshSkin& skin = vertexData.Skins[v];
-				skin.Joints = vertexJoints[v];
-				skin.Weights = vertexWeights[v];
+				if (vertexWeights.GetCount() > 0)
+				{
+					NS_Validate(vertexJoints.GetCount() == vertexWeights.GetCount());
+					nsVertexMeshSkin& skin = vertexData.Skins[v];
+					skin.Weights = vertexWeights[v];
+					skin.Joints = vertexJoints[v];
+				}
 			}
 
 			vertexData.Indices = mesh.VertexIndices;
@@ -312,6 +318,7 @@ static void ns_GLB_ImportSkeletons(const nsAssetImportOption_Model& option, cons
 	const nlohmann::json& jsonBufferViewArray = jsonData["bufferViews"];
 	const nlohmann::json& jsonSkeletonArray = jsonData["skins"];
 	const int skeletonCount = static_cast<int>(jsonSkeletonArray.size());
+	const nsMatrix4 scaleMatrix = nsMatrix4::Scale(100.0f);
 
 	for (int i = 0; i < skeletonCount; ++i)
 	{
@@ -334,10 +341,12 @@ static void ns_GLB_ImportSkeletons(const nsAssetImportOption_Model& option, cons
 			const int nodeIndex = jsonBoneArray[j];
 			const nsGLB_Node& node = glbNodes[nodeIndex];
 
+			const nsMatrix4 invBindMatrix = inverseBindPoseMatrices[j];
 			nsGLB_Bone& glbBone = glbSkeleton.Bones[j];
 			glbBone.Name = node.Name;
-			glbBone.InverseBindPoseTransform = inverseBindPoseMatrices[j].GetTransposed();
+			glbBone.InverseBindPoseTransform = invBindMatrix * scaleMatrix;
 			glbBone.LocalTransform = node.Transform;
+			glbBone.LocalTransform.Position *= 100.0f;
 			glbBone.NodeId = nodeIndex;
 			glbBone.ParentId = -1;
 		}
@@ -372,6 +381,7 @@ static void ns_GLB_ImportSkeletons(const nsAssetImportOption_Model& option, cons
 
 			nsAnimationSkeletonData::Bone& bone = data.BoneDatas[j];
 			bone.InverseBindPoseTransform = glbBone.InverseBindPoseTransform;
+			bone.PoseTransform = nsMatrix4::IDENTITY;
 			bone.LocalTransform = glbBone.LocalTransform;
 			bone.ParentId = glbBone.ParentId;
 		}

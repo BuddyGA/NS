@@ -52,8 +52,8 @@ private:
 		nsVulkanBuffer* CameraViewUniformBuffer;
 		nsVulkanBuffer* LightStorageBuffer;
 
-		// Forward pass global descriptor sets. [0]: Texture (Dynamic indexing), [1]: Environment, [2]: Camera
-		VkDescriptorSet ForwardGlobalDescriptorSets[3];
+		// Forward pass global descriptor sets. [0]: Texture (Dynamic indexing), [1]: Environment, [2]: BoneTransforms [3]: Camera
+		VkDescriptorSet ForwardGlobalDescriptorSets[4];
 	};
 
 	Frame FrameDatas[NS_ENGINE_FRAME_BUFFERING];
@@ -86,7 +86,6 @@ public:
 	void ExecuteRenderPass_Shadow(VkCommandBuffer commandBuffer) noexcept;
 
 private:
-	void RenderPassForward_SkelMesh(VkCommandBuffer commandBuffer);
 	void RenderPassForward_Mesh(VkCommandBuffer commandBuffer);
 	void RenderPassForward_Wireframe(VkCommandBuffer commandBuffer);
 	void RenderPassForward_PrimitiveBatch(VkCommandBuffer commandBuffer);

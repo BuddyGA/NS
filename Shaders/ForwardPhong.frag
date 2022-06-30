@@ -21,7 +21,7 @@ layout (set = 1, binding = 0) uniform UBO_Environment
 };
 
 
-layout (set = 3, binding = 0) readonly buffer UBO_Material
+layout (set = 4, binding = 0) readonly buffer UBO_Material
 {
 	vec4 BaseColor;
 	float Shininess;

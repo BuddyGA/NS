@@ -228,7 +228,7 @@ void nsEngine::MainLoop()
 
 
 		// Update animation
-		nsAnimationManager::Get().Update(DeltaTimeSeconds);
+		nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
 
 
 		if (Game && !Game->IsMinimized())
