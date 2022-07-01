@@ -5,12 +5,18 @@
 #include "ThirdParty/json.hpp"
 
 
-static nsLogCategory AssetImporterGLB("nsAssetImporterGLB", nsELogVerbosity::LV_WARNING);
+static nsLogCategory AssetImporterGLB("nsAssetImporterGLB", nsELogVerbosity::LV_INFO);
 
 
-static constexpr uint32 GLB_MAGIC			= (0x46546C67); // glTF
-static constexpr uint32 GLB_CHUNK_TYPE_JSON = (0x4E4F534A); // JSON
-static constexpr uint32 GLB_CHUNK_TYPE_BIN	= (0x004E4942); // BIN
+static constexpr uint32 GLB_MAGIC					= 0x46546C67; // glTF
+static constexpr uint32 GLB_CHUNK_TYPE_JSON			= 0x4E4F534A; // JSON
+static constexpr uint32 GLB_CHUNK_TYPE_BIN			= 0x004E4942; // BIN
+static constexpr int GLB_COMPONENT_TYPE_INT8		= 5120;
+static constexpr int GLB_COMPONENT_TYPE_UINT8		= 5121;
+static constexpr int GLB_COMPONENT_TYPE_INT16		= 5122;
+static constexpr int GLB_COMPONENT_TYPE_UINT16		= 5123;
+static constexpr int GLB_COMPONENT_TYPE_UINT32		= 5125;
+static constexpr int GLB_COMPONENT_TYPE_FLOAT		= 5126;
 
 
 
@@ -44,33 +50,6 @@ struct nsGLB_Model
 	nsTArrayInline<nsGLB_Mesh, NS_ENGINE_ASSET_MODEL_MAX_MESH> Meshes;
 };
 
-
-
-struct nsGLB_Bone
-{
-	nsName Name;
-	nsMatrix4 InverseBindPoseTransform;
-	nsTransform LocalTransform;
-	int NodeId;
-	int ParentId;
-
-
-public:
-	nsGLB_Bone()
-	{
-		InverseBindPoseTransform = nsMatrix4::IDENTITY;
-		NodeId = -1;
-		ParentId = -1;
-	}
-
-};
-
-
-struct nsGLB_Skeleton
-{
-	nsName Name;
-	nsTArrayInline<nsGLB_Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> Bones;
-};
 
 
 
@@ -129,6 +108,10 @@ static bool ns_GLB_GetVertexData(nsTArray<T>& outVertexData, const char* attribu
 
 
 
+
+// ================================================================================================================================================================ //
+// MODEL/MESHES
+// ================================================================================================================================================================ //
 static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const nsString& dstFolderPath, const uint8* binData, const nlohmann::json& jsonData)
 {
 	if (!option.bImportMesh)
@@ -219,7 +202,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 				mesh.VertexIndices.Resize(indexCount);
 
 				// UINT16
-				if (componentType == 5123)
+				if (componentType == GLB_COMPONENT_TYPE_UINT16)
 				{
 					const uint16* indices = reinterpret_cast<const uint16*>(indicesBufferData);
 
@@ -231,6 +214,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 				// UINT32
 				else
 				{
+					NS_Validate(componentType == GLB_COMPONENT_TYPE_UINT32);
 					nsPlatform::Memory_Copy(mesh.VertexIndices.GetData(), indicesBufferData, sizeof(uint32) * indexCount);
 				}
 			}
@@ -287,12 +271,91 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 
 
-static nsGLB_Bone* ns_GLB_FindBoneWithNodeIndex(nsTArrayInline<nsGLB_Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE>& bones, int nodeIndex)
+
+// ================================================================================================================================================================ //
+// SKELETON/ANIMATION
+// ================================================================================================================================================================ //
+struct nsGLB_Bone
+{
+	nsName Name;
+	nsMatrix4 InverseBindPoseTransform;
+	nsTransform LocalTransform;
+	int NodeId;
+	int ParentId;
+
+
+public:
+	nsGLB_Bone()
+	{
+		InverseBindPoseTransform = nsMatrix4::IDENTITY;
+		NodeId = -1;
+		ParentId = -1;
+	}
+
+};
+
+typedef nsTArrayInline<nsGLB_Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> nsGLB_BoneHierarchy;
+
+
+
+struct nsGLB_Skeleton
+{
+	nsName Name;
+	nsGLB_BoneHierarchy Bones;
+};
+
+
+
+struct nsGLB_Animation
+{
+	template<typename T>
+	struct TChannel
+	{
+		T Value;
+		float Timestamp;
+	};
+
+	struct KeyFrame
+	{
+		nsTArray<TChannel<nsVector3>> Positions;
+		nsTArray<TChannel<nsQuaternion>> Rotations;
+		nsTArray<TChannel<nsVector3>> Scales;
+	};
+
+	// Animation name
+	nsName Name;
+
+	// Frame count
+	int FrameCount;
+
+	// Duration (seconds)
+	float Duration;
+
+	// Key frame for each bone
+	nsTArrayInline<KeyFrame, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> KeyFrames;
+
+
+public:
+	nsGLB_Animation()
+	{
+		FrameCount = 0;
+		Duration = 0.0f;
+	}
+
+};
+
+
+static nsGLB_Bone* ns_GLB_FindBoneWithNodeIndex(nsGLB_BoneHierarchy& bones, int nodeIndex, int* outBoneId = nullptr)
 {
 	for (int i = 0; i < bones.GetCount(); ++i)
 	{
 		if (bones[i].NodeId == nodeIndex)
 		{
+			if (outBoneId)
+			{
+				*outBoneId = i;
+			}
+
 			return &bones[i];
 		}
 	}
@@ -301,16 +364,183 @@ static nsGLB_Bone* ns_GLB_FindBoneWithNodeIndex(nsTArrayInline<nsGLB_Bone, NS_EN
 };
 
 
-static void ns_GLB_ImportSkeletons(const nsAssetImportOption_Model& option, const nsString& dstFolderPath, const uint8* binData, const nlohmann::json& jsonData, const nsTArray<nsGLB_Node>& glbNodes)
+static void ns_GLB_ImportAnimations(const nsAssetImportOption_Model& option, const nsString& dstFolderPath, const uint8* binData, const nlohmann::json& jsonData, nsGLB_Skeleton& glbSkeleton, const nsTArray<nsGLB_Node>& glbNodes)
 {
-	if (!option.bImportSkeleton)
+	if (!option.bImportAnimation)
+	{
+		return;
+	}
+
+	if (!jsonData.contains("animations"))
+	{
+		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import animation from file [%s]. <animations> not found in json data!", *option.SourceFile);
+		return;
+	}
+
+	const nlohmann::json& jsonAnimationArray = jsonData["animations"];
+	const int animationCount = static_cast<int>(jsonAnimationArray.size());
+
+	for (int i = 0; i < animationCount; ++i)
+	{
+		const nlohmann::json& jsonAnimation = jsonAnimationArray[i];
+
+		nsGLB_Animation glbAnimation;
+		glbAnimation.Name = nsName::Format("anim_%s", jsonAnimation["name"].get<std::string>().c_str());
+		glbAnimation.KeyFrames.Resize(glbSkeleton.Bones.GetCount());
+
+		const nlohmann::json& jsonChannelArray = jsonAnimation["channels"];
+		const int channelCount = static_cast<int>(jsonChannelArray.size());
+
+		const nlohmann::json& jsonSamplerArray = jsonAnimation["samplers"];
+		const int samplerCount = static_cast<int>(jsonSamplerArray.size());
+
+
+		for (int c = 0; c < channelCount; ++c)
+		{
+			const nlohmann::json& jsonChannel = jsonChannelArray[c];
+			const int samplerIndex = jsonChannel["sampler"];
+			const int nodeIndex = jsonChannel["target"]["node"];
+			const nsName pathType = jsonChannel["target"]["path"].get<std::string>().c_str();
+
+			int boneId = -1;
+			ns_GLB_FindBoneWithNodeIndex(glbSkeleton.Bones, nodeIndex, &boneId);
+
+			if (boneId == -1)
+			{
+				continue;
+			}
+
+			nsGLB_Animation::KeyFrame& keyFrame = glbAnimation.KeyFrames[boneId];
+
+			const nlohmann::json& jsonSampler = jsonSamplerArray[samplerIndex];
+			const int inputAccessorIndex = jsonSampler["input"]; // timestamp
+			const int outputAccessorIndex = jsonSampler["output"]; // position/rotation/scale
+
+			int inputCount = 0;
+			int inputComponentType = 0;
+			const float* timeStamps = ns_GLB_GetBufferData<float>(inputCount, inputComponentType, binData, jsonData, inputAccessorIndex);
+			NS_Validate(inputComponentType == GLB_COMPONENT_TYPE_FLOAT);
+			glbAnimation.FrameCount = nsMath::Max(glbAnimation.FrameCount, inputCount);
+
+			int outputCount = 0;
+			int outputComponentType = 0;
+
+			if (pathType == "translation")
+			{
+				const nsVector3* positions = ns_GLB_GetBufferData<nsVector3>(outputCount, outputComponentType, binData, jsonData, outputAccessorIndex);
+				NS_Validate(inputCount == outputCount);
+
+				for (int t = 0; t < inputCount; ++t)
+				{
+					nsGLB_Animation::TChannel<nsVector3>& positionChannel = keyFrame.Positions.Add();
+					positionChannel.Value = positions[t] * 100.0f;
+					positionChannel.Timestamp = timeStamps[t];
+					glbAnimation.Duration = nsMath::Max(glbAnimation.Duration, positionChannel.Timestamp);
+				}
+			}
+			else if (pathType == "rotation")
+			{
+				const nsQuaternion* rotations = ns_GLB_GetBufferData<nsQuaternion>(outputCount, outputComponentType, binData, jsonData, outputAccessorIndex);
+				NS_Validate(inputCount == outputCount);
+
+				for (int t = 0; t < inputCount; ++t)
+				{
+					nsGLB_Animation::TChannel<nsQuaternion>& rotationChannel = keyFrame.Rotations.Add();
+					rotationChannel.Value = rotations[t];
+					rotationChannel.Timestamp = timeStamps[t];
+					glbAnimation.Duration = nsMath::Max(glbAnimation.Duration, rotationChannel.Timestamp);
+				}
+			}
+			else if (pathType == "scale")
+			{
+				const nsVector3* scales = ns_GLB_GetBufferData<nsVector3>(outputCount, outputComponentType, binData, jsonData, outputAccessorIndex);
+				NS_Validate(inputCount == outputCount);
+
+				for (int t = 0; t < inputCount; ++t)
+				{
+					nsGLB_Animation::TChannel<nsVector3>& scaleChannel = keyFrame.Scales.Add();
+					scaleChannel.Value = scales[t];
+					scaleChannel.Timestamp = timeStamps[t];
+					glbAnimation.Duration = nsMath::Max(glbAnimation.Duration, scaleChannel.Timestamp);
+				}
+			}
+			else
+			{
+				NS_ValidateV(0, "Unknown path type [%s]!", *pathType);
+			}
+		}
+
+
+		nsAnimationManager& animationManager = nsAnimationManager::Get();
+		const nsAnimationClipID clip = animationManager.CreateClip(glbAnimation.Name, glbSkeleton.Name);
+		nsAnimationClipData& data = animationManager.GetClipData(clip);
+		data.SkeletonName = glbSkeleton.Name;
+		data.FrameCount = glbAnimation.FrameCount;
+		data.Duration = glbAnimation.Duration;
+
+		const int keyFrameCount = glbAnimation.KeyFrames.GetCount();
+		data.KeyFrames.Resize(keyFrameCount);
+
+		for (int k = 0; k < keyFrameCount; ++k)
+		{
+			const nsGLB_Animation::KeyFrame& glbKeyFrame = glbAnimation.KeyFrames[k];
+			nsAnimationKeyFrame& keyFrame = data.KeyFrames[k];
+
+			// Copy position channels
+			const int pCount = glbKeyFrame.Positions.GetCount();
+			keyFrame.PositionChannels.Resize(pCount);
+
+			for (int p = 0; p < pCount; ++p)
+			{
+				const nsGLB_Animation::TChannel<nsVector3>& glbPositionChannel = glbKeyFrame.Positions[p];
+				nsAnimationKeyFrame::TChannel<nsVector3>& positionChannel = keyFrame.PositionChannels[p];
+				positionChannel.Value = glbPositionChannel.Value;
+				positionChannel.Timestamp = glbPositionChannel.Timestamp;
+			}
+
+
+			// Copy rotation channels
+			const int rCount = glbKeyFrame.Rotations.GetCount();
+			keyFrame.RotationChannels.Resize(rCount);
+
+			for (int r = 0; r < rCount; ++r)
+			{
+				const nsGLB_Animation::TChannel<nsQuaternion>& glbRotationChannel = glbKeyFrame.Rotations[r];
+				nsAnimationKeyFrame::TChannel<nsQuaternion>& rotationChannel = keyFrame.RotationChannels[r];
+				rotationChannel.Value = glbRotationChannel.Value;
+				rotationChannel.Timestamp = glbRotationChannel.Timestamp;
+			}
+
+
+			// Copy scale channels
+			const int sCount = glbKeyFrame.Scales.GetCount();
+			keyFrame.ScaleChannels.Resize(sCount);
+
+			for (int s = 0; s < sCount; ++s)
+			{
+				const nsGLB_Animation::TChannel<nsVector3>& glbScaleChannel = glbKeyFrame.Scales[s];
+				nsAnimationKeyFrame::TChannel<nsVector3>& scaleChannel = keyFrame.ScaleChannels[s];
+				scaleChannel.Value = glbScaleChannel.Value;
+				scaleChannel.Timestamp = glbScaleChannel.Timestamp;
+			}
+		}
+
+		nsAssetManager::Get().SaveAnimationAsset(glbAnimation.Name, clip, dstFolderPath, false);
+		NS_CONSOLE_Log(AssetImporterGLB, "Imported animation [%s] from source file [%s]", *glbAnimation.Name, *option.SourceFile);
+	}
+}
+
+
+static void ns_GLB_ImportSkeletonAndAnimations(const nsAssetImportOption_Model& option, const nsString& dstFolderPath, const uint8* binData, const nlohmann::json& jsonData, const nsTArray<nsGLB_Node>& glbNodes)
+{
+	if (!(option.bImportSkeleton || option.bImportAnimation))
 	{
 		return;
 	}
 
 	if (!jsonData.contains("skins"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import skeleton from file [%s]. <skins> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import skeleton or animation from file [%s]. <skins> not found in json data!", *option.SourceFile);
 		return;
 	}
 
@@ -319,76 +549,81 @@ static void ns_GLB_ImportSkeletons(const nsAssetImportOption_Model& option, cons
 	const nlohmann::json& jsonSkeletonArray = jsonData["skins"];
 	const int skeletonCount = static_cast<int>(jsonSkeletonArray.size());
 	const nsMatrix4 scaleMatrix = nsMatrix4::Scale(100.0f);
+	NS_Validate(skeletonCount == 1);
 
-	for (int i = 0; i < skeletonCount; ++i)
+	const nlohmann::json& jsonSkeleton = jsonSkeletonArray[0];
+
+	nsGLB_Skeleton glbSkeleton;
+	glbSkeleton.Name = nsName::Format("skl_%s", jsonSkeleton["name"].get<std::string>().c_str());
+	const nlohmann::json& jsonBoneArray = jsonSkeleton["joints"];
+	const int boneCount = static_cast<int>(jsonBoneArray.size());
+	glbSkeleton.Bones.Resize(boneCount);
+
+	const int accessorIndex = jsonSkeleton["inverseBindMatrices"];
+	int matrixCount = 0;
+	int componentType = 0;
+	const nsMatrix4* inverseBindPoseMatrices = ns_GLB_GetBufferData<nsMatrix4>(matrixCount, componentType, binData, jsonData, accessorIndex);
+	NS_Validate(matrixCount == boneCount);
+
+	for (int j = 0; j < boneCount; ++j)
 	{
-		const nlohmann::json& jsonSkeleton = jsonSkeletonArray[i];
+		const int nodeIndex = jsonBoneArray[j];
+		const nsGLB_Node& node = glbNodes[nodeIndex];
 
-		nsGLB_Skeleton glbSkeleton;
-		glbSkeleton.Name = nsName::Format("skl_%s", jsonSkeleton["name"].get<std::string>().c_str());
-		const nlohmann::json& jsonBoneArray = jsonSkeleton["joints"];
-		const int boneCount = static_cast<int>(jsonBoneArray.size());
-		glbSkeleton.Bones.Resize(boneCount);
+		const nsMatrix4 invBindMatrix = inverseBindPoseMatrices[j];
+		nsGLB_Bone& glbBone = glbSkeleton.Bones[j];
+		glbBone.Name = node.Name;
+		glbBone.InverseBindPoseTransform = invBindMatrix * scaleMatrix;
+		glbBone.LocalTransform = node.Transform;
+		glbBone.LocalTransform.Position *= 100.0f;
+		glbBone.NodeId = nodeIndex;
+		glbBone.ParentId = -1;
+	}
 
-		const int accessorIndex = jsonSkeleton["inverseBindMatrices"];
-		int matrixCount = 0;
-		int componentType = 0;
-		const nsMatrix4* inverseBindPoseMatrices = ns_GLB_GetBufferData<nsMatrix4>(matrixCount, componentType, binData, jsonData, accessorIndex);
-		NS_Validate(matrixCount == boneCount);
 
-		for (int j = 0; j < boneCount; ++j)
+	// Adjust bone hierarchy
+	for (int j = 0; j < boneCount; ++j)
+	{
+		const int nodeIndex = jsonBoneArray[j];
+		const nsGLB_Node& node = glbNodes[nodeIndex];
+
+		for (int c = 0; c < node.Children.GetCount(); ++c)
 		{
-			const int nodeIndex = jsonBoneArray[j];
-			const nsGLB_Node& node = glbNodes[nodeIndex];
-
-			const nsMatrix4 invBindMatrix = inverseBindPoseMatrices[j];
-			nsGLB_Bone& glbBone = glbSkeleton.Bones[j];
-			glbBone.Name = node.Name;
-			glbBone.InverseBindPoseTransform = invBindMatrix * scaleMatrix;
-			glbBone.LocalTransform = node.Transform;
-			glbBone.LocalTransform.Position *= 100.0f;
-			glbBone.NodeId = nodeIndex;
-			glbBone.ParentId = -1;
+			const int childNodeIndex = node.Children[c];
+			nsGLB_Bone* childBone = ns_GLB_FindBoneWithNodeIndex(glbSkeleton.Bones, childNodeIndex);
+			NS_Validate(childBone);
+			childBone->ParentId = j;
 		}
+	}
 
 
-		// Adjust bone hierarchy
-		for (int j = 0; j < boneCount; ++j)
-		{
-			const int nodeIndex = jsonBoneArray[j];
-			const nsGLB_Node& node = glbNodes[nodeIndex];
+	nsAnimationManager& animationManager = nsAnimationManager::Get();
+	const nsAnimationSkeletonID skeleton = animationManager.CreateSkeleton(glbSkeleton.Name);
+	nsAnimationSkeletonData& data = animationManager.GetSkeletonData(skeleton);
+	data.BoneNames.Resize(boneCount);
+	data.BoneDatas.Resize(boneCount);
 
-			for (int c = 0; c < node.Children.GetCount(); ++c)
-			{
-				const int childNodeIndex = node.Children[c];
-				nsGLB_Bone* childBone = ns_GLB_FindBoneWithNodeIndex(glbSkeleton.Bones, childNodeIndex);
-				NS_Validate(childBone);
-				childBone->ParentId = j;
-			}
-		}
+	for (int j = 0; j < boneCount; ++j)
+	{
+		const nsGLB_Bone& glbBone = glbSkeleton.Bones[j];
+		data.BoneNames[j] = glbBone.Name;
 
+		nsAnimationSkeletonData::Bone& bone = data.BoneDatas[j];
+		bone.InverseBindPoseTransform = glbBone.InverseBindPoseTransform;
+		bone.PoseTransform = nsMatrix4::IDENTITY;
+		bone.LocalTransform = glbBone.LocalTransform;
+		bone.ParentId = glbBone.ParentId;
+	}
 
-		nsAnimationManager& animationManager = nsAnimationManager::Get();
-		const nsAnimationSkeletonID skeleton = animationManager.CreateSkeleton(glbSkeleton.Name);
-		nsAnimationSkeletonData& data = animationManager.GetSkeletonData(skeleton);
-		data.BoneNames.Resize(boneCount);
-		data.BoneDatas.Resize(boneCount);
-
-		for (int j = 0; j < boneCount; ++j)
-		{
-			const nsGLB_Bone& glbBone = glbSkeleton.Bones[j];
-			data.BoneNames[j] = glbBone.Name;
-
-			nsAnimationSkeletonData::Bone& bone = data.BoneDatas[j];
-			bone.InverseBindPoseTransform = glbBone.InverseBindPoseTransform;
-			bone.PoseTransform = nsMatrix4::IDENTITY;
-			bone.LocalTransform = glbBone.LocalTransform;
-			bone.ParentId = glbBone.ParentId;
-		}
-
+	if (option.bImportSkeleton)
+	{
 		nsAssetManager::Get().SaveSkeletonAsset(glbSkeleton.Name, skeleton, dstFolderPath, false);
-
 		NS_CONSOLE_Log(AssetImporterGLB, "Imported skeleton [%s] from source file [%s]", *glbSkeleton.Name, *option.SourceFile);
+	}
+
+	if (option.bImportAnimation)
+	{
+		ns_GLB_ImportAnimations(option, dstFolderPath, binData, jsonData, glbSkeleton, glbNodes);
 	}
 }
 
@@ -551,5 +786,5 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 	}
 
 	ns_GLB_ImportModels(option, dstFolderPath, binData, jsonData);
-	ns_GLB_ImportSkeletons(option, dstFolderPath, binData, jsonData, glbNodes);
+	ns_GLB_ImportSkeletonAndAnimations(option, dstFolderPath, binData, jsonData, glbNodes);
 }

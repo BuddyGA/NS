@@ -1,9 +1,10 @@
 #include "nsAnimation.h"
+#include "nsConsole.h"
 
 
 NS_ENGINE_DEFINE_HANDLE(nsAnimationSkeletonID);
 NS_ENGINE_DEFINE_HANDLE(nsAnimationInstanceID);
-NS_ENGINE_DEFINE_HANDLE(nsAnimationSequenceID);
+NS_ENGINE_DEFINE_HANDLE(nsAnimationClipID);
 
 
 static nsLogCategory AnimationLog("nsAnimationLog", nsELogVerbosity::LV_DEBUG);
@@ -19,9 +20,9 @@ nsAnimationManager::nsAnimationManager() noexcept
 	SkeletonFlags.Reserve(4);
 	SkeletonDatas.Reserve(4);
 
-	SequenceNames.Reserve(16);
-	SequenceFlags.Reserve(16);
-	SequenceDatas.Reserve(16);
+	ClipNames.Reserve(16);
+	ClipFlags.Reserve(16);
+	ClipDatas.Reserve(16);
 
 	InstanceNames.Reserve(16);
 	InstanceFlags.Reserve(16);
@@ -66,7 +67,64 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 			continue;
 		}
 
+		nsAnimationPlayState& state = InstancePlayStates[i];
+
+		if (state.Clip == nsAnimationClipID::INVALID)
+		{
+			continue;
+		}
+
+		const nsAnimationClipData& clipData = ClipDatas[state.Clip.Id];
+		state.Timestamp += deltaTime * state.PlayRate;
+		
+		if (state.bLooping)
+		{
+			state.Timestamp = nsMath::ModF(state.Timestamp, clipData.Duration);
+		}
+		else
+		{
+			state.Timestamp = nsMath::Clamp(state.Timestamp, 0.0f, clipData.Duration);
+		}
+		
 		const int boneCount = animInstanceData.BoneTransforms.GetCount();
+		NS_Assert(clipData.KeyFrames.GetCount() == boneCount);
+
+		for (int j = 0; j < boneCount; ++j)
+		{
+			nsAnimationSkeletonData::Bone& bone = animInstanceData.BoneTransforms[j];
+
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& pChannels = clipData.KeyFrames[j].PositionChannels;
+			int p0 = -1;
+			int p1 = -1;
+			for (int p = 0; p < pChannels.GetCount() - 1; ++p)
+			{
+				if (state.Timestamp <= pChannels[p + 1].Timestamp)
+				{
+					p0 = p;
+					break;
+				}
+			}
+			NS_Assert(p0 != -1);
+			p1 = p0 + 1;
+			bone.LocalTransform.Position = nsVector3::Lerp(pChannels[p0].Value, pChannels[p1].Value, (state.Timestamp - pChannels[p0].Timestamp) / (pChannels[p1].Timestamp - pChannels[p0].Timestamp));
+
+
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsQuaternion>>& rChannels = clipData.KeyFrames[j].RotationChannels;
+			int r0 = -1;
+			int r1 = -1;
+			for (int r = 0; r < rChannels.GetCount() - 1; ++r)
+			{
+				if (state.Timestamp <= rChannels[r + 1].Timestamp)
+				{
+					r0 = r;
+					break;
+				}
+			}
+			NS_Assert(r0 != -1);
+			r1 = r0 + 1;
+			bone.LocalTransform.Rotation = nsQuaternion::Slerp(rChannels[r0].Value, rChannels[r1].Value, (state.Timestamp - rChannels[r0].Timestamp) / (rChannels[r1].Timestamp - rChannels[r0].Timestamp));
+		}
+
 
 		for (int j = 0; j < boneCount; ++j)
 		{
@@ -133,9 +191,9 @@ void nsAnimationManager::DestroySkeleton(nsAnimationSkeletonID& skeleton)
 }
 
 
-nsAnimationSequenceID nsAnimationManager::FindSequence(const nsName& name) const
+nsAnimationClipID nsAnimationManager::FindClip(const nsName& name) const
 {
-	for (auto it = SequenceNames.CreateConstIterator(); it; ++it)
+	for (auto it = ClipNames.CreateConstIterator(); it; ++it)
 	{
 		if ((*it) == name)
 		{
@@ -143,53 +201,74 @@ nsAnimationSequenceID nsAnimationManager::FindSequence(const nsName& name) const
 		}
 	}
 
-	return nsAnimationSequenceID::INVALID;
+	return nsAnimationClipID::INVALID;
 }
 
 
-nsAnimationSequenceID nsAnimationManager::CreateSequence(nsName name, nsAnimationSkeletonID skeleton)
+nsAnimationClipID nsAnimationManager::CreateClip(nsName name)
 {
 	NS_Validate_IsMainThread();
-	NS_Assert(IsSkeletonValid(skeleton));
 
-	if (FindSequence(name) != nsAnimationSequenceID::INVALID)
+	if (FindClip(name) != nsAnimationClipID::INVALID)
 	{
 		NS_LogWarning(AnimationLog, "Animation sequence with name [%s] already exists!", *name);
 	}
 
-	const int nameId = SequenceNames.Add();
-	const int flagId = SequenceFlags.Add();
-	const int dataId = SequenceDatas.Add();
+	const int nameId = ClipNames.Add();
+	const int flagId = ClipFlags.Add();
+	const int dataId = ClipDatas.Add();
 	NS_Assert(nameId == flagId && flagId == dataId);
 
-	SequenceNames[nameId] = name;
-	SequenceFlags[flagId] = Flag_Allocated;
+	ClipNames[nameId] = name;
+	ClipFlags[flagId] = Flag_Allocated;
 
-	nsAnimationSequenceData& data = SequenceDatas[dataId];
-	data.Skeleton = skeleton;
+	nsAnimationClipData& data = ClipDatas[dataId];
+	data.SkeletonName = nsName::NONE;
+	data.FrameCount = 0;
 	data.Duration = 0.0f;
-	data.FramePerSecond = 0;
-	data.KeyFrames.Clear();
+	data.KeyFrames.Clear(true);
 
 	return nameId;
 }
 
 
-void nsAnimationManager::DestroySequence(nsAnimationSequenceID& sequence)
+nsAnimationClipID nsAnimationManager::CreateClip(nsName name, nsAnimationSkeletonID skeleton)
+{
+	NS_Assert(IsSkeletonValid(skeleton));
+
+	const nsAnimationClipID clip = CreateClip(name);
+
+	nsAnimationClipData& data = ClipDatas[clip.Id];
+	data.SkeletonName = SkeletonNames[skeleton.Id];
+
+	return clip;
+}
+
+
+nsAnimationClipID nsAnimationManager::CreateClip(nsName name, nsName skeletonName)
+{
+	const nsAnimationSkeletonID skeleton = FindSkeleton(skeletonName);
+
+	if (skeleton == nsAnimationSkeletonID::INVALID)
+	{
+		NS_LogError(AnimationLog, "Fail to create clip [%s]. Skeleton name [%s] not found!", *name, *skeletonName);
+		return nsAnimationClipID::INVALID;
+	}
+
+	return CreateClip(name, skeleton);
+}
+
+
+void nsAnimationManager::DestroyClip(nsAnimationClipID& clip)
 {
 	NS_Validate_IsMainThread(); 
 
-	if (IsSequenceValid(sequence))
+	if (IsClipValid(clip))
 	{
 		NS_ValidateV(0, "Not implemented yet!");
 	}
 
-	sequence = nsAnimationSequenceID::INVALID;
-}
-
-
-void nsAnimationManager::UpdateSequenceData(nsAnimationSequenceID sequence, const nsAnimationKeyFrame* keyFrames, int keyFrameCount, float duration)
-{
+	clip = nsAnimationClipID::INVALID;
 }
 
 
@@ -220,7 +299,8 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 	const int nameId = InstanceNames.Add();
 	const int flagId = InstanceFlags.Add();
 	const int dataId = InstanceDatas.Add();
-	NS_Assert(nameId == flagId && flagId == dataId);
+	const int stateId = InstancePlayStates.Add();
+	NS_Assert(nameId == flagId && flagId == dataId && dataId == stateId);
 
 	InstanceNames[nameId] = name;
 	InstanceFlags[flagId] = Flag_Allocated;
@@ -231,8 +311,15 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 	nsAnimationInstanceData& data = InstanceDatas[dataId];
 	data.BoneNames = skeletonData.BoneNames;
 	data.BoneTransforms = skeletonData.BoneDatas;
+	data.Skeleton = skeleton;
 	data.BoneTransformIndex = InstanceBoneTransforms.GetCount();
 	data.bUpdatePose = true;
+
+	nsAnimationPlayState& state = InstancePlayStates[stateId];
+	state.Clip = nsAnimationClipID::INVALID;
+	state.PlayRate = 0.0f;
+	state.Timestamp = 0.0f;
+	state.bLooping = false;
 
 	InstanceBoneTransforms.ResizeConstructs(data.BoneTransformIndex + boneCount, nsMatrix4::IDENTITY);
 
@@ -253,6 +340,60 @@ void nsAnimationManager::DestroyInstance(nsAnimationInstanceID& instance)
 
 	instance = nsAnimationInstanceID::INVALID;
 }
+
+
+void nsAnimationManager::PlayAnimation(nsAnimationInstanceID instance, nsAnimationClipID clip, float playRate, bool bLoop)
+{
+	NS_Assert(IsInstanceValid(instance));
+	NS_Assert(IsClipValid(clip));
+
+	const nsAnimationInstanceData& instanceData = InstanceDatas[instance.Id];
+	const nsAnimationSkeletonID skeleton = instanceData.Skeleton;
+	NS_Assert(IsSkeletonValid(skeleton));
+	const nsName skeletonName = SkeletonNames[skeleton.Id];
+
+	const nsAnimationClipData& clipData = ClipDatas[clip.Id];
+
+	if (skeletonName != clipData.SkeletonName)
+	{
+		NS_CONSOLE_Warning(AnimationLog, "Fail to play animation [%s] with animation instance [%s]. Skeleton is not compatible! [AnimationInstanceSkeleton: %s, AnimationClipSkeleton: %s]",
+			*ClipNames[clip.Id],
+			*InstanceNames[instance.Id],
+			*skeletonName,
+			*clipData.SkeletonName
+		);
+
+		return;
+	}
+
+	nsAnimationPlayState& state = InstancePlayStates[instance.Id];
+	
+	if (state.Clip == clip && state.PlayRate == playRate)
+	{
+		return;
+	}
+
+	state.Clip = clip;
+	state.PlayRate = playRate;
+	state.Timestamp = 0.0f;
+	state.bLooping = bLoop;
+}
+
+
+void nsAnimationManager::StopAnimation(nsAnimationInstanceID instance)
+{
+	NS_Assert(IsInstanceValid(instance));
+
+}
+
+
+void nsAnimationManager::BlendAnimation(nsAnimationInstanceID instance, nsEAnimationTransitionMode transitionMode, float blendFactor, nsAnimationClipID clip, float playRate, bool bLoop)
+{
+	NS_Assert(IsInstanceValid(instance));
+
+}
+
+
 
 
 void nsAnimationManager::BeginFrame(int frameIndex)

@@ -27,6 +27,8 @@ struct nsAssetImportOption_Model
 
 class NS_ENGINE_API nsAssetImporter
 {
+	NS_DECLARE_SINGLETON(nsAssetImporter)
+
 private:
 	bool bInitialized;
 
@@ -41,7 +43,5 @@ private:
 
 public:
 	void ImportAssetFromModelFile(const nsAssetImportOption_Model& option, const nsString& dstFolderPath) noexcept;
-
-	NS_DECLARE_SINGLETON(nsAssetImporter)
 
 };

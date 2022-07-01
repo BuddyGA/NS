@@ -332,3 +332,89 @@ void nsSharedSkeletonAsset::Release() noexcept
 	Name = "";
 	Skeleton = nsAnimationSkeletonID::INVALID;
 }
+
+
+
+
+
+// ====================================================================================================================================================================== //
+// SHARED ASSET - ANIMATION
+// ====================================================================================================================================================================== //
+nsSharedAnimationAsset::nsSharedAnimationAsset() noexcept
+	: AssetId(-1)
+	, Name("")
+	, Clip(nsAnimationClipID::INVALID)
+{
+
+}
+
+
+nsSharedAnimationAsset::nsSharedAnimationAsset(const nsSharedAnimationAsset& other) noexcept
+	: AssetId(-1)
+	, Name("")
+	, Clip(nsAnimationClipID::INVALID)
+{
+	Copy(other);
+}
+
+
+nsSharedAnimationAsset::nsSharedAnimationAsset(nsSharedAnimationAsset&& other) noexcept
+	: AssetId(other.AssetId)
+	, Name(other.Name)
+	, Clip(other.Clip)
+{
+	other.AssetId = -1;
+	other.Name = "";
+	other.Clip = nsAnimationClipID::INVALID;
+
+}
+
+
+nsSharedAnimationAsset::~nsSharedAnimationAsset() noexcept
+{
+	Release();
+}
+
+
+nsSharedAnimationAsset::nsSharedAnimationAsset(int assetId, nsName name, nsAnimationClipID clip) noexcept
+	: AssetId(assetId)
+	, Name(name)
+	, Clip(clip)
+{
+	if (AssetId != -1)
+	{
+		NS_Assert(Clip.IsValid());
+		nsAssetManager::Get().Internal_AddAnimationAssetReference(AssetId, Clip);
+	}
+
+}
+
+
+void nsSharedAnimationAsset::Copy(const nsSharedAnimationAsset& other) noexcept
+{
+	Release();
+
+	AssetId = other.AssetId;
+	Name = other.Name;
+	Clip = other.Clip;
+
+	if (AssetId != -1)
+	{
+		NS_Assert(Clip.IsValid());
+		nsAssetManager::Get().Internal_AddAnimationAssetReference(AssetId, Clip);
+	}
+}
+
+
+void nsSharedAnimationAsset::Release() noexcept
+{
+	if (AssetId != -1)
+	{
+		NS_Assert(Clip.IsValid());
+		nsAssetManager::Get().Internal_RemoveAnimationAssetReference(AssetId, Clip);
+	}
+
+	AssetId = -1;
+	Name = "";
+	Clip = nsAnimationClipID::INVALID;
+}

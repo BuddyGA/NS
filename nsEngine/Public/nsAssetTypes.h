@@ -408,3 +408,89 @@ public:
 	friend class nsAssetManager;
 
 };
+
+
+
+
+class NS_ENGINE_API nsSharedAnimationAsset
+{
+private:
+	int AssetId;
+	nsName Name;
+	nsAnimationClipID Clip;
+
+
+public:
+	nsSharedAnimationAsset() noexcept;
+	nsSharedAnimationAsset(const nsSharedAnimationAsset& other) noexcept;
+	nsSharedAnimationAsset(nsSharedAnimationAsset&& other) noexcept;
+	~nsSharedAnimationAsset() noexcept;
+
+private:
+	nsSharedAnimationAsset(int assetId, nsName name, nsAnimationClipID clip) noexcept;
+	void Copy(const nsSharedAnimationAsset& other) noexcept;
+
+public:
+	void Release() noexcept;
+
+
+	NS_NODISCARD_INLINE bool IsValid() const noexcept
+	{
+		return AssetId != -1 && Clip.IsValid();
+	}
+
+
+	NS_NODISCARD_INLINE nsName GetName() const noexcept
+	{
+		return Name;
+	}
+
+
+	NS_NODISCARD_INLINE nsAnimationClipID GetClip() const noexcept
+	{
+		return Clip;
+	}
+
+
+	NS_INLINE nsSharedAnimationAsset& operator=(const nsSharedAnimationAsset& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			Copy(rhs);
+		}
+
+		return *this;
+	}
+
+
+	NS_INLINE nsSharedAnimationAsset& operator=(nsSharedAnimationAsset&& rhs) noexcept
+	{
+		if (this != &rhs)
+		{
+			Release();
+			AssetId = rhs.AssetId;
+			Name = rhs.Name;
+			Clip = rhs.Clip;
+			rhs.AssetId = -1;
+			rhs.Name = "";
+			rhs.Clip = nsAnimationClipID::INVALID;
+		}
+
+		return *this;
+	}
+
+
+	NS_INLINE bool operator==(const nsSharedAnimationAsset& rhs) const noexcept
+	{
+		return AssetId == rhs.AssetId && Clip == rhs.Clip;
+	}
+
+
+	NS_INLINE bool operator!=(const nsSharedAnimationAsset& rhs) const noexcept
+	{
+		return !(*this == rhs);
+	}
+
+
+	friend class nsAssetManager;
+};

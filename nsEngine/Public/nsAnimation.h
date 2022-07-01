@@ -40,49 +40,59 @@ struct nsAnimationSkeletonData
 
 struct nsAnimationKeyFrame
 {
-	nsQuaternion Rotation;
-	nsVector3 Position;
-	nsVector3 Scale;
-	float RotationTime;
-	float PositionTime;
-	float ScaleTime;
-	bool bHasRotation;
-	bool bHasPosition;
-	bool bHasScale;
-
-
-public:
-	nsAnimationKeyFrame()
-		: Rotation(nsQuaternion::IDENTITY)
-		, Position(0.0f)
-		, Scale(1.0f)
-		, RotationTime(0.0f)
-		, PositionTime(0.0f)
-		, ScaleTime(0.0f)
-		, bHasRotation(false)
-		, bHasPosition(false)
-		, bHasScale(false)
+	template<typename T>
+	struct TChannel
 	{
+		T Value;
+		float Timestamp;
+	};
+
+	nsTArray<TChannel<nsVector3>> PositionChannels;
+	nsTArray<TChannel<nsQuaternion>> RotationChannels;
+	nsTArray<TChannel<nsVector3>> ScaleChannels;
+
+
+	friend NS_INLINE void operator|(nsStream& stream, nsAnimationKeyFrame& animationKeyFrame)
+	{
+		stream | animationKeyFrame.PositionChannels;
+		stream | animationKeyFrame.RotationChannels;
+		stream | animationKeyFrame.ScaleChannels;
 	}
 
 };
 
 
 
-struct nsAnimationSequenceData
+struct nsAnimationClipData
 {
-	nsAnimationSkeletonID Skeleton;
+	// Compatible skeleton
+	nsName SkeletonName;
+
+	// Frame count
+	int FrameCount;
+
+	// Duration (seconds)
 	float Duration;
-	int FramePerSecond;
-	nsTArrayInline<nsAnimationKeyFrame, NS_ENGINE_ANIMATION_SEQUENCE_MAX_KEY_FRAME> KeyFrames;
+
+	// Key-frames for each bone
+	nsTArray<nsAnimationKeyFrame> KeyFrames;
 
 
 public:
-	nsAnimationSequenceData()
-		: Skeleton(nsAnimationSkeletonID::INVALID)
+	nsAnimationClipData()
+		: SkeletonName()
+		, FrameCount(0)
 		, Duration(0.0f)
-		, FramePerSecond(0)
 	{
+	}
+
+
+	friend NS_INLINE void operator|(nsStream& stream, nsAnimationClipData& animationSequenceData)
+	{
+		stream | animationSequenceData.SkeletonName;
+		stream | animationSequenceData.FrameCount;
+		stream | animationSequenceData.Duration;
+		stream | animationSequenceData.KeyFrames;
 	}
 
 };
@@ -97,13 +107,71 @@ struct nsAnimationInstanceData
 	// Skeleton bone transforms
 	nsTArrayInline<nsAnimationSkeletonData::Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE> BoneTransforms;
 
+	// Skeleton which this instanced from
+	nsAnimationSkeletonID Skeleton;
+
 	// Bone transform index
 	int BoneTransformIndex;
 
 	// Update/pause pose
 	bool bUpdatePose;
+
+
+public:
+	nsAnimationInstanceData()
+	{
+		Skeleton = nsAnimationSkeletonID::INVALID;
+		BoneTransformIndex = -1;
+		bUpdatePose = false;
+	}
+
 };
 
+
+
+enum class nsEAnimationTransitionMode : uint8
+{
+	SMOOTH = 0,
+	FROZEN
+};
+
+
+struct nsAnimationPlayState
+{
+	nsAnimationClipID Clip;
+	float PlayRate;
+	float Timestamp;
+	bool bLooping;
+
+
+public:
+	nsAnimationPlayState()
+	{
+		Clip = nsAnimationClipID::INVALID;
+		PlayRate = 1.0f;
+		Timestamp = 0.0f;
+		bLooping = false;
+	}
+
+};
+
+
+struct nsAnimationBlendState
+{
+	nsAnimationClipID Clip;
+	nsEAnimationTransitionMode TransitionMode;
+	float BlendFactor;
+
+
+public:
+	nsAnimationBlendState()
+		: Clip(nsAnimationClipID::INVALID)
+		, TransitionMode(nsEAnimationTransitionMode::SMOOTH)
+		, BlendFactor(0.2f)
+	{
+	}
+
+};
 
 
 
@@ -133,22 +201,25 @@ private:
 	};
 
 
-	// Skeleton
+	// Animation Skeleton
 	nsTArrayFreeList<nsName> SkeletonNames;
 	nsTArrayFreeList<uint32> SkeletonFlags;
 	nsTArrayFreeList<nsAnimationSkeletonData> SkeletonDatas;
 	
 
-	// Animation Sequence
-	nsTArrayFreeList<nsName> SequenceNames;
-	nsTArrayFreeList<uint32> SequenceFlags;
-	nsTArrayFreeList<nsAnimationSequenceData> SequenceDatas;
+	// Animation Clip
+	nsTArrayFreeList<nsName> ClipNames;
+	nsTArrayFreeList<uint32> ClipFlags;
+	nsTArrayFreeList<nsAnimationClipData> ClipDatas;
 
 
 	// Animation Instance
 	nsTArrayFreeList<nsName> InstanceNames;
 	nsTArrayFreeList<uint32> InstanceFlags;
 	nsTArrayFreeList<nsAnimationInstanceData> InstanceDatas;
+	nsTArrayFreeList<nsAnimationPlayState> InstancePlayStates;
+
+
 	nsTArray<nsMatrix4> InstanceBoneTransforms;
 
 
@@ -186,20 +257,44 @@ public:
 
 
 
-	NS_NODISCARD nsAnimationSequenceID FindSequence(const nsName& name) const;
-	NS_NODISCARD nsAnimationSequenceID CreateSequence(nsName name, nsAnimationSkeletonID skeleton);
-	void DestroySequence(nsAnimationSequenceID& sequence);
-	void UpdateSequenceData(nsAnimationSequenceID sequence, const nsAnimationKeyFrame* keyFrames, int keyFrameCount, float duration);
+	NS_NODISCARD nsAnimationClipID FindClip(const nsName& name) const;
+	NS_NODISCARD nsAnimationClipID CreateClip(nsName name);
+	NS_NODISCARD nsAnimationClipID CreateClip(nsName name, nsAnimationSkeletonID skeleton);
+	NS_NODISCARD nsAnimationClipID CreateClip(nsName name, nsName skeletonName);
+	void DestroyClip(nsAnimationClipID& clip);
 
-	NS_NODISCARD_INLINE bool IsSequenceValid(nsAnimationSequenceID sequence) const
+	NS_NODISCARD_INLINE bool IsClipValid(nsAnimationClipID clip) const
 	{
-		return sequence.IsValid() && SequenceFlags.IsValid(sequence.Id) && !(SequenceFlags[sequence.Id] & Flag_PendingDestroy);
+		return clip.IsValid() && ClipFlags.IsValid(clip.Id) && !(ClipFlags[clip.Id] & Flag_PendingDestroy);
 	}
+
+	NS_NODISCARD_INLINE nsAnimationClipData& GetClipData(nsAnimationClipID clip)
+	{
+		NS_Assert(IsClipValid(clip));
+		return ClipDatas[clip.Id];
+	}
+
+	NS_NODISCARD_INLINE const nsAnimationClipData& GetClipData(nsAnimationClipID clip) const
+	{
+		NS_Assert(IsClipValid(clip));
+		return ClipDatas[clip.Id];
+	}
+
+	NS_NODISCARD_INLINE nsName GetClipName(nsAnimationClipID clip) const
+	{
+		NS_Assert(IsClipValid(clip));
+		return ClipNames[clip.Id];
+	}
+
 
 
 	NS_NODISCARD nsAnimationInstanceID FindInstance(const nsName& name) const;
 	NS_NODISCARD nsAnimationInstanceID CreateInstance(nsName name, nsAnimationSkeletonID skeleton);
 	void DestroyInstance(nsAnimationInstanceID& instance);
+	void PlayAnimation(nsAnimationInstanceID instance, nsAnimationClipID clip, float playRate, bool bLoop);
+	void StopAnimation(nsAnimationInstanceID instance);
+	void BlendAnimation(nsAnimationInstanceID instance, nsEAnimationTransitionMode transitionMode, float blendFactor, nsAnimationClipID clip, float playRate, bool bLoop);
+
 
 	NS_NODISCARD_INLINE bool IsInstanceValid(nsAnimationInstanceID instance) const
 	{

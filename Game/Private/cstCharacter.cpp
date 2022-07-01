@@ -26,6 +26,10 @@ void cstCharacter::OnInitialize()
 	nsAssetManager& assetManager = nsAssetManager::Get();
 	MeshComponent->SetMesh(assetManager.LoadModelAsset("mdl_LowPolyChar"));
 	MeshComponent->SetSkeleton(assetManager.LoadSkeletonAsset("skl_LowPolyChar_Rig"));
+
+	AnimRunForwardLoop = assetManager.LoadAnimationAsset("anim_run_forward_loop");
+
+	MeshComponent->PlayAnimation(AnimRunForwardLoop, 1.0f, true);
 }
 
 

@@ -49,9 +49,6 @@
 // Maximum bones per skeleton
 #define NS_ENGINE_ANIMATION_SKELETON_MAX_BONE						(64)
 
-// Maximum key frames per animation sequence
-#define NS_ENGINE_ANIMATION_SEQUENCE_MAX_KEY_FRAME					(64)
-
 // Asset file signature (magic number) 
 #define NS_ENGINE_ASSET_FILE_SIGNATURE								(0x0000734E) // Ns
 
@@ -149,7 +146,7 @@ public:																						\
 NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
 NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationSkeletonID, nsAnimationManager)
-NS_ENGINE_DECLARE_HANDLE(nsAnimationSequenceID, nsAnimationManager)
+NS_ENGINE_DECLARE_HANDLE(nsAnimationClipID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationInstanceID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsRenderContextMeshID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsRenderContextPointLightID, nsRenderContextWorld)

@@ -177,4 +177,22 @@ public:
 private:
 	void UpdateSkeletonAssets();
 
+
+
+// ================================================================================================ //
+// ANIMATION
+// ================================================================================================ //
+private:
+	TAssetData<nsAnimationClipID> AnimationAsset;
+
+
+public:
+	void SaveAnimationAsset(nsName name, nsAnimationClipID clip, const nsString& folderPath, bool bIsEngineAsset);
+	nsSharedAnimationAsset LoadAnimationAsset(const nsName& name);
+	void Internal_AddAnimationAssetReference(int index, nsAnimationClipID clip);
+	void Internal_RemoveAnimationAssetReference(int index, nsAnimationClipID clip);
+
+private:
+	void UpdateAnimationAssets();
+
 };

@@ -98,5 +98,12 @@ protected:
 
 public:
 	void SetSkeleton(nsSharedSkeletonAsset newSkeleton);
+	void PlayAnimation(nsSharedAnimationAsset animation, float playRate, bool bLoop);
+
+
+	NS_NODISCARD_INLINE nsSharedSkeletonAsset GetSkeleton() const
+	{
+		return SkeletonAsset;
+	}
 
 };

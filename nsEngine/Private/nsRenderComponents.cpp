@@ -2,6 +2,8 @@
 #include "nsRenderManager.h"
 #include "nsMaterial.h"
 #include "nsAnimation.h"
+#include "nsActor.h"
+#include "nsConsole.h"
 
 
 
@@ -245,4 +247,20 @@ void nsSkeletalMeshComponent::SetSkeleton(nsSharedSkeletonAsset newSkeleton)
 	{
 		AnimationInstance = animationManager.CreateInstance("anim_instance", SkeletonAsset.GetSkeleton());
 	}
+}
+
+
+void nsSkeletalMeshComponent::PlayAnimation(nsSharedAnimationAsset animation, float playRate, bool bLoop)
+{
+	if (!SkeletonAsset.IsValid())
+	{
+		return;
+	}
+
+	if (!animation.IsValid())
+	{
+		return;
+	}
+
+	nsAnimationManager::Get().PlayAnimation(AnimationInstance, animation.GetClip(), playRate, bLoop);
 }

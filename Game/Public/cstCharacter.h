@@ -115,6 +115,8 @@ private:
 	nsSkeletalMeshComponent* MeshComponent;
 	cstCharacterAttributes Attributes;
 
+	nsSharedAnimationAsset AnimRunForwardLoop;
+
 
 public:
 	cstCharacter();

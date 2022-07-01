@@ -127,6 +127,15 @@ void nsAssetManager::RegisterAsset(const nsString& assetFile)
 			break;
 		}
 
+		case nsEAssetType::ANIMATION:
+		{
+			NS_AssertV(AnimationAsset.Names.Find(name) == NS_ARRAY_INDEX_INVALID, "Animation asset with name [%s] already registered!", *name);
+			NS_CONSOLE_Log(AssetLog, "Register animation asset [%s]", *name);
+			AnimationAsset.Add(name, path, AssetFlag_Unloaded, nsAnimationClipID::INVALID);
+
+			break;
+		}
+
 		default:
 			NS_ValidateV(0, "Not implemented yet!");
 			break;
@@ -202,7 +211,10 @@ void nsAssetManager::GetAssetInfosFromPath(const nsString& path, nsTArray<nsAsse
 void nsAssetManager::Update()
 {
 	UpdateTextureAssets();
+	UpdateMaterialAssets();
 	UpdateModelAssets();
+	UpdateSkeletonAssets();
+	UpdateAnimationAssets();
 }
 
 
@@ -432,7 +444,21 @@ void nsAssetManager::Internal_RemoveMaterialAssetReference(int index, nsMaterial
 
 void nsAssetManager::UpdateMaterialAssets()
 {
+	for (int i = 0; i < MaterialAsset.Flags.GetCount(); ++i)
+	{
+		uint8& flags = MaterialAsset.Flags[i];
 
+		if (flags & AssetFlag_PendingUnload)
+		{
+			NS_Assert(MaterialAsset.RefCounts[i] == 0);
+			NS_Assert(MaterialAsset.Handles[i].IsValid());
+
+			flags = AssetFlag_Unloaded;
+			MaterialAsset.RefCounts[i] = 0;
+			NS_CONSOLE_Debug(AssetLog, "Unloaded material asset [%s]", *MaterialAsset.Names[i]);
+			nsMaterialManager::Get().DestroyMaterial(MaterialAsset.Handles[i]);
+		}
+	}
 }
 
 
@@ -617,7 +643,7 @@ void nsAssetManager::SaveSkeletonAsset(nsName name, nsAnimationSkeletonID skelet
 	const nsName assetName = animationManager.GetSkeletonName(skeleton);
 	const nsString assetPath = nsString::Format("%s/%s", bIsEngineAsset ? *EngineAssetsPath : *GameAssetsPath, *folderPath);
 
-	if (TextureAsset.Names.Find(assetName) != NS_ARRAY_INDEX_INVALID)
+	if (SkeletonAsset.Names.Find(assetName) != NS_ARRAY_INDEX_INVALID)
 	{
 		NS_CONSOLE_Warning(AssetLog, "Fail to save skeleton asset. Skeleton asset with name [%s] already exists!", *assetName);
 		return;
@@ -708,7 +734,7 @@ nsSharedSkeletonAsset nsAssetManager::LoadSkeletonAsset(const nsName& name)
 	}
 
 
-	TextureAsset.Flags[index] = AssetFlag_Loaded;
+	SkeletonAsset.Flags[index] = AssetFlag_Loaded;
 
 	NS_CONSOLE_Debug(AssetLog, "Loaded skeleton asset [%s]", *name);
 
@@ -746,6 +772,151 @@ void nsAssetManager::UpdateSkeletonAssets()
 			SkeletonAsset.RefCounts[i] = 0;
 			NS_CONSOLE_Debug(AssetLog, "Unloaded skeleton asset [%s]", *SkeletonAsset.Names[i]);
 			nsAnimationManager::Get().DestroySkeleton(SkeletonAsset.Handles[i]);
+		}
+	}
+}
+
+
+
+
+// ====================================================================================================================================================================== //
+// ANIMATION
+// ====================================================================================================================================================================== //
+void nsAssetManager::SaveAnimationAsset(nsName name, nsAnimationClipID clip, const nsString& folderPath, bool bIsEngineAsset)
+{
+	nsAnimationManager& animationManager = nsAnimationManager::Get();
+	const nsName assetName = animationManager.GetClipName(clip);
+	const nsString assetPath = nsString::Format("%s/%s", bIsEngineAsset ? *EngineAssetsPath : *GameAssetsPath, *folderPath);
+
+	if (AnimationAsset.Names.Find(assetName) != NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save animation asset. Animation asset with name [%s] already exists!", *assetName);
+		return;
+	}
+
+	if (!nsFileSystem::FolderCreate(assetPath))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save animation asset. Create folder [%s] failed!", *assetPath);
+		return;
+	}
+
+
+	// Write data
+	nsBinaryStreamWriter writer;
+	{
+		nsAssetFileHeader header;
+		header.Signature = NS_ENGINE_ASSET_FILE_SIGNATURE;
+		header.Version = NS_ENGINE_ASSET_FILE_VERSION;
+		header.Type = static_cast<int>(nsEAssetType::ANIMATION);
+		header.Compression = 0;
+
+		writer | header;
+
+		nsAnimationClipData& data = animationManager.GetClipData(clip);
+		writer | data;
+	}
+
+
+	const nsString assetFile = nsString::Format("%s/%s%s", *assetPath, *assetName, NS_ENGINE_ASSET_FILE_EXTENSION);
+
+	if (!nsFileSystem::FileWriteBinary(assetFile, writer.GetBuffer()))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to save animation [%s] to asset file [%s]", *assetName, *assetFile);
+		return;
+	}
+
+	NS_CONSOLE_Log(AssetLog, "Animation [%s] saved to asset file [%s]", *assetName, *assetFile);
+	AnimationAsset.Add(assetName, assetPath, AssetFlag_Loaded, clip);
+}
+
+
+nsSharedAnimationAsset nsAssetManager::LoadAnimationAsset(const nsName& name)
+{
+	if (name.GetLength() == 0)
+	{
+		return nsSharedAnimationAsset();
+	}
+
+	const int index = AnimationAsset.Names.Find(name);
+
+	if (index == NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to load animation asset. Animation asset with name [%s] not found!", *name);
+		return nsSharedAnimationAsset();
+	}
+
+	if (AnimationAsset.Handles[index] != nsAnimationClipID::INVALID)
+	{
+		AnimationAsset.Flags[index] = AssetFlag_Loaded;
+		return nsSharedAnimationAsset(index, name, AnimationAsset.Handles[index]);
+	}
+
+
+	const nsString assetFile = nsString::Format("%s/%s%s", *AnimationAsset.Paths[index], *name, NS_ENGINE_ASSET_FILE_EXTENSION);
+
+	nsTArray<uint8> bytes;
+
+	if (!nsFileSystem::FileReadBinary(assetFile, bytes))
+	{
+		NS_CONSOLE_Warning(AssetLog, "Fail to load animation asset. Read data from asset file [%s] failed!", *assetFile);
+		return nsSharedAnimationAsset();
+	}
+
+
+	// Read data
+	nsBinaryStreamReader reader(bytes);
+	{
+		nsAssetFileHeader header{};
+		reader | header;
+
+		NS_Validate(header.Signature == NS_ENGINE_ASSET_FILE_SIGNATURE && header.Type == static_cast<int>(nsEAssetType::ANIMATION));
+
+		nsAnimationManager& animationManager = nsAnimationManager::Get();
+		AnimationAsset.Handles[index] = animationManager.CreateClip(name);
+
+		nsAnimationClipData& data = animationManager.GetClipData(AnimationAsset.Handles[index]);
+		reader | data;
+	}
+
+
+	AnimationAsset.Flags[index] = AssetFlag_Loaded;
+
+	NS_CONSOLE_Debug(AssetLog, "Loaded animation asset [%s]", *name);
+
+	return nsSharedAnimationAsset(index, name, AnimationAsset.Handles[index]);
+}
+
+
+void nsAssetManager::Internal_AddAnimationAssetReference(int index, nsAnimationClipID clip)
+{
+	AnimationAsset.AddReference(index, clip);
+}
+
+
+void nsAssetManager::Internal_RemoveAnimationAssetReference(int index, nsAnimationClipID clip)
+{
+	if (AnimationAsset.RemoveReference(index, clip) == 0)
+	{
+		NS_CONSOLE_Debug(AssetLog, "Mark animation asset [%s] pending unload (RefCount = 0)", *AnimationAsset.Names[index]);
+	}
+}
+
+
+void nsAssetManager::UpdateAnimationAssets()
+{
+	for (int i = 0; i < AnimationAsset.Flags.GetCount(); ++i)
+	{
+		uint8& flags = AnimationAsset.Flags[i];
+
+		if (flags & AssetFlag_PendingUnload)
+		{
+			NS_Assert(AnimationAsset.RefCounts[i] == 0);
+			NS_Assert(AnimationAsset.Handles[i].IsValid());
+
+			flags = AssetFlag_Unloaded;
+			AnimationAsset.RefCounts[i] = 0;
+			NS_CONSOLE_Debug(AssetLog, "Unloaded animation asset [%s]", *AnimationAsset.Names[i]);
+			nsAnimationManager::Get().DestroyClip(AnimationAsset.Handles[i]);
 		}
 	}
 }
