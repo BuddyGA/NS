@@ -44,8 +44,8 @@ void nsAssetImporter::Initialize() noexcept
 	//importOptionModel.SourceFile = "../../../Assets/Models/LowPolyChar.glb";
 	importOptionModel.SourceFile = "../../../Assets/Models/LowPolyChar_rigged_animations.glb";
 	importOptionModel.MeshScaleMultiplier = 1.0f;
-	importOptionModel.bImportMesh = false;
-	importOptionModel.bImportSkeleton = false;
+	importOptionModel.bImportMesh = true;
+	importOptionModel.bImportSkeleton = true;
 	importOptionModel.bImportAnimation = true;
 	ImportAssetFromModelFile(importOptionModel, "Models");
 
@@ -96,7 +96,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 		return;
 	}
 
-	const nsName fileName = nsFileSystem::FileGetName(option.SourceFile);
+	const nsName fileName = *nsFileSystem::FileGetName(option.SourceFile);
 	const nsName fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
 
 	if (!(fileExt == ".bmp" || fileExt == ".png" || fileExt == ".tga"))
@@ -175,6 +175,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 #include "nsAssetImporter_GLB.cpp"
 
 
+
 void nsAssetImporter::ImportAssetFromModelFile(const nsAssetImportOption_Model& option, const nsString& dstFolderPath) noexcept
 {
 	if (!nsFileSystem::FileExists(option.SourceFile))
@@ -183,7 +184,7 @@ void nsAssetImporter::ImportAssetFromModelFile(const nsAssetImportOption_Model& 
 		return;
 	}
 
-	const nsName fileName = nsFileSystem::FileGetName(option.SourceFile);
+	const nsName fileName = *nsFileSystem::FileGetName(option.SourceFile);
 	const nsName fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
 
 	if (!(fileExt == ".glb" || fileExt == ".gltf" || fileExt == ".fbx"))

@@ -12,6 +12,7 @@ struct nsAnimationSkeletonData
 		nsMatrix4 PoseTransform;
 		nsTransform LocalTransform;
 		int ParentId;
+		bool bUpdated;
 
 
 		friend NS_INLINE void operator|(nsStream& stream, Bone& bone)

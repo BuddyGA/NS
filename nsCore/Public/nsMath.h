@@ -1280,25 +1280,31 @@ public:
 
 	NS_NODISCARD static NS_INLINE nsQuaternion Slerp(const nsQuaternion& quatA, const nsQuaternion& quatB, float t) noexcept
 	{
-		const float cosHalfTheta = quatA.X * quatB.X + quatA.Y * quatB.Y + quatA.Z * quatB.Z + quatA.W * quatB.W;
+		nsQuaternion srcQuat = quatA.GetNormalized();
+		nsQuaternion dstQuat = quatB.GetNormalized();
+		
+		float dot = srcQuat.X * dstQuat.X + srcQuat.Y * dstQuat.Y + srcQuat.Z * dstQuat.Z + srcQuat.W * dstQuat.W;
 
-		if (nsMath::Abs(cosHalfTheta) >= 1.0f)
+		if (dot < 0.0f)
 		{
-			return quatA;
+			dstQuat = nsQuaternion(-quatB.X, -quatB.Y, -quatB.Z, -quatB.W);
+			dot = -dot;
 		}
 
-		const float halfTheta = nsMath::ACos(cosHalfTheta);
-		const float sinHalfTheta = nsMath::Sqrt(1.0f - cosHalfTheta * cosHalfTheta);
-
-		if (nsMath::Abs(sinHalfTheta) < 0.001f)
+		if (dot > 0.9995f)
 		{
-			return quatA * 0.5f + quatB * 0.5f;
+			return Lerp(srcQuat, dstQuat, t);
 		}
 
-		const float ratioA = nsMath::Sin((1.0f - t) * halfTheta) / sinHalfTheta;
-		const float ratioB = nsMath::Sin(t * halfTheta) / sinHalfTheta;
+		const float theta0 = nsMath::ACos(dot);
+		const float theta = t * theta0;
+		const float sinTheta0 = nsMath::Sin(theta0);
+		const float sinTheta = nsMath::Sin(theta);
 
-		return quatA * ratioA + quatB * ratioB;
+		const float scaleA = nsMath::Cos(theta) - dot * sinTheta / sinTheta0;
+		const float scaleB = sinTheta / sinTheta0;
+
+		return srcQuat * scaleA + dstQuat * scaleB;
 	}
 
 };

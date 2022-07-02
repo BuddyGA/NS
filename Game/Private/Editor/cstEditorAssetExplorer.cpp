@@ -37,7 +37,7 @@ void cstEditorAssetExplorer::ScanAssetsInFolder(cstEditorAssetFolder& assetFolde
 	{
 		cstEditorAssetFolder& assetSubfolder = assetFolder.Subfolders[i];
 		assetSubfolder.Path = tempStringArray[i];
-		assetSubfolder.Name = nsFileSystem::FileGetName(assetSubfolder.Path);
+		assetSubfolder.Name = *nsFileSystem::FileGetName(assetSubfolder.Path);
 		ScanAssetsInFolder(assetSubfolder);
 	}
 
@@ -51,11 +51,11 @@ void cstEditorAssetExplorer::ScanAssets()
 	nsAssetManager& assetManager = nsAssetManager::Get();
 
 	EngineAssetFolder.Path = assetManager.GetEngineAssetsPath();
-	EngineAssetFolder.Name = nsFileSystem::FileGetName(EngineAssetFolder.Path);
+	EngineAssetFolder.Name = *nsFileSystem::FileGetName(EngineAssetFolder.Path);
 	ScanAssetsInFolder(EngineAssetFolder);
 
 	GameAssetFolder.Path = assetManager.GetGameAssetsPath();
-	GameAssetFolder.Name = nsFileSystem::FileGetName(GameAssetFolder.Path);
+	GameAssetFolder.Name = *nsFileSystem::FileGetName(GameAssetFolder.Path);
 	ScanAssetsInFolder(GameAssetFolder);
 }
 

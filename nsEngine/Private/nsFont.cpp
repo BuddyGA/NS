@@ -59,7 +59,7 @@ nsFontID nsFontManager::CreateFontTTF(const nsString& ttfFile, float fontSize)
 	const nsName ext = nsFileSystem::FileGetExtension(ttfFile);
 	NS_ValidateV(ext == ".ttf", "File must be a valid TTF File!");
 
-	const nsName name = nsFileSystem::FileGetName(ttfFile);
+	const nsString name = nsFileSystem::FileGetName(ttfFile);
 
 
 	// Read TTF file

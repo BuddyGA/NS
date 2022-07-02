@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	const nsString path = nsFileSystem::FileGetPath(file);
 	NS_Validate(path == "C:/Users/Buddy/AppData/Local");
 
-	const nsName name = nsFileSystem::FileGetName(file);
+	const nsString name = nsFileSystem::FileGetName(file);
 	NS_Validate(name == "Temp");
 
 	const nsName ext = nsFileSystem::FileGetExtension(file);

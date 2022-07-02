@@ -88,7 +88,7 @@ void nsAssetManager::RegisterAsset(const nsString& assetFile)
 		return;
 	}
 
-	const nsName name = nsFileSystem::FileGetName(assetFile);
+	const nsName name = *nsFileSystem::FileGetName(assetFile);
 	const nsString path = nsFileSystem::FileGetPath(assetFile);
 	const nsEAssetType assetType = static_cast<nsEAssetType>(header.Type);
 
@@ -173,7 +173,7 @@ bool nsAssetManager::GetAssetInfoFromFile(const nsString& assetFile, nsAssetInfo
 
 	if (IsValidAssetFile(assetFile, header))
 	{
-		outAssetInfo.Name = nsFileSystem::FileGetName(assetFile);
+		outAssetInfo.Name = *nsFileSystem::FileGetName(assetFile);
 		outAssetInfo.Path = nsFileSystem::FileGetPath(assetFile);
 		outAssetInfo.Type = static_cast<nsEAssetType>(header.Type);
 		bValid = true;

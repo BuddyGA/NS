@@ -124,10 +124,8 @@ nsString nsFileSystem::FileGetPath(const nsString& file) noexcept
 }
 
 
-nsName nsFileSystem::FileGetName(const nsString& file) noexcept
+nsString nsFileSystem::FileGetName(const nsString& file) noexcept
 {
-	nsName name = "";
-
 	if (!file.IsEmpty())
 	{
 		int count = file.GetLength();
@@ -155,10 +153,10 @@ nsName nsFileSystem::FileGetName(const nsString& file) noexcept
 			count = file.GetLength() - offset;
 		}
 
-		nsPlatform::Memory_Copy(*name, *file + offset, count);
+		return file.Substring(offset, count);
 	}
 
-	return name;
+	return "";
 }
 
 

@@ -92,37 +92,43 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 		for (int j = 0; j < boneCount; ++j)
 		{
 			nsAnimationSkeletonData::Bone& bone = animInstanceData.BoneTransforms[j];
+			bone.bUpdated = false;
 
 			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& pChannels = clipData.KeyFrames[j].PositionChannels;
-			int p0 = -1;
-			int p1 = -1;
+
 			for (int p = 0; p < pChannels.GetCount() - 1; ++p)
 			{
-				if (state.Timestamp <= pChannels[p + 1].Timestamp)
+				if (state.Timestamp >= pChannels[p].Timestamp && state.Timestamp <= pChannels[p + 1].Timestamp)
 				{
-					p0 = p;
+					const float pa = (state.Timestamp - pChannels[p].Timestamp) / (pChannels[p + 1].Timestamp - pChannels[p].Timestamp);
+					bone.LocalTransform.Position = nsVector3::Lerp(pChannels[p].Value, pChannels[p + 1].Value, pa);
 					break;
 				}
 			}
-			NS_Assert(p0 != -1);
-			p1 = p0 + 1;
-			bone.LocalTransform.Position = nsVector3::Lerp(pChannels[p0].Value, pChannels[p1].Value, (state.Timestamp - pChannels[p0].Timestamp) / (pChannels[p1].Timestamp - pChannels[p0].Timestamp));
 
 
 			const nsTArray<nsAnimationKeyFrame::TChannel<nsQuaternion>>& rChannels = clipData.KeyFrames[j].RotationChannels;
-			int r0 = -1;
-			int r1 = -1;
 			for (int r = 0; r < rChannels.GetCount() - 1; ++r)
 			{
-				if (state.Timestamp <= rChannels[r + 1].Timestamp)
+				if (state.Timestamp >= rChannels[r].Timestamp && state.Timestamp <= rChannels[r + 1].Timestamp)
 				{
-					r0 = r;
+					const float ra = (state.Timestamp - rChannels[r].Timestamp) / (rChannels[r + 1].Timestamp - rChannels[r].Timestamp);
+					bone.LocalTransform.Rotation = nsQuaternion::Slerp(rChannels[r].Value, rChannels[r + 1].Value, ra);
 					break;
 				}
 			}
-			NS_Assert(r0 != -1);
-			r1 = r0 + 1;
-			bone.LocalTransform.Rotation = nsQuaternion::Slerp(rChannels[r0].Value, rChannels[r1].Value, (state.Timestamp - rChannels[r0].Timestamp) / (rChannels[r1].Timestamp - rChannels[r0].Timestamp));
+
+
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& sChannels = clipData.KeyFrames[j].ScaleChannels;
+			for (int s = 0; s < sChannels.GetCount() - 1; ++s)
+			{
+				if (state.Timestamp >= sChannels[s].Timestamp && state.Timestamp <= sChannels[s + 1].Timestamp)
+				{
+					const float sa = (state.Timestamp - sChannels[s].Timestamp) / (sChannels[s + 1].Timestamp - sChannels[s].Timestamp);
+					bone.LocalTransform.Scale = nsVector3::Lerp(sChannels[s].Value, sChannels[s + 1].Value, sa);
+					break;
+				}
+			}
 		}
 
 
@@ -130,10 +136,17 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 		{
 			nsAnimationSkeletonData::Bone& bone = animInstanceData.BoneTransforms[j];
 			const nsAnimationSkeletonData::Bone* parentBone = bone.ParentId == -1 ? nullptr : &animInstanceData.BoneTransforms[bone.ParentId];
-			bone.PoseTransform = parentBone ? bone.LocalTransform.ToMatrixNoScale() * parentBone->PoseTransform : bone.LocalTransform.ToMatrixNoScale();
+
+			if (parentBone)
+			{
+				NS_Validate(parentBone->bUpdated);
+			}
+
+			bone.PoseTransform = parentBone ? bone.LocalTransform.ToMatrix() * parentBone->PoseTransform : bone.LocalTransform.ToMatrix();
 
 			const int boneTransformId = animInstanceData.BoneTransformIndex + j;
 			InstanceBoneTransforms[boneTransformId] = bone.InverseBindPoseTransform * bone.PoseTransform;
+			bone.bUpdated = true;
 		}
 	}
 }

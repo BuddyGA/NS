@@ -77,6 +77,7 @@ public:
 
 
 
+
 class NS_ENGINE_API nsSharedTextureAsset
 {
 private:

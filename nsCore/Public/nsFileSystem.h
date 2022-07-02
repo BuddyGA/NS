@@ -48,7 +48,7 @@ namespace nsFileSystem
 	NS_NODISCARD extern NS_CORE_API nsString FileGetPath(const nsString& file) noexcept;
 
 	// Get file name without extension
-	NS_NODISCARD extern NS_CORE_API nsName FileGetName(const nsString& file) noexcept;
+	NS_NODISCARD extern NS_CORE_API nsString FileGetName(const nsString& file) noexcept;
 
 	// Get file extension with dot
 	NS_NODISCARD extern NS_CORE_API nsName FileGetExtension(const nsString& file) noexcept;

@@ -227,8 +227,12 @@ void nsEngine::MainLoop()
 		}
 
 
-		// Update animation
-		nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
+		if (Worlds[0]->HasStartedPlay())
+		{
+			// Update animation
+			nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
+		}
+		
 
 
 		if (Game && !Game->IsMinimized())
