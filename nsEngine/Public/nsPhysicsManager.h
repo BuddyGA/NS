@@ -57,9 +57,9 @@ public:
 
 	
 
-#ifdef __NS_ENGINE_DEBUG_DRAW__
+#ifdef NS_ENGINE_DEBUG_DRAW
 public:
-	void DebugDraw(class nsRenderContextWorld& renderContextWorld);
-#endif // __NS_ENGINE_DEBUG_DRAW__
+	void DebugDraw(physx::PxScene* scene, class nsRenderer* renderer);
+#endif // NS_ENGINE_DEBUG_DRAW
 
 };

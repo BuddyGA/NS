@@ -114,16 +114,12 @@ struct nsAnimationInstanceData
 	// Bone transform index
 	int BoneTransformIndex;
 
-	// Update/pause pose
-	bool bUpdatePose;
-
 
 public:
 	nsAnimationInstanceData()
 	{
 		Skeleton = nsAnimationSkeletonID::INVALID;
 		BoneTransformIndex = -1;
-		bUpdatePose = false;
 	}
 
 };
@@ -176,6 +172,7 @@ public:
 
 
 
+
 class NS_ENGINE_API nsAnimationManager
 {
 	NS_DECLARE_SINGLETON(nsAnimationManager)
@@ -186,7 +183,6 @@ private:
 	struct Frame
 	{
 		nsVulkanBuffer* SkeletonPoseTransformStorageBuffer;
-		nsTArray<nsAnimationInstanceID> AnimationInstanceToBinds;
 	};
 
 
@@ -196,9 +192,10 @@ private:
 
 	enum Flag
 	{
-		Flag_None				= (0),
-		Flag_Allocated			= (1 << 0),
-		Flag_PendingDestroy		= (1 << 1),
+		Flag_None					= (0),
+		Flag_Allocated				= (1 << 0),
+		Flag_PendingDestroy			= (1 << 1),
+		Flag_Instance_UpdatePose	= (1 << 2),
 	};
 
 
@@ -288,10 +285,10 @@ public:
 	}
 
 
-
 	NS_NODISCARD nsAnimationInstanceID FindInstance(const nsName& name) const;
 	NS_NODISCARD nsAnimationInstanceID CreateInstance(nsName name, nsAnimationSkeletonID skeleton);
 	void DestroyInstance(nsAnimationInstanceID& instance);
+	void SetInstanceUpdatePose(nsAnimationInstanceID instance, bool bUpdatePose);
 	void PlayAnimation(nsAnimationInstanceID instance, nsAnimationClipID clip, float playRate, bool bLoop);
 	void StopAnimation(nsAnimationInstanceID instance);
 	void BlendAnimation(nsAnimationInstanceID instance, nsEAnimationTransitionMode transitionMode, float blendFactor, nsAnimationClipID clip, float playRate, bool bLoop);
@@ -302,15 +299,14 @@ public:
 		return instance.IsValid() && InstanceFlags.IsValid(instance.Id) && !(InstanceFlags[instance.Id] & Flag_PendingDestroy);
 	}
 
-	NS_NODISCARD_INLINE int GetInstanceBoneTransformIndex(nsAnimationInstanceID animationInstance) const
+	NS_NODISCARD_INLINE int GetInstanceBoneTransformIndex(nsAnimationInstanceID instance) const
 	{
-		NS_Assert(IsInstanceValid(animationInstance));
-		return InstanceDatas[animationInstance.Id].BoneTransformIndex;
+		NS_Assert(IsInstanceValid(instance));
+		return InstanceDatas[instance.Id].BoneTransformIndex;
 	}
 
 
 	void BeginFrame(int frameIndex);
-	void BindAnimationInstances(const nsAnimationInstanceID* animationInstances, int count);
 	void UpdateRenderResources();
 
 

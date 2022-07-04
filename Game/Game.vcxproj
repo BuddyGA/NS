@@ -159,6 +159,7 @@
     <ClInclude Include="Private\Editor\cstEditorGizmo.h" />
     <ClInclude Include="Private\Editor\cstEditorTypes.h" />
     <ClInclude Include="Private\Editor\cstEditorWorldOutliner.h" />
+    <ClInclude Include="Public\cstAttributeComponent.h" />
     <ClInclude Include="Public\cstCharacter.h" />
     <ClInclude Include="Public\cstGame.h" />
     <ClInclude Include="Public\cstTypes.h" />
@@ -166,6 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Build_Game.cpp" />
+    <ClCompile Include="Private\cstAttributeComponent.cpp" />
     <ClCompile Include="Private\cstCharacter.cpp" />
     <ClCompile Include="Private\cstPlayer.cpp" />
     <ClCompile Include="Private\cstTypes.cpp" />

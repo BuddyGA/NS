@@ -79,7 +79,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__;__NS_ENGINE_DEBUG_DRAW__</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -111,7 +111,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__;__NS_ENGINE_DEBUG_DRAW__</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);__NS_ENGINE_BUILD__</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -189,6 +189,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClCompile Include="Private\nsRenderContextWorld.cpp" />
     <ClCompile Include="Private\nsRenderer.cpp" />
     <ClCompile Include="Private\nsRenderManager.cpp" />
+    <ClCompile Include="Private\nsRenderPrimitiveBatch.cpp" />
     <ClCompile Include="Private\nsShaderManager.cpp" />
     <ClCompile Include="Private\nsTexture.cpp" />
     <ClCompile Include="Private\nsViewport.cpp" />
@@ -225,6 +226,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Public\nsPhysicsManager.h" />
     <ClInclude Include="Public\nsRenderer.h" />
     <ClInclude Include="Public\nsRenderManager.h" />
+    <ClInclude Include="Public\nsRenderPrimitiveBatch.h" />
     <ClInclude Include="Public\nsViewport.h" />
     <ClInclude Include="Public\nsShaderManager.h" />
     <ClInclude Include="Public\nsTexture.h" />

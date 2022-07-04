@@ -186,10 +186,19 @@ void nsMaterialManager::Initialize() noexcept
 			forwardState.CullMode = VK_CULL_MODE_BACK_BIT;
 			DefaultPrimitiveMesh = CreateMaterial("mat_default_primitive_mesh", forwardState, nsMaterialParameterLayout());
 
+			// mesh - no depth
+			forwardState.bEnableDepthTest = false;
+			DefaultPrimitiveMesh_IgnoreDepth = CreateMaterial("mat_default_primitive_mesh_2", forwardState, nsMaterialParameterLayout());
+
 			// line
 			forwardState.SurfaceDomain = nsEMaterialSurfaceDomain::PRIMITIVE_LINE;
 			forwardState.CullMode = VK_CULL_MODE_NONE;
+			forwardState.bEnableDepthTest = true;
 			DefaultPrimitiveLine = CreateMaterial("mat_default_primitive_line", forwardState, nsMaterialParameterLayout());
+
+			// line - no depth
+			forwardState.bEnableDepthTest = false;
+			DefaultPrimitiveLine_IgnoreDepth = CreateMaterial("mat_default_primitive_line_2", forwardState, nsMaterialParameterLayout());
 		}
 	}
 

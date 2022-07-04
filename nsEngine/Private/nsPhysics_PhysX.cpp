@@ -368,10 +368,10 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 	
 	PxScene* scene = Physics->createScene(sceneDesc);
 	
-#ifdef __NS_ENGINE_DEBUG_DRAW__
+#ifdef NS_ENGINE_DEBUG_DRAW
 	scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-#endif // __NS_ENGINE_DEBUG_DRAW__
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
 
@@ -439,23 +439,25 @@ bool nsPhysicsManager::SceneQueryMousePicking(physx::PxScene* scene, nsPhysicsHi
 
 
 
-#ifdef __NS_ENGINE_DEBUG_DRAW__
+#ifdef NS_ENGINE_DEBUG_DRAW
+#include "nsRenderer.h"
 
-void nsPhysicsManager::DebugDraw(nsRenderContextWorld& renderContextWorld)
+
+void nsPhysicsManager::DebugDraw(physx::PxScene* scene, nsRenderer* renderer)
 {
-	for (int i = 0; i < SceneObjects.GetCount(); ++i)
-	{
-		PxScene* scene = SceneObjects[i];
-		const PxRenderBuffer& renderBuffer = scene->getRenderBuffer();
-		const PxDebugLine* debugLines = renderBuffer.getLines();
-		const PxU32 lineCount = renderBuffer.getNbLines();
+	NS_Assert(scene);
+	NS_Assert(renderer);
 
-		for (PxU32 i = 0; i < lineCount; ++i)
-		{
-			const PxDebugLine& line = debugLines[i];
-			renderContextWorld.AddPrimitiveLine(NS_FromPxVec3(line.pos0), NS_FromPxVec3(line.pos1), nsColor(line.color0));
-		}
+	const PxRenderBuffer& renderBuffer = scene->getRenderBuffer();
+	const PxDebugLine* debugLines = renderBuffer.getLines();
+	const PxU32 lineCount = renderBuffer.getNbLines();
+
+	for (PxU32 i = 0; i < lineCount; ++i)
+	{
+		const PxDebugLine& line = debugLines[i];
+		renderer->DebugDrawLine(NS_FromPxVec3(line.pos0), NS_FromPxVec3(line.pos1), nsColor(line.color0));
 	}
 }
 
-#endif // __NS_ENGINE_DEBUG_DRAW__
+
+#endif // NS_ENGINE_DEBUG_DRAW

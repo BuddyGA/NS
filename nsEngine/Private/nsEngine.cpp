@@ -226,13 +226,8 @@ void nsEngine::MainLoop()
 			Game->PostPhysicsUpdate();
 		}
 
-
-		if (Worlds[0]->HasStartedPlay())
-		{
-			// Update animation
-			nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
-		}
-		
+		// Update animation
+		nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
 
 
 		if (Game && !Game->IsMinimized())

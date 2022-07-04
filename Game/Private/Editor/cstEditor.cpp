@@ -617,16 +617,25 @@ void cstEditor::PreRender(nsRenderContextWorld& context)
 	NS_Assert(Game);
 	NS_Assert(MainViewport);
 
+	/*
 	if (FocusActor)
 	{
 		const nsTransform transform = bIsLocalCoordSpace ? FocusActor->GetLocalTransform() : FocusActor->GetWorldTransform();
 		ActorGizmo.Render(context, MainViewport, transform, bIsLocalCoordSpace, true);
 	}
+	*/
 
 	MainRenderer->Viewport = *MainViewport;
 	MainRenderer->RenderTargetDimension = Game->GetDimension();
 	MainRenderer->RenderFinalTexture = nsERenderFinalTexture::SCENE_RENDER_TARGET;
 	MainRenderer->RenderContextWorld = &nsRenderManager::Get().GetWorldRenderContext(MainWorld);
+	MainRenderer->World = MainWorld;
+
+	if (FocusActor)
+	{
+		const nsTransform transform = bIsLocalCoordSpace ? FocusActor->GetLocalTransform() : FocusActor->GetWorldTransform();
+		ActorGizmo.Render(MainRenderer, MainViewport, transform, bIsLocalCoordSpace, true);
+	}
 }
 
 

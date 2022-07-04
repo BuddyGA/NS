@@ -62,11 +62,6 @@ void nsCollisionComponent::OnDestroy()
 	{
 		PhysicsActor->release();
 		PhysicsActor = nullptr;
-	}
-
-	if (PhysicsShape)
-	{
-		PhysicsShape->release();
 		PhysicsShape = nullptr;
 	}
 
@@ -208,9 +203,9 @@ void nsCollisionComponent::UpdateCollisionShapeFlags()
 
 	PxShapeFlags shapeFlags{};
 
-#if __NS_ENGINE_DEBUG_DRAW__
+#ifdef NS_ENGINE_DEBUG_DRAW
 	shapeFlags = PxShapeFlag::eVISUALIZATION;
-#endif // __NS_ENGINE_DEBUG_DRAW__
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	switch (CollisionTest)
 	{

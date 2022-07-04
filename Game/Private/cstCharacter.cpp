@@ -1,5 +1,8 @@
 #include "cstCharacter.h"
 #include "nsAssetManager.h"
+#include "nsPhysicsComponents.h"
+#include "nsRenderComponents.h"
+#include "cstAttributeComponent.h"
 
 
 
@@ -13,9 +16,10 @@ cstCharacter::cstCharacter()
 	MovementComponent->CapsuleRadius = 36.0f;
 	RootComponent = MovementComponent;
 
-	MeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
-	MeshComponent->SetLocalPosition(nsVector3(0.0f, -90.0f, 0.0f));
-	//MeshComponent->SetLocalRotation(nsQuaternion::FromRotation(0.0f, 180.0f, 0.0f));
+	SkelMeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
+	SkelMeshComponent->SetLocalPosition(nsVector3(0.0f, -90.0f, 0.0f));
+
+	AttributeComponent = AddComponent<cstAttributeComponent>("attribute");
 }
 
 
@@ -24,12 +28,18 @@ void cstCharacter::OnInitialize()
 	nsActor::OnInitialize();
 
 	nsAssetManager& assetManager = nsAssetManager::Get();
-	MeshComponent->SetMesh(assetManager.LoadModelAsset("mdl_LowPolyChar"));
-	MeshComponent->SetSkeleton(assetManager.LoadSkeletonAsset("skl_LowPolyChar_Rig"));
+	SkelMeshComponent->SetMesh(assetManager.LoadModelAsset("mdl_LowPolyChar"));
+	SkelMeshComponent->SetSkeleton(assetManager.LoadSkeletonAsset("skl_LowPolyChar_Rig"));
 
 	AnimRunForwardLoop = assetManager.LoadAnimationAsset("anim_run_forward_loop");
+}
 
-	MeshComponent->PlayAnimation(AnimRunForwardLoop, 1.0f, true);
+
+void cstCharacter::OnStartPlay()
+{
+	nsActor::OnStartPlay();
+
+	SkelMeshComponent->PlayAnimation(AnimRunForwardLoop, 1.0f, true);
 }
 
 

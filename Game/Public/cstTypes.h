@@ -13,6 +13,7 @@
 #include "nsGameApplication.h"
 #include "nsConsole.h"
 #include "nsActor.h"
+#include "nsAssetTypes.h"
 
 
 

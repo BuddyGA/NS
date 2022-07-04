@@ -1,4 +1,5 @@
 #include "cstEditorGizmo.h"
+#include "nsRenderer.h"
 
 
 #define CST_EDITOR_GIZMO_COLOR_AXIS_X		nsColor(200, 50, 50, 255);
@@ -82,14 +83,14 @@ bool cstEditorGizmoTranslate::UpdateTranslation(nsViewport* viewport, const nsVe
 }
 
 
-void cstEditorGizmoTranslate::Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug)
+void cstEditorGizmoTranslate::Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug)
 {
 	const nsColor useColor = bIsSelected ? CST_EDITOR_GIZMO_COLOR_SELECTED : Color;
 	const nsLine axisLine = GetAxisLine(transform, scale, bIsLocal);
 	const nsVector3 directionAxis = axisLine.GetDirection();
 
-	context.AddPrimitiveLine(axisLine.A, axisLine.B, useColor);
-	context.AddPrimitiveMesh_Prism(axisLine.B, nsQuaternion::FromVectors(nsVector3::UP, directionAxis), ArrowWidth * scale, ArrowTipHeight * scale, useColor);
+	renderer->DebugDrawLine(axisLine.A, axisLine.B, useColor, 100, true);
+	renderer->DebugDrawMeshPrism(axisLine.B, nsQuaternion::FromVectors(nsVector3::UP, directionAxis), ArrowWidth * scale, ArrowTipHeight * scale, useColor, true);
 
 	// Draw debug
 	if (bDrawDebug)
@@ -201,22 +202,22 @@ bool cstEditorGizmoRotate::UpdateRotation(nsViewport* viewport, const nsVector2&
 }
 
 
-void cstEditorGizmoRotate::Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug)
+void cstEditorGizmoRotate::Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug)
 {
 	const nsColor useColor = bIsSelected ? CST_EDITOR_GIZMO_COLOR_SELECTED : Color;
 	const nsLine axisLine = GetAxisLine(transform, bIsLocal);
 	const nsVector3 directionAxis = axisLine.GetDirection();
 
-	context.AddPrimitiveLine_CircleAroundAxis(transform.Position, directionAxis, CircleRadius * scale, NS_MATH_PI, useColor);
-	context.AddPrimitiveLine(transform.Position, transform.Position + directionAxis * CircleRadius * scale, useColor);
+	renderer->DebugDrawLineCircleAroundAxis(transform.Position, directionAxis, CircleRadius * scale, NS_MATH_PI, useColor, 100, true);
+	renderer->DebugDrawLine(transform.Position, transform.Position + directionAxis * CircleRadius * scale, useColor, 100, true);
 
 	if (bUpdating)
 	{
 		const nsVector3 startIntersectionPoint = transform.Position + StartIntersectionDirection * CircleRadius * scale;
-		context.AddPrimitiveMesh_AABB(startIntersectionPoint - 2.0f * scale, startIntersectionPoint + 2.0f * scale, useColor);
+		renderer->DebugDrawMeshAABB(startIntersectionPoint - 2.0f * scale, startIntersectionPoint + 2.0f * scale, useColor, true);
 
 		const nsVector3 currentIntersectionPoint = transform.Position + CurrentIntersectionDirection * CircleRadius * scale;
-		context.AddPrimitiveMesh_AABB(currentIntersectionPoint - 2.0f * scale, currentIntersectionPoint + 2.0f * scale, Color);
+		renderer->DebugDrawMeshAABB(currentIntersectionPoint - 2.0f * scale, currentIntersectionPoint + 2.0f * scale, Color, true);
 	}
 
 
@@ -330,14 +331,14 @@ bool cstEditorGizmoScale::UpdateScale(nsViewport* viewport, const nsVector2& mou
 }
 
 
-void cstEditorGizmoScale::Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsSelected, bool bDrawDebug)
+void cstEditorGizmoScale::Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsSelected, bool bDrawDebug)
 {
 	const nsColor useColor = bIsSelected ? CST_EDITOR_GIZMO_COLOR_SELECTED : Color;
 	const nsLine axisLine = GetAxisLine(transform, scale);
 	const nsVector3 directionAxis = axisLine.GetDirection();
 
-	context.AddPrimitiveLine(axisLine.A, axisLine.B, useColor);
-	context.AddPrimitiveMesh_AABB(axisLine.B - BoxWidth * 0.5f * scale, axisLine.B + BoxWidth * 0.5f * scale, useColor);
+	renderer->DebugDrawLine(axisLine.A, axisLine.B, useColor, 100, true);
+	renderer->DebugDrawMeshAABB(axisLine.B - BoxWidth * 0.5f * scale, axisLine.B + BoxWidth * 0.5f * scale, useColor, true);
 
 	// Draw debug
 	if (bDrawDebug)
@@ -592,9 +593,12 @@ bool cstEditorGizmoTransform::UpdateTransform(nsViewport* viewport, const nsVect
 }
 
 
-void cstEditorGizmoTransform::Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, bool bIsLocal, bool bDrawDebug)
+void cstEditorGizmoTransform::Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, bool bIsLocal, bool bDrawDebug)
 {
-	NS_Assert(viewport);
+	if (renderer == nullptr || viewport == nullptr)
+	{
+		return;
+	}
 
 	const float distanceToView = nsVector3::Distance(viewport->GetViewTransform().Position, transform.Position);
 	const float gizmoScale = nsMath::Lerp(1.0f, 10.0f, distanceToView / 10000.0f);
@@ -603,7 +607,7 @@ void cstEditorGizmoTransform::Render(nsRenderContextWorld& context, nsViewport* 
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			Translates[i].Render(context, viewport, transform, gizmoScale, bIsLocal, SelectedTranslate == i, bDrawDebug);
+			Translates[i].Render(renderer, viewport, transform, gizmoScale, bIsLocal, SelectedTranslate == i, bDrawDebug);
 		}
 	}
 	else if (Mode == cstEEditorGizmoTransformMode::ROTATE)
@@ -614,12 +618,12 @@ void cstEditorGizmoTransform::Render(nsRenderContextWorld& context, nsViewport* 
 			{
 				if (SelectedRotate == i)
 				{
-					Rotates[i].Render(context, viewport, transform, gizmoScale, bIsLocal, SelectedRotate == i, bDrawDebug);
+					Rotates[i].Render(renderer, viewport, transform, gizmoScale, bIsLocal, SelectedRotate == i, bDrawDebug);
 				}
 			}
 			else
 			{
-				Rotates[i].Render(context, viewport, transform, gizmoScale, bIsLocal, SelectedRotate == i, bDrawDebug);
+				Rotates[i].Render(renderer, viewport, transform, gizmoScale, bIsLocal, SelectedRotate == i, bDrawDebug);
 			}
 		}
 	}
@@ -627,7 +631,7 @@ void cstEditorGizmoTransform::Render(nsRenderContextWorld& context, nsViewport* 
 	{
 		for (int i = 0; i < 3; ++i)
 		{
-			Scales[i].Render(context, viewport, transform, gizmoScale, SelectedScale == i, bDrawDebug);
+			Scales[i].Render(renderer, viewport, transform, gizmoScale, SelectedScale == i, bDrawDebug);
 		}
 	}
 }

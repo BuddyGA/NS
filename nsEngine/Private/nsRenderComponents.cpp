@@ -2,7 +2,6 @@
 #include "nsRenderManager.h"
 #include "nsMaterial.h"
 #include "nsAnimation.h"
-#include "nsActor.h"
 #include "nsConsole.h"
 
 
@@ -41,7 +40,7 @@ NS_CLASS_END(nsMeshComponent)
 nsMeshComponent::nsMeshComponent()
 {
 	Materials.Add();
-	RenderMeshId = nsRenderContextMeshID::INVALID;
+	RenderMeshId = nsRenderMeshID::INVALID;
 }
 
 
@@ -51,7 +50,7 @@ void nsMeshComponent::OnDestroy()
 
 	ModelAsset = nsSharedModelAsset();
 	Materials.Resize(1);
-	RenderMeshId = nsRenderContextMeshID::INVALID;
+	RenderMeshId = nsRenderMeshID::INVALID;
 
 	nsActorComponent::OnDestroy();
 }
@@ -113,7 +112,7 @@ void nsMeshComponent::RegisterMesh()
 
 	const nsAssetModelMeshes& meshes = ModelAsset.GetMeshes();
 
-	if (RenderMeshId == nsRenderContextMeshID::INVALID)
+	if (RenderMeshId == nsRenderMeshID::INVALID)
 	{
 		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix(), nsAnimationInstanceID::INVALID);
 	}
@@ -126,7 +125,7 @@ void nsMeshComponent::RegisterMesh()
 
 void nsMeshComponent::UnregisterMesh()
 {
-	if (RenderMeshId == nsRenderContextMeshID::INVALID || !bAddedToLevel)
+	if (RenderMeshId == nsRenderMeshID::INVALID || !bAddedToLevel)
 	{
 		return;
 	}
@@ -184,6 +183,28 @@ nsSkeletalMeshComponent::nsSkeletalMeshComponent()
 }
 
 
+void nsSkeletalMeshComponent::OnStartPlay()
+{
+	nsMeshComponent::OnStartPlay();
+
+	if (AnimationInstance.IsValid())
+	{
+		nsAnimationManager::Get().SetInstanceUpdatePose(AnimationInstance, true);
+	}
+}
+
+
+void nsSkeletalMeshComponent::OnStopPlay()
+{
+	if (AnimationInstance.IsValid())
+	{
+		nsAnimationManager::Get().SetInstanceUpdatePose(AnimationInstance, false);
+	}
+
+	nsMeshComponent::OnStopPlay();
+}
+
+
 void nsSkeletalMeshComponent::OnDestroy()
 {
 	nsAnimationManager::Get().DestroyInstance(AnimationInstance);
@@ -209,7 +230,7 @@ void nsSkeletalMeshComponent::RegisterMesh()
 
 	const nsAssetModelMeshes& meshes = ModelAsset.GetMeshes();
 
-	if (RenderMeshId == nsRenderContextMeshID::INVALID)
+	if (RenderMeshId == nsRenderMeshID::INVALID)
 	{
 		RenderMeshId = renderContext.AddRenderMesh(meshes[0], Materials[0], GetWorldTransform().ToMatrix(), AnimationInstance);
 	}
@@ -222,7 +243,7 @@ void nsSkeletalMeshComponent::RegisterMesh()
 
 void nsSkeletalMeshComponent::UnregisterMesh()
 {
-	if (RenderMeshId == nsRenderContextMeshID::INVALID || !bAddedToLevel)
+	if (RenderMeshId == nsRenderMeshID::INVALID || !bAddedToLevel)
 	{
 		return;
 	}

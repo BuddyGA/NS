@@ -6,6 +6,8 @@
 
 class NS_ENGINE_API nsRenderManager
 {
+	NS_DECLARE_SINGLETON(nsRenderManager)
+
 private:
 	int FrameIndex;
 	bool bInitialized;
@@ -59,8 +61,5 @@ public:
 
 		return WorldRenderContexts[world];
 	}
-
-
-	NS_DECLARE_SINGLETON(nsRenderManager)
 
 };

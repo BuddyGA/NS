@@ -7,6 +7,11 @@
 #endif // __NS_ENGINE_BUILD__
 
 
+#ifndef __NS_ENGINE_SHIPPING__
+#define NS_ENGINE_DEBUG_DRAW
+#endif // !__NS_ENGINE_SHIPPING__
+
+
 // Frame buffering count
 #define NS_ENGINE_FRAME_BUFFERING									(3)
 
@@ -148,8 +153,8 @@ NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationSkeletonID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationClipID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationInstanceID, nsAnimationManager)
-NS_ENGINE_DECLARE_HANDLE(nsRenderContextMeshID, nsRenderContextWorld)
-NS_ENGINE_DECLARE_HANDLE(nsRenderContextPointLightID, nsRenderContextWorld)
+NS_ENGINE_DECLARE_HANDLE(nsRenderMeshID, nsRenderContextWorld)
+NS_ENGINE_DECLARE_HANDLE(nsRenderPointLightID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
 
 

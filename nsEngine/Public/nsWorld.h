@@ -25,6 +25,7 @@ private:
 	nsTArray<nsActor*> PhysicsTickUpdateActors;
 	nsTArray<nsActor*> PendingDestroyActors;
 
+
 public:
 	bool bOnlyTickAfterStartedPlay;
 
@@ -98,6 +99,7 @@ public:
 	}
 
 
+
 	// Get all actors
 	NS_NODISCARD_INLINE const nsTArray<nsActor*>& GetAllActors() const noexcept
 	{
@@ -118,8 +120,8 @@ public:
 	}
 
 
-	// Get elapsed time in seconds since start play has called
-	NS_NODISCARD_INLINE float GetElapsedTimeSeconds() const noexcept
+	// Get time in seconds since start play has called
+	NS_NODISCARD_INLINE float GetCurrentTimeSeconds() const noexcept
 	{
 		if (!bHasStartedPlay)
 		{

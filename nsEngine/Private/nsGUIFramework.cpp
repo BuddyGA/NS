@@ -983,12 +983,12 @@ void nsGUITable::BeginDraw(nsGUIContext& context) noexcept
 			context.UpdateControlInCurrentRegion(columnSeparatorControl, false);
 			context.AddDrawRect(columnSeparatorControl.Rect, SeparatorColor);
 
-		#ifdef _DEBUG
+		#ifdef NS_ENGINE_DEBUG_DRAW
 			if (context.bDrawDebugHoveredRect && context.IsCurrentRegionHovered() && (columnSeparatorControl.Interactions & nsEGUIRectInteraction::Hovered))
 			{
 				context.AddDrawDebugRectLine(columnSeparatorControl.Rect, nsColor::GREEN);
 			}
-		#endif // _DEBUG
+		#endif // NS_ENGINE_DEBUG_DRAW
 
 			leftOffset += SeparatorWidth;
 		}

@@ -459,7 +459,7 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 
 	VkApplicationInfo appInfo = { VK_STRUCTURE_TYPE_APPLICATION_INFO };
-	appInfo.apiVersion = VK_API_VERSION_1_2;
+	appInfo.apiVersion = VK_API_VERSION_1_3;
 	appInfo.pEngineName = "nsEngine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pApplicationName = "nsApplication";
@@ -559,8 +559,11 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 		if (properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 			continue;
 
-		VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES };
-		VkPhysicalDeviceFeatures2 featuresEXT = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, &descriptorIndexingFeatures };
+		VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES };
+		
+		VkPhysicalDeviceFeatures2 featuresEXT = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+		featuresEXT.pNext = &descriptorIndexingFeatures;
+
 		vkGetPhysicalDeviceFeatures2(gpu, &featuresEXT);
 
 		// Required features

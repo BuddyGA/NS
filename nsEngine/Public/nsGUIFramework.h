@@ -70,12 +70,12 @@ private:
 		{
 			context.AddDrawRect(borderControl.Rect, color);
 
-		#ifdef _DEBUG
+		#ifdef NS_ENGINE_DEBUG_DRAW
 			if (bResizable && context.bDrawDebugHoveredRect && context.IsCurrentRegionHovered() && (borderControl.Interactions & nsEGUIRectInteraction::Hovered) )
 			{
 				context.AddDrawDebugRectLine(borderControl.Rect, nsColor::GREEN);
 			}
-		#endif // _DEBUG
+		#endif // NS_ENGINE_DEBUG_DRAW
 		}
 	}
 

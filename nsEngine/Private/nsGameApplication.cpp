@@ -127,6 +127,7 @@ void nsGameApplication::PreRender() noexcept
 	MainRenderer->RenderTargetDimension = windowDimension;
 	MainRenderer->RenderFinalTexture = nsERenderFinalTexture::SCENE_RENDER_TARGET;
 	MainRenderer->RenderContextWorld = &nsRenderManager::Get().GetWorldRenderContext(MainWorld);
+	MainRenderer->World = MainWorld;
 }
 
 

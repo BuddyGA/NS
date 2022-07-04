@@ -12,7 +12,6 @@ enum class nsEMaterialSurfaceDomain : uint8
 	PRIMITIVE_MESH,
 	PRIMITIVE_MESH_2D,
 	MESH,
-	SKELMESH,
 	GUI,
 	POST_PROCESS,
 	WIREFRAME
@@ -163,7 +162,9 @@ private:
 	nsMaterialID DefaultPhongChecker;
 	nsMaterialID DefaultWireframe;
 	nsMaterialID DefaultPrimitiveMesh;
+	nsMaterialID DefaultPrimitiveMesh_IgnoreDepth;
 	nsMaterialID DefaultPrimitiveLine;
+	nsMaterialID DefaultPrimitiveLine_IgnoreDepth;
 	nsMaterialID DefaultPrimitiveMesh2D;
 	nsMaterialID DefaultPrimitiveLine2D;
 	nsMaterialID DefaultGUI;
@@ -274,10 +275,42 @@ public:
 		return DefaultPrimitiveMesh;
 	}
 
+	NS_NODISCARD_INLINE const nsMaterialResource& GetDefaultMaterialResource_PrimitiveMesh() const noexcept
+	{
+		return MaterialResources[DefaultPrimitiveMesh.Id];
+	}
+
+
+	NS_NODISCARD_INLINE nsMaterialID GetDefaultMaterial_PrimitiveMesh_IgnoreDepth() const noexcept
+	{
+		return DefaultPrimitiveMesh_IgnoreDepth;
+	}
+
+	NS_NODISCARD_INLINE const nsMaterialResource& GetDefaultMaterialResource_PrimitiveMesh_IgnoreDepth() const noexcept
+	{
+		return MaterialResources[DefaultPrimitiveMesh_IgnoreDepth.Id];
+	}
+
 
 	NS_NODISCARD_INLINE nsMaterialID GetDefaultMaterial_PrimitiveLine() const noexcept
 	{
 		return DefaultPrimitiveLine;
+	}
+
+	NS_NODISCARD_INLINE const nsMaterialResource& GetDefaultMaterialResource_PrimitiveLine() const noexcept
+	{
+		return MaterialResources[DefaultPrimitiveLine.Id];
+	}
+
+
+	NS_NODISCARD_INLINE nsMaterialID GetDefaultMaterial_PrimitiveLine_IgnoreDepth() const noexcept
+	{
+		return DefaultPrimitiveLine_IgnoreDepth;
+	}
+
+	NS_NODISCARD_INLINE const nsMaterialResource& GetDefaultMaterialResource_PrimitiveLine_IgnoreDepth() const noexcept
+	{
+		return MaterialResources[DefaultPrimitiveLine_IgnoreDepth.Id];
 	}
 
 

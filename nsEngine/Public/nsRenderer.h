@@ -2,6 +2,7 @@
 
 #include "nsViewport.h"
 #include "nsRenderContextWorld.h"
+#include "nsRenderPrimitiveBatch.h"
 
 
 class nsGUIContext;
@@ -36,6 +37,7 @@ typedef uint8 nsRenderDebugDrawFlags;
 
 
 
+
 class NS_ENGINE_API nsRenderer
 {
 	NS_DECLARE_NOCOPY(nsRenderer)
@@ -65,11 +67,12 @@ private:
 
 public:
 	nsViewport Viewport;
-	nsRenderPassFlags RenderPassFlags;
 	nsPointInt RenderTargetDimension;
+	nsRenderPassFlags RenderPassFlags;
 	nsERenderFinalTexture RenderFinalTexture;
 	nsRenderContextWorld* RenderContextWorld;
 	nsGUIContext* GUIContext;
+	nsWorld* World;
 	nsRenderDebugDrawFlags DebugDrawFlags;
 
 
@@ -108,5 +111,79 @@ public:
 	{
 		return FrameDatas[FrameIndex].SceneDepthStencil;
 	}
+
+
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+private:
+	struct FrameDebug
+	{
+		nsVulkanBuffer* VertexBuffer;
+		nsVulkanBuffer* IndexBuffer;
+	};
+
+	FrameDebug FrameDebugDatas[NS_ENGINE_FRAME_BUFFERING];
+
+
+	struct DebugDrawCall
+	{
+		int BaseIndex;
+		int IndexCount;
+		int IndexVertexOffset;
+	};
+
+	nsRenderPrimitiveBatchMesh DebugPrimitiveBatchMesh;
+	DebugDrawCall DebugDrawCallMesh;
+
+	nsRenderPrimitiveBatchMesh DebugPrimitiveBatchMeshIgnoreDepth;
+	DebugDrawCall DebugDrawCallMeshIgnoreDepth;
+
+	nsRenderPrimitiveBatchLine DebugPrimitiveBatchLine;
+	DebugDrawCall DebugDrawCallLine;
+
+	nsRenderPrimitiveBatchLine DebugPrimitiveBatchLineIgnoreDepth;
+	DebugDrawCall DebugDrawCallLineIgnoreDepth;
+
+
+private:
+	void UpdateDebugDrawCalls();
+
+
+public:
+	NS_INLINE void DebugDrawMeshAABB(const nsVector3& boxMin, const nsVector3& boxMax, nsColor color, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchMesh& batchMesh = bIgnoreDepth ? DebugPrimitiveBatchMeshIgnoreDepth : DebugPrimitiveBatchMesh;
+		batchMesh.AddBoxAABB(boxMin, boxMax, color);
+	}
+
+
+	NS_INLINE void DebugDrawMeshPrism(const nsVector3& position, const nsQuaternion& rotation, float width, float height, nsColor color, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchMesh& batchMesh = bIgnoreDepth ? DebugPrimitiveBatchMeshIgnoreDepth : DebugPrimitiveBatchMesh;
+		batchMesh.AddPrism(position, rotation, width, height, color);
+	}
+
+
+	NS_INLINE void DebugDrawLine(const nsVector3& start, const nsVector3& end, nsColor color, uint8 order = 0, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchLine& batchLine = bIgnoreDepth ? DebugPrimitiveBatchLineIgnoreDepth : DebugPrimitiveBatchLine;
+		batchLine.AddLine(start, end, color);
+	}
+
+
+	NS_INLINE void DebugDrawLineCircle(const nsVector3& center, float radius, float halfArcRadian, nsEAxisType arcAxis, nsColor color, uint8 order = 0, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchLine& batchLine = bIgnoreDepth ? DebugPrimitiveBatchLineIgnoreDepth : DebugPrimitiveBatchLine;
+		batchLine.AddCircle(center, radius, halfArcRadian, arcAxis, color);
+	}
+
+
+	NS_INLINE void DebugDrawLineCircleAroundAxis(const nsVector3& center, const nsVector3& axis, float radius, float halfArcRadian, nsColor color, uint8 order = 0, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchLine& batchLine = bIgnoreDepth ? DebugPrimitiveBatchLineIgnoreDepth : DebugPrimitiveBatchLine;
+		batchLine.AddCircleAroundAxis(center, radius, axis, halfArcRadian, color);
+	}
+
+#endif // NS_ENGINE_DEBUG_DRAW
 
 };

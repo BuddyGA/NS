@@ -37,6 +37,8 @@ public:
 
 class NS_ENGINE_API nsShaderManager
 {
+	NS_DECLARE_SINGLETON(nsShaderManager)
+
 private:
 	bool bInitialized;
 
@@ -60,8 +62,5 @@ public:
 	void AddShader(nsName name, const nsString& glslFile, VkShaderStageFlagBits shaderType, nsTArray<nsName> optionalCompileMacros = nsTArray<nsName>()) noexcept;
 	void CompileShaders(bool bWaitUntilFinished) noexcept;
 	nsVulkanShader* GetShaderModule(const nsName& name) const noexcept;
-
-
-	NS_DECLARE_SINGLETON(nsShaderManager)
 
 };

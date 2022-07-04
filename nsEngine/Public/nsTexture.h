@@ -77,6 +77,8 @@ struct nsTextureResource
 
 class NS_ENGINE_API nsTextureManager
 {
+	NS_DECLARE_SINGLETON(nsTextureManager)
+
 private:
 	bool bInitialized;
 
@@ -235,8 +237,5 @@ public:
 	void BeginFrame(int frameIndex) noexcept;
 	void BindTextures(const nsTextureID* textures, int count) noexcept;
 	void UpdateRenderResources() noexcept;
-
-
-	NS_DECLARE_SINGLETON(nsTextureManager)
 
 };

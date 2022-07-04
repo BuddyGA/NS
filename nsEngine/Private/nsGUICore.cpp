@@ -7,12 +7,12 @@
 
 
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 #define NS_GUI_DRAW_DEBUG_COLOR_REGION_RECT_CLIP		nsColor::CYAN
 #define NS_GUI_DRAW_DEBUG_COLOR_REGION_RECT_CONTENT		nsColor::YELLOW
 #define NS_GUI_DRAW_DEBUG_COLOR_RECT					nsColor::GREEN
 #define NS_GUI_DRAW_DEBUG_COLOR_RECT_HOVERED			nsColor::WHITE
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 
 nsLogCategory GUILog("GUILog", nsELogVerbosity::LV_DEBUG);
@@ -53,7 +53,7 @@ nsGUIContext::nsGUIContext() noexcept
 	nsPlatform::Memory_Zero(MouseState.bWasPresseds, sizeof(bool) * 3);
 	nsPlatform::Memory_Zero(MouseState.bPresseds, sizeof(bool) * 3);
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	DefaultDebugMaterial = nsMaterialManager::Get().GetDefaultMaterial_PrimitiveLine_2D();
 
 	for (int i = 0; i < NS_ENGINE_FRAME_BUFFERING; ++i)
@@ -67,7 +67,7 @@ nsGUIContext::nsGUIContext() noexcept
 	DrawDebugIndices.Reserve(32);
 	bDrawDebugRect = false;
 	bDrawDebugHoveredRect = true;
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 }
 
@@ -448,14 +448,14 @@ void nsGUIContext::BeginRegion(const char* uniqueId, const nsGUIRect& rect, cons
 
 	ElementLayoutStacks.Add(newRegion.ChildElementLayout);
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	newRegion.DebugName = debugName;
 
 	if (bDrawDebugRect && LastHoveredRegionId == CurrentRegionId)
 	{
 		AddDrawDebugRectLine(newRegion.Rect, NS_GUI_DRAW_DEBUG_COLOR_REGION_RECT_CLIP);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 }
 
@@ -480,12 +480,12 @@ void nsGUIContext::EndRegion() noexcept
 		}
 	}
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (bDrawDebugRect && CurrentRegionId == LastHoveredRegionId)
 	{
 		AddDrawDebugRectLine(currentRegion.ChildContentRect, NS_GUI_DRAW_DEBUG_COLOR_REGION_RECT_CONTENT);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	ElementLayoutStacks.RemoveAt(NS_ARRAY_INDEX_LAST);
 	RegionStacks.RemoveAt(NS_ARRAY_INDEX_LAST);
@@ -660,12 +660,12 @@ nsGUIControl nsGUIContext::AddControlText(const char* text, nsColor color, nsFon
 		AddDrawText(text, charLength, nsPointFloat(textControl.Rect.Left, textControl.Rect.Top), color, font, material);
 	}
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (bDrawDebugRect)
 	{
 		AddDrawDebugRectLine(textControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	return textControl;
 }
@@ -692,12 +692,12 @@ nsGUIControl nsGUIContext::AddControlTextOnRect(const char* text, const nsGUIRec
 		AddDrawTextOnRect(text, charLength, textControl.Rect, hAlign, vAlign, offsetAlignment, color, font, material);
 	}
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (bDrawDebugHoveredRect && IsCurrentRegionHovered() && (textControl.Interactions & nsEGUIRectInteraction::Hovered) )
 	{
 		AddDrawDebugRectLine(textControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT_HOVERED);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	return textControl;
 }
@@ -715,7 +715,7 @@ nsGUIControl nsGUIContext::AddControlRect(float width, float height, nsColor col
 		AddDrawRect(newControl.Rect, color, texture, material);
 	}
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (bDrawDebugRect)
 	{
 		AddDrawDebugRectLine(newControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT);
@@ -725,7 +725,7 @@ nsGUIControl nsGUIContext::AddControlRect(float width, float height, nsColor col
 	{
 		AddDrawDebugRectLine(newControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT_HOVERED);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	return newControl;
 }
@@ -742,7 +742,7 @@ nsGUIControl& nsGUIContext::AddControlUnique(const char* uniqueId, const nsPoint
 
 	UpdateControlInCurrentRegion(newControl, false);
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (bDrawDebugRect)
 	{
 		AddDrawDebugRectLine(newControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT);
@@ -752,7 +752,7 @@ nsGUIControl& nsGUIContext::AddControlUnique(const char* uniqueId, const nsPoint
 	{
 		AddDrawDebugRectLine(newControl.Rect, NS_GUI_DRAW_DEBUG_COLOR_RECT_HOVERED);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	return newControl;
 }
@@ -791,10 +791,10 @@ void nsGUIContext::BeginRender(const nsPointFloat& windowDimension, const nsGUIR
 	DrawBindMaterials.Clear();
 	DrawCallData.Clear();
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	DrawDebugVertices.Clear();
 	DrawDebugIndices.Clear();
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 	
 	NS_Assert(WindowDimension.X > 0.0f && WindowDimension.Y > 0.0f);
 	BeginRegion("canvas", canvasRect, nsPointFloat(), nsEGUIElementLayout::NONE, nsEGUIScrollOption::None, true);
@@ -907,7 +907,7 @@ void nsGUIContext::UpdateResourcesAndBuildDrawCalls(int frameIndex) noexcept
 	nsMaterialManager::Get().BindMaterials(DrawBindMaterials.GetData(), DrawBindMaterials.GetCount());
 
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (!DrawDebugVertices.IsEmpty())
 	{
 		NS_Assert(!DrawDebugIndices.IsEmpty());
@@ -926,7 +926,7 @@ void nsGUIContext::UpdateResourcesAndBuildDrawCalls(int frameIndex) noexcept
 		nsPlatform::Memory_Copy(idxMap, DrawDebugIndices.GetData(), drawDebugIndexBufferSize);
 		frameDebug.IndexBuffer->UnmapMemory();
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 }
 
 
@@ -1009,7 +1009,7 @@ void nsGUIContext::ExecuteDrawCalls(VkCommandBuffer commandBuffer) noexcept
 		}
 	}
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 	if (!DrawDebugVertices.IsEmpty())
 	{
 		NS_Assert(!DrawDebugIndices.IsEmpty());
@@ -1034,6 +1034,6 @@ void nsGUIContext::ExecuteDrawCalls(VkCommandBuffer commandBuffer) noexcept
 
 		vkCmdDrawIndexed(commandBuffer, static_cast<uint32>(DrawDebugIndices.GetCount()), 1, 0, 0, 0);
 	}
-#endif // _DEBUG
+#endif // NS_ENGINE_DEBUG_DRAW
 
 }

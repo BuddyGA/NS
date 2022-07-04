@@ -5,6 +5,7 @@
 #include "nsAnimation.h"
 #include "nsGUICore.h"
 #include "nsPhysicsManager.h"
+#include "nsWorld.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 
@@ -18,7 +19,13 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 	, RenderFinalTexture(nsERenderFinalTexture::NONE)
 	, RenderContextWorld(nullptr)
 	, GUIContext(nullptr)
+	, World(nullptr)
 	, DebugDrawFlags(nsERenderDebugDraw::Collision)
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+	, FrameDebugDatas()
+#endif // NS_ENGINE_DEBUG_DRAW
+
 {
 	RenderPassFlags |= nsERenderPass::Forward;
 
@@ -111,15 +118,23 @@ void nsRenderer::BeginRender(int frameIndex, float deltaTime) noexcept
 
 		if (RenderContextWorld)
 		{
-		#ifdef __NS_ENGINE_DEBUG_DRAW__
-			if (DebugDrawFlags & nsERenderDebugDraw::Collision)
-			{
-				nsPhysicsManager::Get().DebugDraw(*RenderContextWorld);
-			}
-		#endif // __NS_ENGINE_DEBUG_DRAW__
-
 			RenderContextWorld->UpdateResourcesAndBuildDrawCalls(FrameIndex);
 		}
+
+
+	#ifdef NS_ENGINE_DEBUG_DRAW
+
+		if (World)
+		{
+			if (DebugDrawFlags & nsERenderDebugDraw::Collision)
+			{
+				nsPhysicsManager::Get().DebugDraw(World->GetPhysicsScene(), this);
+			}
+		}
+
+		UpdateDebugDrawCalls();
+	#endif // NS_ENGINE_DEBUG_DRAW
+
 	}
 
 
@@ -400,7 +415,7 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 			{
 				environmentBufferInfo.buffer = RenderContextWorld->GetEnvironmentUniformBuffer()->GetVkBuffer();
 				environmentBufferInfo.offset = 0;
-				environmentBufferInfo.range = sizeof(nsRenderEnvironment);
+				environmentBufferInfo.range = sizeof(nsRenderEnvironmentData);
 
 				writeGlobalDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeGlobalDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -455,7 +470,52 @@ void nsRenderer::ExecuteRenderPass_Forward(VkCommandBuffer commandBuffer) noexce
 			RenderPassForward_Mesh(commandBuffer);
 		}
 
-		RenderPassForward_PrimitiveBatch(commandBuffer);
+		//RenderPassForward_PrimitiveBatch(commandBuffer);
+
+
+	#ifdef NS_ENGINE_DEBUG_DRAW
+		if (DebugDrawCallMesh.IndexCount > 0 || DebugDrawCallMeshIgnoreDepth.IndexCount > 0 || DebugDrawCallLine.IndexCount > 0 || DebugDrawCallLineIgnoreDepth.IndexCount > 0)
+		{
+			FrameDebug& frameDebug = FrameDebugDatas[FrameIndex];
+
+			const VkBuffer vertexBuffer = frameDebug.VertexBuffer->GetVkBuffer();
+			const VkDeviceSize vertexOffset = 0;
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
+			vkCmdBindIndexBuffer(commandBuffer, frameDebug.IndexBuffer->GetVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+			const nsVulkanShaderResourceLayout* defaultPrimitiveSRL = materialManager.GetDefaultShaderResourceLayout_Primitive();
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, defaultPrimitiveSRL->GetVkPipelineLayout(), 0, 1, &frame.ForwardGlobalDescriptorSets[3], 0, nullptr);
+
+			if (DebugDrawCallMesh.IndexCount > 0)
+			{
+				const nsMaterialResource& resource = materialManager.GetDefaultMaterialResource_PrimitiveMesh();
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resource.ShaderPipeline->GetVkPipeline());
+				vkCmdDrawIndexed(commandBuffer, DebugDrawCallMesh.IndexCount, 1, DebugDrawCallMesh.BaseIndex, DebugDrawCallMesh.IndexVertexOffset, 0);
+			}
+
+			if (DebugDrawCallMeshIgnoreDepth.IndexCount > 0)
+			{
+				const nsMaterialResource& resource = materialManager.GetDefaultMaterialResource_PrimitiveMesh_IgnoreDepth();
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resource.ShaderPipeline->GetVkPipeline());
+				vkCmdDrawIndexed(commandBuffer, DebugDrawCallMeshIgnoreDepth.IndexCount, 1, DebugDrawCallMeshIgnoreDepth.BaseIndex, DebugDrawCallMeshIgnoreDepth.IndexVertexOffset, 0);
+			}
+
+			if (DebugDrawCallLine.IndexCount > 0)
+			{
+				const nsMaterialResource& resource = materialManager.GetDefaultMaterialResource_PrimitiveLine();
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resource.ShaderPipeline->GetVkPipeline());
+				vkCmdDrawIndexed(commandBuffer, DebugDrawCallLine.IndexCount, 1, DebugDrawCallLine.BaseIndex, DebugDrawCallLine.IndexVertexOffset, 0);
+			}
+
+			if (DebugDrawCallLineIgnoreDepth.IndexCount > 0)
+			{
+				const nsMaterialResource& resource = materialManager.GetDefaultMaterialResource_PrimitiveLine_IgnoreDepth();
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, resource.ShaderPipeline->GetVkPipeline());
+				vkCmdDrawIndexed(commandBuffer, DebugDrawCallLineIgnoreDepth.IndexCount, 1, DebugDrawCallLineIgnoreDepth.BaseIndex, DebugDrawCallLineIgnoreDepth.IndexVertexOffset, 0);
+			}
+		}
+	#endif // NS_ENGINE_DEBUG_DRAW
+
 	}
 
 	frame.RenderPassForward->EndRenderPass(commandBuffer);
@@ -520,7 +580,9 @@ void nsRenderer::ExecuteRenderPass_Final(VkCommandBuffer commandBuffer) noexcept
 
 void nsRenderer::ExecuteDrawCalls() noexcept
 {
-	// TODO: Update each render pass output layout based on RenderPassFlags. This is useful for debugging when we turn on/off render pass
+	// TODO: 
+	// - Update each render pass output layout based on RenderPassFlags. This is useful for debugging when we turn on/off render pass
+	// - OR VK_KHR_dynamic_rendering
 
 
 	VkCommandBuffer commandBuffer = nsVulkan::AllocateGraphicsCommandBuffer();
@@ -558,4 +620,135 @@ void nsRenderer::ExecuteDrawCalls() noexcept
 	NS_VK_EndCommand(commandBuffer);
 
 	nsVulkan::SubmitGraphicsCommandBuffer(&commandBuffer, 1);
+
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+	DebugPrimitiveBatchMesh.Clear();
+	DebugDrawCallMesh.IndexCount = 0;
+
+	DebugPrimitiveBatchMeshIgnoreDepth.Clear();
+	DebugDrawCallMeshIgnoreDepth.IndexCount = 0;
+
+	DebugPrimitiveBatchLine.Clear();
+	DebugDrawCallLine.IndexCount = 0;
+	
+	DebugPrimitiveBatchLineIgnoreDepth.Clear();
+	DebugDrawCallLineIgnoreDepth.IndexCount = 0;
+#endif // NS_ENGINE_DEBUG_DRAW
 }
+
+
+
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+
+void nsRenderer::UpdateDebugDrawCalls()
+{
+	const uint64 vertexBufferSize = DebugPrimitiveBatchMesh.GetVertexSizeBytes() + DebugPrimitiveBatchMeshIgnoreDepth.GetVertexSizeBytes() + DebugPrimitiveBatchLine.GetVertexSizeBytes() + DebugPrimitiveBatchLineIgnoreDepth.GetVertexSizeBytes();
+
+	if (vertexBufferSize == 0)
+	{
+		return;
+	}
+
+	const uint64 indexBufferSize = DebugPrimitiveBatchMesh.GetIndexSizeBytes() + DebugPrimitiveBatchMeshIgnoreDepth.GetIndexSizeBytes() + DebugPrimitiveBatchLine.GetIndexSizeBytes() + DebugPrimitiveBatchLineIgnoreDepth.GetIndexSizeBytes();
+	NS_Assert(indexBufferSize > 0);
+
+	FrameDebug& frame = FrameDebugDatas[FrameIndex];
+
+	if (frame.VertexBuffer == nullptr)
+	{
+		frame.VertexBuffer = nsVulkan::CreateVertexBuffer(VMA_MEMORY_USAGE_CPU_TO_GPU, vertexBufferSize, nsName::Format("debug_vertex_buffer_%i", FrameIndex));
+	}
+	else
+	{
+		frame.VertexBuffer->Resize(vertexBufferSize);
+	}
+
+	if (frame.IndexBuffer == nullptr)
+	{
+		frame.IndexBuffer = nsVulkan::CreateIndexBuffer(VMA_MEMORY_USAGE_CPU_TO_GPU, indexBufferSize, nsName::Format("debug_index_buffer_%i", FrameIndex));
+	}
+	else
+	{
+		frame.IndexBuffer->Resize(indexBufferSize);
+	}
+
+	nsVertexPrimitive* vtxBufferMap = reinterpret_cast<nsVertexPrimitive*>(frame.VertexBuffer->MapMemory());
+	uint32* idxBufferMap = reinterpret_cast<uint32*>(frame.IndexBuffer->MapMemory());
+
+	int debugVertexCount = 0;
+	int debugIndexCount = 0;
+
+	if (!DebugPrimitiveBatchMesh.IsEmpty())
+	{
+		const nsTArray<nsVertexPrimitive>& vertices = DebugPrimitiveBatchMesh.GetVertices();
+		nsPlatform::Memory_Copy(vtxBufferMap + debugVertexCount, vertices.GetData(), DebugPrimitiveBatchMesh.GetVertexSizeBytes());
+
+		const nsTArray<uint32>& indices = DebugPrimitiveBatchMesh.GetIndices();
+		nsPlatform::Memory_Copy(idxBufferMap + debugIndexCount, indices.GetData(), DebugPrimitiveBatchMesh.GetIndexSizeBytes());
+
+		DebugDrawCallMesh.BaseIndex = debugIndexCount;
+		DebugDrawCallMesh.IndexCount = indices.GetCount();
+		DebugDrawCallMesh.IndexVertexOffset = debugVertexCount;
+
+		debugVertexCount += vertices.GetCount();
+		debugIndexCount += indices.GetCount();
+	}
+
+	if (!DebugPrimitiveBatchMeshIgnoreDepth.IsEmpty())
+	{
+		const nsTArray<nsVertexPrimitive>& vertices = DebugPrimitiveBatchMeshIgnoreDepth.GetVertices();
+		nsPlatform::Memory_Copy(vtxBufferMap + debugVertexCount, vertices.GetData(), DebugPrimitiveBatchMeshIgnoreDepth.GetVertexSizeBytes());
+
+		const nsTArray<uint32>& indices = DebugPrimitiveBatchMeshIgnoreDepth.GetIndices();
+		nsPlatform::Memory_Copy(idxBufferMap + debugIndexCount, indices.GetData(), DebugPrimitiveBatchMeshIgnoreDepth.GetIndexSizeBytes());
+
+		DebugDrawCallMeshIgnoreDepth.BaseIndex = debugIndexCount;
+		DebugDrawCallMeshIgnoreDepth.IndexCount = indices.GetCount();
+		DebugDrawCallMeshIgnoreDepth.IndexVertexOffset = debugVertexCount;
+
+		debugVertexCount += vertices.GetCount();
+		debugIndexCount += indices.GetCount();
+	}
+
+
+	if (!DebugPrimitiveBatchLine.IsEmpty())
+	{
+		const nsTArray<nsVertexPrimitive>& vertices = DebugPrimitiveBatchLine.GetVertices();
+		nsPlatform::Memory_Copy(vtxBufferMap + debugVertexCount, vertices.GetData(), DebugPrimitiveBatchLine.GetVertexSizeBytes());
+
+		const nsTArray<uint32>& indices = DebugPrimitiveBatchLine.GetIndices();
+		nsPlatform::Memory_Copy(idxBufferMap + debugIndexCount, indices.GetData(), DebugPrimitiveBatchLine.GetIndexSizeBytes());
+
+		DebugDrawCallLine.BaseIndex = debugIndexCount;
+		DebugDrawCallLine.IndexCount = indices.GetCount();
+		DebugDrawCallLine.IndexVertexOffset = debugVertexCount;
+
+		debugVertexCount += vertices.GetCount();
+		debugIndexCount += indices.GetCount();
+	}
+
+	if (!DebugPrimitiveBatchLineIgnoreDepth.IsEmpty())
+	{
+		const nsTArray<nsVertexPrimitive>& vertices = DebugPrimitiveBatchLineIgnoreDepth.GetVertices();
+		nsPlatform::Memory_Copy(vtxBufferMap + debugVertexCount, vertices.GetData(), DebugPrimitiveBatchLineIgnoreDepth.GetVertexSizeBytes());
+
+		const nsTArray<uint32>& indices = DebugPrimitiveBatchLineIgnoreDepth.GetIndices();
+		nsPlatform::Memory_Copy(idxBufferMap + debugIndexCount, indices.GetData(), DebugPrimitiveBatchLineIgnoreDepth.GetIndexSizeBytes());
+
+		DebugDrawCallLineIgnoreDepth.BaseIndex = debugIndexCount;
+		DebugDrawCallLineIgnoreDepth.IndexCount = indices.GetCount();
+		DebugDrawCallLineIgnoreDepth.IndexVertexOffset = debugVertexCount;
+
+		debugVertexCount += vertices.GetCount();
+		debugIndexCount += indices.GetCount();
+	}
+
+
+	frame.VertexBuffer->UnmapMemory();
+	frame.IndexBuffer->UnmapMemory();
+}
+
+
+#endif // NS_ENGINE_DEBUG_DRAW

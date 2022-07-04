@@ -76,7 +76,7 @@ void cstEditorAssetExplorer::DrawAssetFolder(nsGUIContext& context, float indent
 			SelectedAssetFolder = &assetFolder;
 		}
 
-	#ifdef _DEBUG
+	#ifdef NS_ENGINE_DEBUG_DRAW
 		if (context.bDrawDebugRect)
 		{
 			context.AddDrawDebugRectLine(control.Rect, nsColor::GREEN);
@@ -86,7 +86,7 @@ void cstEditorAssetExplorer::DrawAssetFolder(nsGUIContext& context, float indent
 		{
 			context.AddDrawDebugRectLine(control.Rect, nsColor::WHITE);
 		}
-	#endif // _DEBUG
+	#endif // NS_ENGINE_DEBUG_DRAW
 	}
 
 	const int subfolderCount = assetFolder.Subfolders.GetCount();
@@ -120,7 +120,7 @@ void cstEditorAssetExplorer::DrawAssetInfo(nsGUIContext& context, const nsAssetI
 
 		context.AddDrawTextOnRect(*assetInfo.Name, assetInfo.Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
 
-	#ifdef _DEBUG
+	#ifdef NS_ENGINE_DEBUG_DRAW
 		if (context.bDrawDebugRect)
 		{
 			context.AddDrawDebugRectLine(control.Rect, nsColor::GREEN);
@@ -130,7 +130,7 @@ void cstEditorAssetExplorer::DrawAssetInfo(nsGUIContext& context, const nsAssetI
 		{
 			context.AddDrawDebugRectLine(control.Rect, nsColor::WHITE);
 		}
-	#endif // _DEBUG
+	#endif // NS_ENGINE_DEBUG_DRAW
 	}
 }
 

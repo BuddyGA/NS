@@ -325,6 +325,8 @@ struct nsGUIDrawCallPerRegion
 
 class NS_ENGINE_API nsGUIContext
 {
+	NS_DECLARE_NOCOPY(nsGUIContext)
+
 private:
 	struct Frame
 	{
@@ -636,7 +638,7 @@ public:
 	}
 
 
-#ifdef _DEBUG
+#ifdef NS_ENGINE_DEBUG_DRAW
 private:
 	struct FrameDebug
 	{
@@ -701,9 +703,6 @@ public:
 		return DrawDebugIndices;
 	}
 
-#endif // _DEBUG
-
-
-	NS_DECLARE_NOCOPY(nsGUIContext)
+#endif // NS_ENGINE_DEBUG_DRAW
 
 };

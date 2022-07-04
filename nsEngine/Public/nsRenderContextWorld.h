@@ -13,7 +13,7 @@ struct nsRenderCameraView
 
 
 
-struct nsRenderEnvironment
+struct nsRenderEnvironmentData
 {
 	nsMatrix4 DirectionalLight_ViewProjection;
 	nsVector4 DirectionalLight_Direction;
@@ -23,7 +23,7 @@ struct nsRenderEnvironment
 
 
 
-struct nsRenderMesh
+struct nsRenderMeshData
 {
 	nsMatrix4 WorldTransform;
 	nsMaterialID Material;
@@ -112,6 +112,7 @@ public:
 
 
 
+
 class NS_ENGINE_API nsRenderContextWorld
 {
 private:
@@ -126,8 +127,8 @@ private:
 	Frame FrameDatas[NS_ENGINE_FRAME_BUFFERING];
 	int FrameIndex;
 
-	nsRenderEnvironment RenderEnvironment;
-	nsTArrayFreeList<nsRenderMesh> RenderMeshes;
+	nsRenderEnvironmentData RenderEnvironment;
+	nsTArrayFreeList<nsRenderMeshData> RenderMeshes;
 	
 	nsTArray<nsVertexPrimitive> PrimitiveBatchLineVertices;
 	nsTArray<uint32> PrimitiveBatchLineIndices;
@@ -155,18 +156,18 @@ public:
 	void UpdateResourcesAndBuildDrawCalls(int frameIndex) noexcept;
 
 
-	NS_NODISCARD_INLINE bool IsRenderMeshValid(nsRenderContextMeshID renderMesh) const noexcept
+	NS_NODISCARD_INLINE bool IsRenderMeshValid(nsRenderMeshID renderMesh) const noexcept
 	{
 		return renderMesh.IsValid() && RenderMeshes.IsValid(renderMesh.Id);
 	}
 
 
-	NS_NODISCARD_INLINE nsRenderContextMeshID AddRenderMesh(nsMeshID mesh, nsMaterialID material, const nsMatrix4& transform, nsAnimationInstanceID animationInstance) noexcept
+	NS_NODISCARD_INLINE nsRenderMeshID AddRenderMesh(nsMeshID mesh, nsMaterialID material, const nsMatrix4& transform, nsAnimationInstanceID animationInstance) noexcept
 	{
 		NS_Assert(mesh != nsMeshID::INVALID);
 		NS_Assert(material != nsMaterialID::INVALID);
 
-		nsRenderMesh value{};
+		nsRenderMeshData value{};
 		value.WorldTransform = transform;
 		value.Material = material;
 		value.Mesh = mesh;
@@ -175,25 +176,25 @@ public:
 		return RenderMeshes.Add(value);
 	}
 
-	NS_INLINE void UpdateRenderMesh(nsRenderContextMeshID id, nsMeshID newMesh, nsMaterialID newMaterial, const nsMatrix4& newTransform, nsAnimationInstanceID animationInstance) noexcept
+	NS_INLINE void UpdateRenderMesh(nsRenderMeshID id, nsMeshID newMesh, nsMaterialID newMaterial, const nsMatrix4& newTransform, nsAnimationInstanceID animationInstance) noexcept
 	{
 		NS_Assert(IsRenderMeshValid(id));
 		NS_Assert(newMesh != nsMeshID::INVALID);
 		NS_Assert(newMaterial != nsMaterialID::INVALID);
 
-		nsRenderMesh& value = RenderMeshes[id.Id];
+		nsRenderMeshData& value = RenderMeshes[id.Id];
 		value.WorldTransform = newTransform;
 		value.Material = newMaterial;
 		value.Mesh = newMesh;
 		value.AnimationInstance = animationInstance;
 	}
 
-	NS_INLINE void RemoveRenderMesh(nsRenderContextMeshID& id) noexcept
+	NS_INLINE void RemoveRenderMesh(nsRenderMeshID& id) noexcept
 	{
 		NS_Assert(IsRenderMeshValid(id));
 
 		RenderMeshes.RemoveAt(id.Id);
-		id = nsRenderContextMeshID::INVALID;
+		id = nsRenderMeshID::INVALID;
 	}
 
 

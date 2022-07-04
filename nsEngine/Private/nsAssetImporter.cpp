@@ -42,12 +42,12 @@ void nsAssetImporter::Initialize() noexcept
 
 	// Test import mesh, skeleton, animation
 	//importOptionModel.SourceFile = "../../../Assets/Models/LowPolyChar.glb";
-	importOptionModel.SourceFile = "../../../Assets/Models/LowPolyChar_rigged_animations.glb";
-	importOptionModel.MeshScaleMultiplier = 1.0f;
-	importOptionModel.bImportMesh = true;
-	importOptionModel.bImportSkeleton = true;
-	importOptionModel.bImportAnimation = true;
-	ImportAssetFromModelFile(importOptionModel, "Models");
+	//importOptionModel.SourceFile = "../../../Assets/Models/LowPolyChar_rigged_animations.glb";
+	//importOptionModel.MeshScaleMultiplier = 1.0f;
+	//importOptionModel.bImportMesh = true;
+	//importOptionModel.bImportSkeleton = true;
+	//importOptionModel.bImportAnimation = true;
+	//ImportAssetFromModelFile(importOptionModel, "Models");
 
 	bInitialized = true;
 }

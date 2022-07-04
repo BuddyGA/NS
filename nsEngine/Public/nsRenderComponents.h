@@ -46,7 +46,7 @@ class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 protected:
 	nsSharedModelAsset ModelAsset;
 	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESH> Materials;
-	nsRenderContextMeshID RenderMeshId;
+	nsRenderMeshID RenderMeshId;
 
 
 public:
@@ -90,6 +90,8 @@ private:
 
 public:
 	nsSkeletalMeshComponent();
+	virtual void OnStartPlay() override;
+	virtual void OnStopPlay() override;
 	virtual void OnDestroy() override;
 
 protected:

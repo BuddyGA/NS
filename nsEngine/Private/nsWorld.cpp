@@ -37,7 +37,7 @@ void nsWorld::Initialize()
 {
 	if (bHasPhysics)
 	{
-		PhysicsScene = nsPhysicsManager::Get().CreateScene(nsName::Format("%s.physics_scene", *Name));
+		PhysicsScene = nsPhysicsManager::Get().CreateScene(nsName::Format("%s.physics_ctx", *Name));
 	}
 
 	CreateLevel("Persistent");

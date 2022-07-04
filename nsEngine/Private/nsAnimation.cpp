@@ -60,12 +60,12 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 
 	for (int i = 0; i < count; ++i)
 	{
-		nsAnimationInstanceData& animInstanceData = InstanceDatas[i];
-		
-		if (!animInstanceData.bUpdatePose)
+		if (!(InstanceFlags[i] & Flag_Instance_UpdatePose))
 		{
 			continue;
 		}
+
+		nsAnimationInstanceData& animInstanceData = InstanceDatas[i];
 
 		nsAnimationPlayState& state = InstancePlayStates[i];
 
@@ -326,7 +326,6 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 	data.BoneTransforms = skeletonData.BoneDatas;
 	data.Skeleton = skeleton;
 	data.BoneTransformIndex = InstanceBoneTransforms.GetCount();
-	data.bUpdatePose = true;
 
 	nsAnimationPlayState& state = InstancePlayStates[stateId];
 	state.Clip = nsAnimationClipID::INVALID;
@@ -352,6 +351,21 @@ void nsAnimationManager::DestroyInstance(nsAnimationInstanceID& instance)
 	}
 
 	instance = nsAnimationInstanceID::INVALID;
+}
+
+
+void nsAnimationManager::SetInstanceUpdatePose(nsAnimationInstanceID instance, bool bUpdatePose)
+{
+	NS_Assert(IsInstanceValid(instance));
+
+	if (bUpdatePose)
+	{
+		InstanceFlags[instance.Id] |= Flag_Instance_UpdatePose;
+	}
+	else
+	{
+		InstanceFlags[instance.Id] &= ~Flag_Instance_UpdatePose;
+	}
 }
 
 
@@ -408,46 +422,17 @@ void nsAnimationManager::BlendAnimation(nsAnimationInstanceID instance, nsEAnima
 
 
 
-
 void nsAnimationManager::BeginFrame(int frameIndex)
 {
 	FrameIndex = frameIndex;
 
 	Frame& frame = FrameDatas[FrameIndex];
-	frame.AnimationInstanceToBinds.Clear();
-}
-
-
-void nsAnimationManager::BindAnimationInstances(const nsAnimationInstanceID* animationInstances, int count)
-{
-	if (animationInstances == nullptr || count <= 0)
-	{
-		return;
-	}
-
-	Frame& frame = FrameDatas[FrameIndex];
-
-	for (int i = 0; i < count; ++i)
-	{
-		const nsAnimationInstanceID& animInstance = animationInstances[i];
-		NS_Assert(IsInstanceValid(animInstance));
-
-		const uint32& flags = InstanceFlags[animInstance.Id];
-		NS_AssertV(!(flags & Flag_PendingDestroy), "Cannot bind animation instance that has marked pending destroy!");
-
-		frame.AnimationInstanceToBinds.Add(animInstance);
-	}
 }
 
 
 void nsAnimationManager::UpdateRenderResources()
 {
 	Frame& frame = FrameDatas[FrameIndex];
-
-	if (frame.AnimationInstanceToBinds.GetCount() == 0)
-	{
-		return;
-	}
 
 	const uint64 storageBufferSize = sizeof(nsMatrix4) * InstanceBoneTransforms.GetCount();
 	frame.SkeletonPoseTransformStorageBuffer->Resize(storageBufferSize);

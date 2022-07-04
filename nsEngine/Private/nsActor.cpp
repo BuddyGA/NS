@@ -35,7 +35,6 @@ void nsActor::OnInitialize()
 	}
 
 	Flags |= nsEActorFlag::Initialized;
-	//RootComponent = AddComponent<nsTransformComponent>("default_root_component");
 
 	for (int i = 0; i < Components.GetCount(); ++i)
 	{

@@ -99,6 +99,9 @@
     <ClCompile Include="Private\nsPhysicsComponents.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Private\nsRenderPrimitiveBatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Public\nsEngineTypes.h">
@@ -204,6 +207,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsPhysicsComponents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsRenderPrimitiveBatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

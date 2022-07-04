@@ -6,8 +6,8 @@
 
 
 
-NS_ENGINE_DEFINE_HANDLE(nsRenderContextMeshID);
-NS_ENGINE_DEFINE_HANDLE(nsRenderContextPointLightID);
+NS_ENGINE_DEFINE_HANDLE(nsRenderMeshID);
+NS_ENGINE_DEFINE_HANDLE(nsRenderPointLightID);
 
 
 
@@ -126,11 +126,11 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 
 	if (frame.EnvironmentUniformBuffer == nullptr)
 	{
-		frame.EnvironmentUniformBuffer = nsVulkan::CreateUniformBuffer(VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(nsRenderEnvironment), "environment_uniform_buffer");
+		frame.EnvironmentUniformBuffer = nsVulkan::CreateUniformBuffer(VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(nsRenderEnvironmentData), "environment_uniform_buffer");
 	}
 
 	void* environmentMap = frame.EnvironmentUniformBuffer->MapMemory();
-	nsPlatform::Memory_Copy(environmentMap, &RenderEnvironment, sizeof(nsRenderEnvironment));
+	nsPlatform::Memory_Copy(environmentMap, &RenderEnvironment, sizeof(nsRenderEnvironmentData));
 	frame.EnvironmentUniformBuffer->UnmapMemory();
 	
 
@@ -173,7 +173,7 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 
 	nsMaterialManager::Get().BindMaterials(DrawBindMaterials.GetData(), DrawBindMaterials.GetCount());
 	nsMeshManager::Get().BindMeshes(DrawBindMeshes.GetData(), DrawBindMeshes.GetCount());
-	nsAnimationManager::Get().BindAnimationInstances(DrawBindAnimationInstances.GetData(), DrawBindAnimationInstances.GetCount());
+
 
 	const uint64 primitiveMeshVertexSize = sizeof(nsVertexPrimitive) * PrimitiveBatchMeshVertices.GetCount();
 	const uint64 primitiveMeshIndexSize = sizeof(uint32) * PrimitiveBatchMeshIndices.GetCount();

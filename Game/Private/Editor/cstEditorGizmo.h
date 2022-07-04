@@ -3,6 +3,9 @@
 #include "cstEditorTypes.h"
 
 
+class nsRenderer;
+
+
 
 enum class cstEEditorGizmoAxis : uint8
 {
@@ -48,7 +51,7 @@ private:
 
 public:
 	bool UpdateTranslation(nsViewport* viewport, const nsVector2& mousePosition, nsTransform& transform, float snapValue, float scale, bool bIsLocal);
-	void Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug);
+	void Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug);
 
 
 	NS_INLINE void BeginTranslate(nsViewport* viewport, const nsVector2& mousePosition, const nsTransform& transform, float scale, bool bIsLocal)
@@ -131,7 +134,7 @@ private:
 
 public:
 	bool UpdateRotation(nsViewport* viewport, const nsVector2& mousePosition, nsTransform& transform, float snapValue, float scale, bool bIsLocal);
-	void Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug);
+	void Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsLocal, bool bIsSelected, bool bDrawDebug);
 
 
 	NS_INLINE void BeginRotate(nsViewport* viewport, const nsVector2& mousePosition, const nsTransform& transform, float scale, bool bIsLocal)
@@ -233,7 +236,7 @@ private:
 
 public:
 	bool UpdateScale(nsViewport* viewport, const nsVector2& mousePosition, nsTransform& transform, float snapValue, float scale);
-	void Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsSelected, bool bDrawDebug);
+	void Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, float scale, bool bIsSelected, bool bDrawDebug);
 
 
 	NS_INLINE void BeginScale(nsViewport* viewport, const nsVector2& mousePosition, const nsTransform& transform, float scale)
@@ -319,7 +322,7 @@ public:
 	void BeginTransform(nsViewport* viewport, const nsVector2& mousePosition, const nsTransform& transform, bool bIsLocal);
 	void EndTransform();
 	bool UpdateTransform(nsViewport* viewport, const nsVector2& mousePosition, cstEEditorViewMode viewMode, nsTransform& outTransform, bool bIsLocal);
-	void Render(nsRenderContextWorld& context, nsViewport* viewport, const nsTransform& transform, bool bIsLocal, bool bDrawDebug);
+	void Render(nsRenderer* renderer, nsViewport* viewport, const nsTransform& transform, bool bIsLocal, bool bDrawDebug);
 
 
 	NS_INLINE void RemoveSelected()
