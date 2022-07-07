@@ -27,7 +27,7 @@
     <ClCompile Include="Private\nsActorComponents.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\nsAnimation.cpp">
+    <ClCompile Include="Private\nsAnimationManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsAssetImporter.cpp">
@@ -90,7 +90,7 @@
     <ClCompile Include="Private\nsAssetTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\nsPhysics_PhysX.cpp">
+    <ClCompile Include="Private\nsPhysicsManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsRenderComponents.cpp">
@@ -100,6 +100,36 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsRenderPrimitiveBatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\nsNavigationManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ThirdParty\RecastNavigation\DebugUtils\Build_DebugUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ThirdParty\RecastNavigation\Detour\Build_Detour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ThirdParty\RecastNavigation\DetourCrowd\Build_DetourCrowd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ThirdParty\RecastNavigation\DetourTileCache\Build_DetourTileCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\ThirdParty\RecastNavigation\Recast\Build_Recast.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\nsNavigationEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\nsActorEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\nsWorldEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\nsAssetEditor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -185,7 +215,7 @@
     <ClInclude Include="Public\nsAssetImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\nsAnimation.h">
+    <ClInclude Include="Public\nsAnimationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsRenderContextWorld.h">
@@ -210,6 +240,39 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsRenderPrimitiveBatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsNavigationManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsPhysicsDebugDraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsAnimationDebugDraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsNavigationDebugDraw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsNavigationEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsActorEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsWorldEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsNavigationTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsPhysicsTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsAnimationTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsAssetEditor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

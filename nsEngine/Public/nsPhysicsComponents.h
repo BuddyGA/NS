@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nsActorComponents.h"
+#include "nsPhysicsTypes.h"
 
 
 

@@ -2,9 +2,10 @@
 #include "nsTexture.h"
 #include "nsMaterial.h"
 #include "nsMesh.h"
-#include "nsAnimation.h"
+#include "nsAnimationManager.h"
 #include "nsGUICore.h"
 #include "nsPhysicsManager.h"
+#include "nsNavigationManager.h"
 #include "nsWorld.h"
 #include "API_VK/nsVulkanFunctions.h"
 
@@ -20,7 +21,7 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 	, RenderContextWorld(nullptr)
 	, GUIContext(nullptr)
 	, World(nullptr)
-	, DebugDrawFlags(nsERenderDebugDraw::Collision)
+	, DebugDrawFlags(0)
 
 #ifdef NS_ENGINE_DEBUG_DRAW
 	, FrameDebugDatas()
@@ -129,6 +130,16 @@ void nsRenderer::BeginRender(int frameIndex, float deltaTime) noexcept
 			if (DebugDrawFlags & nsERenderDebugDraw::Collision)
 			{
 				nsPhysicsManager::Get().DebugDraw(World->GetPhysicsScene(), this);
+			}
+
+			if (DebugDrawFlags & nsERenderDebugDraw::Skeleton)
+			{
+				nsAnimationManager::Get().DebugDraw(this);
+			}
+
+			if (DebugDrawFlags & nsERenderDebugDraw::NavMesh)
+			{
+				nsNavigationManager::Get().DebugDraw(this);
 			}
 		}
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nsPhysicsManager.h"
+#include "nsEngineTypes.h"
 #include "physx/PxPhysicsAPI.h"
 
 

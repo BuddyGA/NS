@@ -9,6 +9,23 @@ class nsGUIContext;
 
 
 
+namespace nsERenderPass
+{
+	enum Flag
+	{
+		None = (0),
+		Depth = (1 << 0),
+		Shadow = (1 << 1),
+		Forward = (1 << 2),
+		Transparency = (1 << 3),
+		Final = (1 << 4),
+	};
+};
+
+typedef uint8 nsRenderPassFlags;
+
+
+
 enum class nsERenderFinalTexture : uint8
 {
 	NONE = 0,
@@ -26,6 +43,7 @@ namespace nsERenderDebugDraw
 		Wireframe		= (1 << 0),
 		Collision		= (1 << 1),
 		Skeleton		= (1 << 2),
+		NavMesh			= (1 << 3),
 
 		// ...
 
@@ -150,6 +168,13 @@ private:
 
 
 public:
+	NS_INLINE void DebugDrawMeshTriangle(const nsVector3& a, const nsVector3& b, const nsVector3& c, nsColor color, bool bIgnoreDepth = false)
+	{
+		nsRenderPrimitiveBatchMesh& batchMesh = bIgnoreDepth ? DebugPrimitiveBatchMeshIgnoreDepth : DebugPrimitiveBatchMesh;
+		batchMesh.AddTriangle(a, b, c, color);
+	}
+
+
 	NS_INLINE void DebugDrawMeshAABB(const nsVector3& boxMin, const nsVector3& boxMax, nsColor color, bool bIgnoreDepth = false)
 	{
 		nsRenderPrimitiveBatchMesh& batchMesh = bIgnoreDepth ? DebugPrimitiveBatchMeshIgnoreDepth : DebugPrimitiveBatchMesh;

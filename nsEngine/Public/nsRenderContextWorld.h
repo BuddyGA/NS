@@ -119,6 +119,7 @@ private:
 	struct Frame
 	{
 		nsVulkanBuffer* EnvironmentUniformBuffer;
+		nsVulkanBuffer* LightStorageBuffer;
 		nsVulkanBuffer* PrimitiveVertexBuffer;
 		nsVulkanBuffer* PrimitiveIndexBuffer;
 		nsVulkanBuffer* PrimitiveStagingBuffer;

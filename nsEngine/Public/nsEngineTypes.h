@@ -150,12 +150,12 @@ public:																						\
 
 NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
 NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
+NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationSkeletonID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationClipID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsAnimationInstanceID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsRenderMeshID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsRenderPointLightID, nsRenderContextWorld)
-NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
 
 
 NS_NODISCARD_INLINE uint64 ns_GetHash(nsMaterialID material) noexcept
@@ -163,17 +163,6 @@ NS_NODISCARD_INLINE uint64 ns_GetHash(nsMaterialID material) noexcept
 	return material.GetHash();
 }
 
-
-
-namespace physx
-{
-	class PxPhysics;
-	class PxMaterial;
-	class PxCooking;
-	class PxScene;
-	class PxRigidActor;
-	class PxShape;
-};
 
 
 class nsViewport;
@@ -191,91 +180,6 @@ enum class nsEAxisType : uint8
 	Y_Axis,
 	Z_Axis
 };
-
-
-
-enum class nsEPhysicsShape : uint8
-{
-	NONE = 0,
-	BOX,
-	SPHERE,
-	CAPSULE,
-	CONVEX_MESH,
-	TRIANGLE_MESH,
-	HEIGHTFIELD
-};
-
-
-
-namespace nsEPhysicsCollisionChannel
-{
-	enum Type : uint32
-	{
-		NONE			= (0),
-		Default			= (1 << 0),
-		Character		= (1 << 1),
-		Camera			= (1 << 2),
-		MousePicking	= (1 << 3),
-	};
-};
-
-typedef uint32 nsPhysicsCollisionChannels;
-
-
-
-enum class nsEPhysicsCollisionTest : uint8
-{
-	NONE = 0,
-	COLLISION_ONLY,
-	QUERY_ONLY,
-	COLLISION_AND_QUERY
-};
-
-
-typedef nsTArrayInline<nsActor*, 8> nsPhysicsQueryIgnoredActors;
-
-
-struct nsPhysicsQueryParams
-{
-	nsEPhysicsCollisionChannel::Type Channel;
-	nsPhysicsQueryIgnoredActors IgnoredActors;
-
-
-public:
-	nsPhysicsQueryParams()
-		: Channel(nsEPhysicsCollisionChannel::Default)
-		, IgnoredActors()
-	{
-	}
-
-};
-
-
-
-struct nsPhysicsHitResult
-{
-	nsActor* Actor;
-	nsActorComponent* Component;
-	nsVector3 WorldPosition;
-	nsVector3 WorldNormal;
-	float Distance;
-	bool bIsBlock;
-
-
-public:
-	nsPhysicsHitResult()
-		: Actor(nullptr)
-		, Component(nullptr)
-		, WorldPosition()
-		, WorldNormal()
-		, Distance(0.0f)
-		, bIsBlock(false)
-	{
-	}
-
-};
-
-typedef nsTArrayInline<nsPhysicsHitResult, NS_ENGINE_PHYSICS_MAX_HIT_RESULT> nsPhysicsHitResultMany;
 
 
 
@@ -329,23 +233,6 @@ struct nsVertexMeshSkin
 	nsVector4 Weights;
 	uint32 Joints;
 };
-
-
-
-namespace nsERenderPass
-{
-	enum Flag
-	{
-		None			= (0),
-		Depth			= (1 << 0),
-		Shadow			= (1 << 1),
-		Forward			= (1 << 2),
-		Transparency	= (1 << 3),
-		Final			= (1 << 4),
-	};
-};
-
-typedef uint8 nsRenderPassFlags;
 
 
 

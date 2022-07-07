@@ -315,4 +315,15 @@ public:
 		return FrameDatas[FrameIndex].SkeletonPoseTransformStorageBuffer;
 	}
 
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+private:
+	nsTMap<int, nsTransform> InstanceDebugDraws;
+
+public:
+	void SetInstanceDebugDraw(nsAnimationInstanceID instance, bool bDebugDraw, nsTransform rootWorldTransform);
+	void DebugDraw(class nsRenderer* renderer);
+
+#endif // NS_ENGINE_DEBUG_DRAW
+
 };

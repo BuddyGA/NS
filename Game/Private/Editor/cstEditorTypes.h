@@ -44,4 +44,12 @@ struct cstEditorAssetFolder
 
 
 
+enum class cstEEditorDragDropType : uint8
+{
+	NONE = 0,
+	ASSET,
+	NAVMESH_VOLUME
+};
+
+
 class cstGame;

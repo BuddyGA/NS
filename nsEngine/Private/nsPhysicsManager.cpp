@@ -1,3 +1,4 @@
+#include "nsPhysicsManager.h"
 #include "nsPhysics_PhysX.h"
 #include "nsConsole.h"
 #include "nsActor.h"
@@ -345,6 +346,32 @@ void nsPhysicsManager::Simulate(float fixedTimeSteps)
 		PxScene* scene = SceneObjects[i];
 		scene->simulate(timeSteps);
 		scene->fetchResults(true);
+	}
+}
+
+
+void nsPhysicsManager::SceneSyncTransforms(physx::PxScene* scene)
+{
+	NS_Assert(scene);
+
+	PxU32 numActiveActors = 0;
+	PxActor** activeActors = scene->getActiveActors(numActiveActors);
+
+	for (PxU32 i = 0; i < numActiveActors; ++i)
+	{
+		NS_Assert(activeActors[i]->is<PxRigidActor>());
+
+		PxRigidActor* rigidActor = static_cast<PxRigidActor*>(activeActors[i]);
+
+		nsTransformComponent* actorTransformComp = static_cast<nsTransformComponent*>(rigidActor->userData);
+		const PxTransform globalPose = rigidActor->getGlobalPose();
+
+		nsTransform newTransform;
+		newTransform.Position = NS_FromPxVec3(globalPose.p);
+		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
+		newTransform.Scale = actorTransformComp->GetWorldScale();
+
+		actorTransformComp->SetWorldTransform(newTransform);
 	}
 }
 

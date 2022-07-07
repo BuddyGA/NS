@@ -217,14 +217,14 @@ namespace nsMath
 	template<typename T>
 	NS_NODISCARD_INLINE T Floor(T value) noexcept
 	{
-		return floor(value);
+		return floorf(value);
 	}
 
 
 	template<typename T>
 	NS_NODISCARD_INLINE T Ceil(T value) noexcept
 	{
-		return ceil(value);
+		return ceilf(value);
 	}
 
 };
@@ -1636,8 +1636,6 @@ public:
 		nsMatrix4 r;
 
 	#if NS_MATH_SIMD
-		// (100,000 matrices. Debug: 11.5 ms, Release: 0.15 ms)
-
 		for (int i = 0; i < 4; ++i)
 		{
 			r.Xmms[i] = _mm_mul_ps(_mm_shuffle_ps(a.Xmms[i], a.Xmms[i], 0x00), b.Xmms[0]);
@@ -1647,7 +1645,6 @@ public:
 		}
 
 	#else
-		// (100,000 matrices. Debug: 14.7 ms, Release: 0.8 ms)
 		for (int i = 0; i < 4; ++i)
 		{
 			for (int j = 0; j < 4; ++j)
@@ -2290,6 +2287,10 @@ public:
 		return *this;
 	}
 
+	NS_INLINE friend nsVector3 operator*(const nsVector3& lhs, const nsMatrix4& rhs) noexcept
+	{
+		return nsMatrix4::Multiply(lhs, rhs).ToVector3();
+	}
 
 	NS_INLINE friend nsVector4 operator*(const nsVector4& lhs, const nsMatrix4& rhs) noexcept
 	{

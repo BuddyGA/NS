@@ -17,6 +17,7 @@ cstCharacter::cstCharacter()
 	RootComponent = MovementComponent;
 
 	SkelMeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
+	SkelMeshComponent->bDebugDrawSkeleton = true;
 	SkelMeshComponent->SetLocalPosition(nsVector3(0.0f, -90.0f, 0.0f));
 
 	AttributeComponent = AddComponent<cstAttributeComponent>("attribute");

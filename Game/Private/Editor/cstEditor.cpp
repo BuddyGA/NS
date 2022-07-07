@@ -279,15 +279,25 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		{
 			bShowWorldOutliner = !bShowWorldOutliner;
 		}
-		else if (e.Key == nsEInputKey::KEYBOARD_F5)
+		else if (e.Key == nsEInputKey::KEYBOARD_F4)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
 			NS_CONSOLE_Log(EditorLog, "Debug draw wireframe [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? "ON" : "OFF");
 		}
-		else if (e.Key == nsEInputKey::KEYBOARD_F6)
+		else if (e.Key == nsEInputKey::KEYBOARD_F5)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
 			NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
+		}
+		else if (e.Key == nsEInputKey::KEYBOARD_F6)
+		{
+			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Skeleton;
+			NS_CONSOLE_Log(EditorLog, "Debug draw skeleton [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Skeleton) ? "ON" : "OFF");
+		}
+		else if (e.Key == nsEInputKey::KEYBOARD_F7)
+		{
+			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::NavMesh;
+			NS_CONSOLE_Log(EditorLog, "Debug draw NavMesh [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::NavMesh) ? "ON" : "OFF");
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F8)
 		{

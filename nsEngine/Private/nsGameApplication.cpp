@@ -6,6 +6,7 @@
 #include "nsEngine.h"
 #include "nsPhysicsComponents.h"
 #include "nsRenderComponents.h"
+#include "nsNavigationManager.h"
 
 
 
@@ -440,7 +441,6 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		MainWorld->AddActorToLevel(boxCenter);
 	}
 
-
 	nsActor* capsuleS = MainWorld->CreateActor("capsule_static", true, nsVector3(-50.0f, 100.0f, -10.0f));
 	{
 		nsCapsuleCollisionComponent* collisionComp = capsuleS->AddComponent<nsCapsuleCollisionComponent>("capsule_collision");
@@ -448,6 +448,8 @@ void nsGameApplication::LoadTestLevel_Boxes()
 
 		MainWorld->AddActorToLevel(capsuleS);
 	}
+
+	nsNavigationManager::Get().BuildNavMesh(MainWorld);
 
 	/*
 	nsActor* capsuleD = MainWorld->CreateActor("capsule_dynamic", false, nsVector3(-50.0f, 800.0f, -10.0f));
@@ -461,6 +463,7 @@ void nsGameApplication::LoadTestLevel_Boxes()
 
 	// ================================================================================================================= //
 	// Random boxes
+	/*
 	const int boxCountX = 4;
 	const int boxCountY = 4; 
 	const int boxCountZ = 4;
@@ -496,4 +499,5 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		spawnPosition.X += 300.0f;
 		spawnPosition.Y = baseSpawnPosition.Y;
 	}
+	*/
 }

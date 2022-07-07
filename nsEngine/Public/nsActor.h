@@ -19,6 +19,7 @@ namespace nsEActorFlag
 		AddedToLevel			= (1 << 7),
 		StartedPlay				= (1 << 8),
 		PendingDestroy			= (1 << 9),
+		EditorOnly				= (1 << 10),
 	};
 };
 

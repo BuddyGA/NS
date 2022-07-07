@@ -1,4 +1,5 @@
 #include "nsPhysicsComponents.h"
+#include "nsPhysicsManager.h"
 #include "nsPhysics_PhysX.h"
 #include "nsWorld.h"
 #include "nsMesh.h"

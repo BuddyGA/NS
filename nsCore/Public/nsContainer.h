@@ -103,7 +103,6 @@ private:
 		}
 
 		NS_ARRAY_ValidateIndex(dstIndex);
-		NS_Assert(count > 0);
 
 		const int endIndex = dstIndex + count;
 		NS_ARRAY_ValidateIndex(endIndex - 1);
@@ -445,7 +444,7 @@ public:
 	template<typename U, typename TComparePredicate>
 	NS_INLINE bool Remove(const U& compareValue, TComparePredicate compare, bool bKeepOrder = true) noexcept
 	{
-		const int index = FindFirst(compareValue, compare);
+		const int index = Find(compareValue, compare);
 
 		if (index != NS_ARRAY_INDEX_INVALID)
 		{

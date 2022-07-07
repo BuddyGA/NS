@@ -84,6 +84,7 @@ class NS_ENGINE_API nsRenderPrimitiveBatchMesh : public nsRenderPrimitiveBatch
 {
 public:
 	nsRenderPrimitiveBatchMesh();
+	void AddTriangle(const nsVector3& a, const nsVector3& b, const nsVector3& c, nsColor color);
 	void AddBoxAABB(const nsVector3& boxMin, const nsVector3& boxMax, nsColor color);
 	void AddBoxOBB(const nsVector3& center, const nsVector3& halfExtent, const nsQuaternion& rotation, nsColor color);
 	void AddPrism(const nsVector3& position, const nsQuaternion& rotation, float width, float height, nsColor color);

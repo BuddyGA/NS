@@ -48,6 +48,9 @@ protected:
 	nsTArrayInline<nsMaterialID, NS_ENGINE_ASSET_MODEL_MAX_MESH> Materials;
 	nsRenderMeshID RenderMeshId;
 
+public:
+	bool bGenerateNavMesh;
+
 
 public:
 	nsMeshComponent();
@@ -86,6 +89,9 @@ class NS_ENGINE_API nsSkeletalMeshComponent : public nsMeshComponent
 private:
 	nsSharedSkeletonAsset SkeletonAsset;
 	nsAnimationInstanceID AnimationInstance;
+
+public:
+	bool bDebugDrawSkeleton;
 
 
 public:

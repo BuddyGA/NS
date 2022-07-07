@@ -1,6 +1,6 @@
 #include "nsWorld.h"
 #include "nsConsole.h"
-#include "nsPhysics_PhysX.h"
+#include "nsPhysicsManager.h"
 
 
 
@@ -157,25 +157,7 @@ void nsWorld::SyncActorTransformsWithPhysics()
 		return;
 	}
 
-	PxU32 numActiveActors = 0;
-	PxActor** activeActors = PhysicsScene->getActiveActors(numActiveActors);
-
-	for (PxU32 i = 0; i < numActiveActors; ++i)
-	{
-		NS_Assert(activeActors[i]->is<PxRigidActor>());
-
-		PxRigidActor* rigidActor = static_cast<PxRigidActor*>(activeActors[i]);
-
-		nsTransformComponent* actorTransformComp = static_cast<nsTransformComponent*>(rigidActor->userData);
-		const PxTransform globalPose = rigidActor->getGlobalPose();
-
-		nsTransform newTransform;
-		newTransform.Position = NS_FromPxVec3(globalPose.p);
-		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
-		newTransform.Scale = actorTransformComp->GetWorldScale();
-
-		actorTransformComp->SetWorldTransform(newTransform);
-	}
+	nsPhysicsManager::Get().SceneSyncTransforms(PhysicsScene);
 }
 
 

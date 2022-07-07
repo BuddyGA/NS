@@ -1,7 +1,7 @@
 #include "nsAssetImporter.h"
 #include "nsFileSystem.h"
+#include "nsAnimationManager.h"
 #include "nsConsole.h"
-#include "nsAnimation.h"
 #include "ThirdParty/json.hpp"
 
 

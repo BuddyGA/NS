@@ -1,4 +1,4 @@
-#include "nsAnimation.h"
+#include "nsAnimationManager.h"
 #include "nsConsole.h"
 
 
@@ -100,8 +100,12 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 			{
 				if (state.Timestamp >= pChannels[p].Timestamp && state.Timestamp <= pChannels[p + 1].Timestamp)
 				{
-					const float pa = (state.Timestamp - pChannels[p].Timestamp) / (pChannels[p + 1].Timestamp - pChannels[p].Timestamp);
-					bone.LocalTransform.Position = nsVector3::Lerp(pChannels[p].Value, pChannels[p + 1].Value, pa);
+					bone.LocalTransform.Position = nsVector3::Lerp(
+						pChannels[p].Value, 
+						pChannels[p + 1].Value,
+						(state.Timestamp - pChannels[p].Timestamp) / (pChannels[p + 1].Timestamp - pChannels[p].Timestamp)
+					);
+
 					break;
 				}
 			}
@@ -112,8 +116,12 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 			{
 				if (state.Timestamp >= rChannels[r].Timestamp && state.Timestamp <= rChannels[r + 1].Timestamp)
 				{
-					const float ra = (state.Timestamp - rChannels[r].Timestamp) / (rChannels[r + 1].Timestamp - rChannels[r].Timestamp);
-					bone.LocalTransform.Rotation = nsQuaternion::Slerp(rChannels[r].Value, rChannels[r + 1].Value, ra);
+					bone.LocalTransform.Rotation = nsQuaternion::Slerp(
+						rChannels[r].Value, 
+						rChannels[r + 1].Value, 
+						(state.Timestamp - rChannels[r].Timestamp) / (rChannels[r + 1].Timestamp - rChannels[r].Timestamp)
+					);
+
 					break;
 				}
 			}
@@ -124,8 +132,12 @@ void nsAnimationManager::UpdateAnimationPose(float deltaTime)
 			{
 				if (state.Timestamp >= sChannels[s].Timestamp && state.Timestamp <= sChannels[s + 1].Timestamp)
 				{
-					const float sa = (state.Timestamp - sChannels[s].Timestamp) / (sChannels[s + 1].Timestamp - sChannels[s].Timestamp);
-					bone.LocalTransform.Scale = nsVector3::Lerp(sChannels[s].Value, sChannels[s + 1].Value, sa);
+					bone.LocalTransform.Scale = nsVector3::Lerp(
+						sChannels[s].Value, 
+						sChannels[s + 1].Value, 
+						(state.Timestamp - sChannels[s].Timestamp) / (sChannels[s + 1].Timestamp - sChannels[s].Timestamp)
+					);
+
 					break;
 				}
 			}
@@ -441,3 +453,67 @@ void nsAnimationManager::UpdateRenderResources()
 	nsPlatform::Memory_Copy(map, InstanceBoneTransforms.GetData(), storageBufferSize);
 	frame.SkeletonPoseTransformStorageBuffer->UnmapMemory();
 }
+
+
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+#include "nsRenderer.h"
+
+
+void nsAnimationManager::SetInstanceDebugDraw(nsAnimationInstanceID instance, bool bDebugDraw, nsTransform rootWorldTransform)
+{
+	NS_Assert(IsInstanceValid(instance));
+
+	if (bDebugDraw)
+	{
+		InstanceDebugDraws[instance.Id] = rootWorldTransform;
+	}
+	else
+	{
+		InstanceDebugDraws.Remove(instance.Id);
+	}
+}
+
+
+void nsAnimationManager::DebugDraw(nsRenderer* renderer)
+{
+	nsTArray<nsMatrix4> cachedBoneWorldMatrices;
+
+	for (int i = 0; i < InstanceDebugDraws.GetCount(); ++i)
+	{
+		const int id = InstanceDebugDraws.GetKeyByIndex(i);
+		const nsMatrix4 rootWorldTransformMatrix = InstanceDebugDraws.GetValueByIndex(i).ToMatrixNoScale();
+		const nsTArrayInline<nsAnimationSkeletonData::Bone, NS_ENGINE_ANIMATION_SKELETON_MAX_BONE>& instanceBones = InstanceDatas[id].BoneTransforms;
+		cachedBoneWorldMatrices.Clear();
+		cachedBoneWorldMatrices.ResizeConstructs(instanceBones.GetCount(), nsMatrix4::IDENTITY);
+
+		for (int j = 0; j < instanceBones.GetCount(); ++j)
+		{
+			const nsAnimationSkeletonData::Bone& bone = instanceBones[j];
+
+			if (bone.ParentId == -1)
+			{
+				cachedBoneWorldMatrices[j] = bone.LocalTransform.ToMatrix() * rootWorldTransformMatrix;
+			}
+			else
+			{
+				cachedBoneWorldMatrices[j] = bone.LocalTransform.ToMatrix() * cachedBoneWorldMatrices[bone.ParentId];
+			}
+		}
+
+		for (int j = 0; j < instanceBones.GetCount(); ++j)
+		{
+			const nsAnimationSkeletonData::Bone& bone = instanceBones[j];
+			const nsVector3 boneWorldPosition = cachedBoneWorldMatrices[j].GetPosition();
+			renderer->DebugDrawMeshAABB(boneWorldPosition - 0.5f, boneWorldPosition + 0.5f, nsColor::GRAY, true);
+
+			if (bone.ParentId != -1)
+			{
+				const nsVector3 parentBoneWorldPosition = cachedBoneWorldMatrices[bone.ParentId].GetPosition();
+				renderer->DebugDrawLine(boneWorldPosition, parentBoneWorldPosition, nsColor::WHITE, 100, true);
+			}
+		}
+	}
+}
+
+#endif // NS_ENGINE_DEBUG_DRAW

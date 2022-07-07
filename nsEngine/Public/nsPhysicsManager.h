@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nsEngineTypes.h"
+#include "nsPhysicsTypes.h"
 
 
 
@@ -36,6 +36,7 @@ public:
 	bool SceneQuerySweepBox(physx::PxScene* scene, nsPhysicsHitResult& hitResult, const nsVector3& halfExtent, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());
 	bool SceneQuerySweepSphere(physx::PxScene* scene, nsPhysicsHitResult& hitResult, float sphereRadius, const nsTransform& worldTransform, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());
 	bool SceneQueryMousePicking(physx::PxScene* scene, nsPhysicsHitResult& outHitResult, const nsVector2& mousePosition, nsViewport* viewport);
+	void SceneSyncTransforms(physx::PxScene* scene);
 
 
 	NS_NODISCARD_INLINE physx::PxMaterial* GetDefaultMaterial() const

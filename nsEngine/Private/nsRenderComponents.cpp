@@ -1,7 +1,7 @@
 #include "nsRenderComponents.h"
 #include "nsRenderManager.h"
 #include "nsMaterial.h"
-#include "nsAnimation.h"
+#include "nsAnimationManager.h"
 #include "nsConsole.h"
 
 
@@ -41,6 +41,7 @@ nsMeshComponent::nsMeshComponent()
 {
 	Materials.Add();
 	RenderMeshId = nsRenderMeshID::INVALID;
+	bGenerateNavMesh = true;
 }
 
 
@@ -180,6 +181,8 @@ NS_CLASS_END(nsSkeletalMeshComponent)
 
 nsSkeletalMeshComponent::nsSkeletalMeshComponent()
 {
+	bGenerateNavMesh = false;
+	bDebugDrawSkeleton = false;
 }
 
 
@@ -238,6 +241,15 @@ void nsSkeletalMeshComponent::RegisterMesh()
 	{
 		renderContext.UpdateRenderMesh(RenderMeshId, meshes[0], Materials[0], GetWorldTransform().ToMatrix(), AnimationInstance);
 	}
+
+
+#ifdef NS_ENGINE_DEBUG_DRAW
+	if (AnimationInstance.IsValid())
+	{
+		nsAnimationManager::Get().SetInstanceDebugDraw(AnimationInstance, bDebugDrawSkeleton, GetWorldTransform());
+	}
+#endif // NS_ENGINE_DEBUG_DRAW
+
 }
 
 

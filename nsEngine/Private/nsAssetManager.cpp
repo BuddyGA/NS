@@ -4,7 +4,7 @@
 #include "nsMesh.h"
 #include "nsTexture.h"
 #include "nsMaterial.h"
-#include "nsAnimation.h"
+#include "nsAnimationManager.h"
 
 
 

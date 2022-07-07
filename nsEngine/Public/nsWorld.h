@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nsLevel.h"
+#include "nsPhysicsTypes.h"
 
 
 

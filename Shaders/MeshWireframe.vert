@@ -44,12 +44,12 @@ void main()
 		uint boneId_2 = (IN_Joints & 0x00FF0000) >> 16;
 		uint boneId_3 = (IN_Joints & 0xFF000000) >> 24;
 
-		mat4 vertexBoneTransform = BoneTransforms[BoneTransformIndex + boneId_0] * IN_Weights.x;
-		vertexBoneTransform += BoneTransforms[BoneTransformIndex + boneId_1] * IN_Weights.y;
-		vertexBoneTransform += BoneTransforms[BoneTransformIndex + boneId_2] * IN_Weights.z;
-		vertexBoneTransform += BoneTransforms[BoneTransformIndex + boneId_3] * IN_Weights.w;
+		mat4 vertexSkinnedTransform = BoneTransforms[BoneTransformIndex + boneId_0] * IN_Weights.x;
+		vertexSkinnedTransform += BoneTransforms[BoneTransformIndex + boneId_1] * IN_Weights.y;
+		vertexSkinnedTransform += BoneTransforms[BoneTransformIndex + boneId_2] * IN_Weights.z;
+		vertexSkinnedTransform += BoneTransforms[BoneTransformIndex + boneId_3] * IN_Weights.w;
 
-		mat4 vertexWorldTransform = WorldTransform * vertexBoneTransform;
+		mat4 vertexWorldTransform = WorldTransform * vertexSkinnedTransform;
 		vertexWorldPosition = vertexWorldTransform * vec4(IN_Position, 1.0);
 	}
 

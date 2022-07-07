@@ -65,6 +65,12 @@ nsRenderPrimitiveBatchMesh::nsRenderPrimitiveBatchMesh()
 }
 
 
+void nsRenderPrimitiveBatchMesh::AddTriangle(const nsVector3& a, const nsVector3& b, const nsVector3& c, nsColor color)
+{
+	nsGeometryFactory::AddPrimitiveTriangle(Vertices, Indices, a, b, c, color, false);
+}
+
+
 void nsRenderPrimitiveBatchMesh::AddBoxAABB(const nsVector3& boxMin, const nsVector3& boxMax, nsColor color)
 {
 	nsGeometryFactory::AddPrimitiveTriangle_AABB(Vertices, Indices, boxMin, boxMax, color);
