@@ -1,16 +1,26 @@
 #include "nsNavigationManager.h"
 #include "nsWorld.h"
-#include "nsRenderComponents.h"
 #include "nsMesh.h"
 #include "nsRenderer.h"
+#include "nsRenderComponents.h"
+#include "nsNavigationComponents.h"
 #include "nsConsole.h"
+
+// Recast & Detour
 #include "Recast.h"
 #include "DebugDraw.h"
 #include "RecastDebugDraw.h"
+#include "DetourCrowd.h"
+#include "DetourNavMeshBuilder.h"
+#include "DetourNavMesh.h"
+#include "DetourNavMeshQuery.h"
 
 
 
-static nsLogCategory NavigationLog("nsNavigationLog", nsELogVerbosity::LV_DEBUG);
+NS_ENGINE_DEFINE_HANDLE(nsNavigationAgentID);
+
+
+nsLogCategory NavigationLog("nsNavigationLog", nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -177,12 +187,21 @@ public:
 	rcContourSet* ContourSet;
 	rcPolyMesh* PolyMesh;
 	rcPolyMeshDetail* PolyMeshDetail;
+
+	dtNavMesh* DetourNavMesh;
+	dtNavMeshQuery* DetourNavMeshQuery;
+
 	bool bBuilding;
 
 
 public:
 	nsNavMeshBuildTask()
 	{
+		CompactHeightField = nullptr;
+		ContourSet = nullptr;
+		PolyMesh = nullptr;
+		PolyMeshDetail = nullptr;
+		
 		Reset();
 	}
 
@@ -198,12 +217,42 @@ public:
 		bDone.Set(0);
 		Context.resetTimers();
 		InputGeometry.Clear();
+
+		if (CompactHeightField)
+		{
+			rcFreeCompactHeightfield(CompactHeightField);
+			CompactHeightField = nullptr;
+		}
+
+		if (ContourSet)
+		{
+			rcFreeContourSet(ContourSet);
+			ContourSet = nullptr;
+		}
+
+		if (PolyMesh)
+		{
+			rcFreePolyMesh(PolyMesh);
+			PolyMesh = nullptr;
+		}
+
+		if (PolyMeshDetail)
+		{
+			rcFreePolyMeshDetail(PolyMeshDetail);
+			PolyMeshDetail = nullptr;
+		}
+
+		DetourNavMesh = nullptr;
+		DetourNavMeshQuery = nullptr;
+
 		bBuilding = false;
 	}
 
 
 	virtual void Execute() noexcept override
 	{
+		NS_CONSOLE_Log(NavigationLog, "Building navigation mesh");
+
 		nsAABB bounding;
 		bounding.Min = nsVector3(-2000.0f, -16.0f, -2000.0f);
 		bounding.Max = nsVector3(2000.0f, 256.0f, 2000.0f);
@@ -223,7 +272,7 @@ public:
 		bSuccess = rcRasterizeTriangles(&Context, (const float*)InputGeometry.GetVertexData(), triAreas.GetData(), InputGeometry.GetTriangleCount(), *heightField);
 		NS_Assert(bSuccess);
 
-		const int walkableHeight = nsMath::Ceil<int>(180.0f / cellSize.Y);
+		const int walkableHeight = nsMath::Ceil<int>(200.0f / cellSize.Y);
 		const int walkableClimb = nsMath::Floor<int>(30.0f / cellSize.Y);
 		rcFilterLowHangingWalkableObstacles(&Context, walkableClimb, *heightField);
 		rcFilterLedgeSpans(&Context, walkableHeight, walkableClimb, *heightField);
@@ -261,6 +310,51 @@ public:
 		PolyMeshDetail = rcAllocPolyMeshDetail();
 		bSuccess = rcBuildPolyMeshDetail(&Context, *PolyMesh, *CompactHeightField, sampleDist, sampleMaxError, *PolyMeshDetail);
 		NS_Assert(bSuccess);
+
+		for (int i = 0; i < PolyMesh->npolys; ++i)
+		{
+			if (PolyMesh->areas[i] == RC_WALKABLE_AREA)
+			{
+				PolyMesh->flags[i] = 1;
+			}
+		}
+
+		dtNavMeshCreateParams navMeshCreateParams{};
+		nsPlatform::Memory_Copy(navMeshCreateParams.bmin, PolyMesh->bmin, sizeof(float) * 3);
+		nsPlatform::Memory_Copy(navMeshCreateParams.bmax, PolyMesh->bmax, sizeof(float) * 3);
+		navMeshCreateParams.buildBvTree = true;
+		navMeshCreateParams.ch = PolyMesh->ch;
+		navMeshCreateParams.cs = PolyMesh->cs;
+		navMeshCreateParams.detailMeshes = PolyMeshDetail->meshes;
+		navMeshCreateParams.detailTriCount = PolyMeshDetail->ntris;
+		navMeshCreateParams.detailTris = PolyMeshDetail->tris;
+		navMeshCreateParams.detailVerts = PolyMeshDetail->verts;
+		navMeshCreateParams.detailVertsCount = PolyMeshDetail->nverts;
+		navMeshCreateParams.nvp = PolyMesh->nvp;
+		navMeshCreateParams.polyAreas = PolyMesh->areas;
+		navMeshCreateParams.polyCount = PolyMesh->npolys;
+		navMeshCreateParams.polyFlags = PolyMesh->flags;
+		navMeshCreateParams.polys = PolyMesh->polys;
+		navMeshCreateParams.vertCount = PolyMesh->nverts;
+		navMeshCreateParams.verts = PolyMesh->verts;
+		navMeshCreateParams.walkableClimb = 30.0f;
+		navMeshCreateParams.walkableHeight = 200.0f;
+		navMeshCreateParams.walkableRadius = 36.0f;
+		
+		uint8* navData = nullptr;
+		int navDataSize = 0;
+		bSuccess = dtCreateNavMeshData(&navMeshCreateParams, &navData, &navDataSize);
+		NS_Assert(bSuccess);
+
+		dtStatus detourStatus = 0;
+
+		NS_Assert(DetourNavMesh);
+		detourStatus = DetourNavMesh->init(navData, navDataSize, DT_TILE_FREE_DATA);
+		NS_Assert(dtStatusSucceed(detourStatus));
+
+		NS_Assert(DetourNavMeshQuery);
+		detourStatus = DetourNavMeshQuery->init(DetourNavMesh, 2048);
+		NS_Assert(dtStatusSucceed(detourStatus));
 
 
 		bDone.Set(1);
@@ -303,7 +397,9 @@ static nsNavMeshBuildTask NavMeshBuildTask;
 nsNavigationManager::nsNavigationManager() noexcept
 {
 	bInitialized = false;
-	bBuildingNavMesh = false;
+	DetourCrowd = nullptr;
+	DetourNavMesh = nullptr;
+	DetourNavMeshQuery = nullptr;
 }
 
 
@@ -314,6 +410,8 @@ void nsNavigationManager::Initialize()
 		return;
 	}
 
+	DetourCrowd = dtAllocCrowd();
+	DetourCrowd->init(NS_ENGINE_NAVIGATION_MAX_AGENT, 40.0f, nullptr);
 
 	bInitialized = true;
 }
@@ -321,8 +419,22 @@ void nsNavigationManager::Initialize()
 
 void nsNavigationManager::BuildNavMesh(nsWorld* world)
 {
-	NavMeshBuildTask.Reset();
+	if (DetourNavMesh)
+	{
+		dtFreeNavMesh(DetourNavMesh);
+	}
 
+	DetourNavMesh = dtAllocNavMesh();
+
+	if (DetourNavMeshQuery)
+	{
+		dtFreeNavMeshQuery(DetourNavMeshQuery);
+	}
+
+	DetourNavMeshQuery = dtAllocNavMeshQuery();
+
+
+	NavMeshBuildTask.Reset();
 	const nsTArray<nsActor*>& allActors = world->GetAllActors();
 
 	for (int act = 0; act < allActors.GetCount(); ++act)
@@ -355,12 +467,170 @@ void nsNavigationManager::BuildNavMesh(nsWorld* world)
 		}
 	}
 	
+	NavMeshBuildTask.DetourNavMesh = DetourNavMesh;
+	NavMeshBuildTask.DetourNavMeshQuery = DetourNavMeshQuery;
 	NavMeshBuildTask.Execute();
+
+	const bool bSuccess = DetourCrowd->init(NS_ENGINE_NAVIGATION_MAX_AGENT, 40.0f, DetourNavMesh);
+	NS_Assert(bSuccess);
 }
 
 
 void nsNavigationManager::BuildNavMesh(const nsNavigationInputGeometry& inputGeometry, const nsNavigationBuildSettings& buildSettings)
 {
+}
+
+
+nsNavigationAgentID nsNavigationManager::CreateAgent(float radius, float height, float maxAcceleration, float maxSpeed)
+{
+	const int paramId = AgentParams.Add();
+	const int stateId = AgentActiveStates.Add();
+	NS_Assert(paramId == stateId);
+
+	nsNavigationAgentParams& params = AgentParams[paramId];
+	params.Radius = radius;
+	params.Height = height;
+	params.MaxAcceleration = maxAcceleration;
+	params.MaxSpeed = maxSpeed;
+
+	AgentState& state = AgentActiveStates[stateId];
+	state.MoveTargetPosition = nsVector3::ZERO;
+	state.ActiveAgentIndex = -1;
+
+	return paramId;
+}
+
+
+void nsNavigationManager::DestroyAgent(nsNavigationAgentID& agent)
+{
+	if (IsAgentValid(agent))
+	{
+		AgentState& state = AgentActiveStates[agent.Id];
+
+		if (state.ActiveAgentIndex != -1)
+		{
+			DetourCrowd->removeAgent(state.ActiveAgentIndex);
+			state.ActiveAgentIndex = -1;
+		}
+
+		AgentParams.RemoveAt(agent.Id);
+	}
+
+	agent = nsNavigationAgentID::INVALID;
+}
+
+
+void nsNavigationManager::UpdateAgentParams(nsNavigationAgentID agent, float radius, float height, float maxAcceleration, float maxSpeed)
+{
+	NS_Assert(IsAgentValid(agent));
+
+	nsNavigationAgentParams& params = AgentParams[agent.Id];
+	params.Radius = radius;
+	params.Height = height;
+	params.MaxAcceleration = maxAcceleration;
+	params.MaxSpeed = maxSpeed;
+
+	AgentState& state = AgentActiveStates[agent.Id];
+
+	if (state.ActiveAgentIndex != -1)
+	{
+		dtCrowdAgent* dtAgent = DetourCrowd->getEditableAgent(state.ActiveAgentIndex);
+		dtAgent->params.radius = radius;
+		dtAgent->params.height = height;
+		dtAgent->params.maxAcceleration = maxAcceleration;
+		dtAgent->params.maxSpeed = maxSpeed;
+	}
+}
+
+
+void nsNavigationManager::SetAgentActive(nsNavigationAgentID agent, bool bActive, nsNavigationAgentComponent* component)
+{
+	NS_Assert(IsAgentValid(agent));
+
+	AgentState& state = AgentActiveStates[agent.Id];
+
+	if (bActive)
+	{
+		NS_Assert(state.ActiveAgentIndex == -1);
+
+		const nsNavigationAgentParams& params = AgentParams[agent.Id];
+
+		dtCrowdAgentParams dtParams{};
+		dtParams.radius = params.Radius;
+		dtParams.height = params.Height;
+		dtParams.maxAcceleration = params.MaxAcceleration;
+		dtParams.maxSpeed = params.MaxSpeed;
+		dtParams.collisionQueryRange = params.Radius * 8.0f;
+		dtParams.pathOptimizationRange = params.Radius * 16.0f;
+		dtParams.updateFlags = 0;
+		dtParams.obstacleAvoidanceType = 3;
+		dtParams.separationWeight = 2.0f;
+		dtParams.userData = component ? component : nullptr;
+
+		nsVector3 initialPosition;
+
+		if (component)
+		{
+			initialPosition = component->GetWorldPosition();
+		}
+
+		state.ActiveAgentIndex = DetourCrowd->addAgent((const float*)&initialPosition, &dtParams);
+	}
+	else
+	{
+		NS_Assert(state.ActiveAgentIndex != -1);
+
+		DetourCrowd->removeAgent(state.ActiveAgentIndex);
+		state.ActiveAgentIndex = -1;
+	}
+}
+
+
+void nsNavigationManager::SetAgentMoveTarget(nsNavigationAgentID agent, const nsVector3& targetPosition)
+{
+	NS_Assert(IsAgentValid(agent));
+
+	AgentState& state = AgentActiveStates[agent.Id];
+	state.MoveTargetPosition = targetPosition;
+	
+	if (state.ActiveAgentIndex != -1)
+	{
+		dtPolyRef nearestPoly = 0;
+		float nearestPosition[3];
+		dtStatus queryStatus = DetourNavMeshQuery->findNearestPoly((const float*)&state.MoveTargetPosition, DetourCrowd->getQueryExtents(), DetourCrowd->getFilter(0), &nearestPoly, nearestPosition);
+		NS_Assert(dtStatusSucceed(queryStatus));
+		bool bSuccess = DetourCrowd->requestMoveTarget(state.ActiveAgentIndex, nearestPoly, nearestPosition);
+
+		if (!bSuccess)
+		{
+			NS_CONSOLE_Warning(NavigationLog, "Request move target failed!");
+		}
+	}
+}
+
+
+void nsNavigationManager::MoveAgents(float deltaTime)
+{
+	DetourCrowd->update(deltaTime, nullptr);
+
+	for (auto it = AgentActiveStates.CreateConstIterator(); it; ++it)
+	{
+		const int index = it.GetIndex();
+		const AgentState& state = it.GetValue();
+
+		if (state.ActiveAgentIndex == -1)
+		{
+			continue;
+		}
+
+		const dtCrowdAgent* dtAgent = DetourCrowd->getAgent(state.ActiveAgentIndex);
+		nsNavigationAgentComponent* component = static_cast<nsNavigationAgentComponent*>(dtAgent->params.userData);
+
+		if (component)
+		{
+			component->SyncWithNavigationPosition(nsVector3(dtAgent->npos[0], dtAgent->npos[1], dtAgent->npos[2]));
+		}
+	}
 }
 
 

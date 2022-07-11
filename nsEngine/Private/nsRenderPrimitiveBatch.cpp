@@ -77,9 +77,9 @@ void nsRenderPrimitiveBatchMesh::AddBoxAABB(const nsVector3& boxMin, const nsVec
 }
 
 
-void nsRenderPrimitiveBatchMesh::AddBoxOBB(const nsVector3& center, const nsVector3& halfExtent, const nsQuaternion& rotation, nsColor color)
+void nsRenderPrimitiveBatchMesh::AddBoxOBB(const nsVector3& center, const nsVector3& halfExtents, const nsQuaternion& rotation, nsColor color)
 {
-	nsGeometryFactory::AddPrimitiveTriangle_OBB(Vertices, Indices, center, rotation, halfExtent, color);
+	nsGeometryFactory::AddPrimitiveTriangle_OBB(Vertices, Indices, center, rotation, halfExtents, color);
 }
 
 

@@ -2,7 +2,7 @@
 #include "nsFileSystem.h"
 #include "nsConsole.h"
 #include "nsMesh.h"
-#include "nsTexture.h"
+#include "nsTextureManager.h"
 #include "nsMaterial.h"
 #include "nsAnimationManager.h"
 

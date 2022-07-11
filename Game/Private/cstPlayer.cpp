@@ -1,5 +1,6 @@
 #include "cstPlayer.h"
 #include "cstCharacter.h"
+#include "nsWorld.h"
 
 
 
@@ -17,6 +18,7 @@ cstPlayerController::cstPlayerController()
 	CameraRotationSpeed = 90.0f;
 
 	Viewport = nullptr;
+	World = nullptr;
 	Character = nullptr;
 }
 
@@ -30,7 +32,31 @@ void cstPlayerController::OnMouseMove(const nsMouseMoveEventArgs& args)
 
 void cstPlayerController::OnMouseButton(const nsMouseButtonEventArgs& args)
 {
+	if (Viewport == nullptr || World == nullptr || Character == nullptr)
+	{
+		return;
+	}
 
+	const nsVector2 mousePosition(static_cast<float>(args.Position.X), static_cast<float>(args.Position.Y));
+
+	if (args.ButtonState == nsEButtonState::PRESSED)
+	{
+		if (args.Key == nsEInputKey::MOUSE_RIGHT)
+		{
+			NS_CONSOLE_Debug(cstPlayerLog, "Move character");
+
+			nsVector3 rayStart, rayDirection;
+			if (Viewport->ProjectToWorld(mousePosition, rayStart, rayDirection))
+			{
+				nsPhysicsHitResult hitResult;
+				if (World->PhysicsRayCast(hitResult, rayStart, rayDirection, 100000.0f))
+				{
+					NS_CONSOLE_Debug(cstPlayerLog, "Move character to [%f, %f, %f]", hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z);
+					Character->SetMoveTargetPosition(hitResult.WorldPosition);
+				}
+			}
+		}
+	}
 }
 
 
@@ -89,6 +115,10 @@ void cstPlayerController::TickUpdate(float deltaTime)
 		{
 			// TODO: Begin free camera state
 		}
+		else if (PendingControlState == cstEPlayerControlState::TOP_DOWN_CAMERA)
+		{
+			// TODO: Begin top down camera state
+		}
 		else if (PendingControlState == cstEPlayerControlState::CONTROLLING_CHARACTER)
 		{
 
@@ -102,6 +132,15 @@ void cstPlayerController::TickUpdate(float deltaTime)
 	{
 		// TODO: Update free camera
 	}
+	else if (CurrentControlState == cstEPlayerControlState::TOP_DOWN_CAMERA && Character)
+	{
+		CameraTransform.Rotation = nsQuaternion::FromRotation(30.0f, -45.0f, 0.0f);
+
+		const nsVector3 characterPosition = Character->GetWorldPosition();
+		CameraTransform.Position.X = characterPosition.X;
+		CameraTransform.Position.Y = characterPosition.Y + 500.0f;
+		CameraTransform.Position.Z = characterPosition.Z;
+	}
 	else if (CurrentControlState == cstEPlayerControlState::CONTROLLING_CHARACTER && Character)
 	{
 		// Update camera
@@ -110,11 +149,11 @@ void cstPlayerController::TickUpdate(float deltaTime)
 
 		const nsVector3 cameraPivotPosition = characterTransform.Position + nsVector3(0.0f, 50.0f, 0.0f);
 		CameraTransform.Position = cameraPivotPosition - CameraTransform.GetAxisForward() * 300.0f;
+	}
 
-		if (Viewport)
-		{
-			Viewport->SetViewTransform(CameraTransform);
-		}
+	if (Viewport)
+	{
+		Viewport->SetViewTransform(CameraTransform);
 	}
 }
 

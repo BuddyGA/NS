@@ -1,7 +1,7 @@
 #include "nsGUICore.h"
 #include "nsLogger.h"
 #include "nsAlgorithm.h"
-#include "nsTexture.h"
+#include "nsTextureManager.h"
 #include "nsMaterial.h"
 #include "API_VK/nsVulkanFunctions.h"
 

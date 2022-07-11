@@ -79,7 +79,7 @@ nsTransformComponent::nsTransformComponent()
 }
 
 
-void nsTransformComponent::UpdateTransform()
+void nsTransformComponent::UpdateTransform(bool bPhysicsSync)
 {
 	if (DirtyTransform == EDirtyTransform::NONE)
 	{
@@ -100,13 +100,13 @@ void nsTransformComponent::UpdateTransform()
 	}
 
 	DirtyTransform = EDirtyTransform::NONE;
-	OnTransformChanged();
+	OnTransformChanged(bPhysicsSync);
 
 	// Propagate to children
 	for (int i = 0; i < Children.GetCount(); ++i)
 	{
 		Children[i]->DirtyTransform = EDirtyTransform::WORLD;
-		Children[i]->UpdateTransform();
+		Children[i]->UpdateTransform(false);
 	}
 }
 
@@ -150,7 +150,7 @@ void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETrans
 
 	Parent->OnChildtAttached(this, attachmentMode, socketName);
 
-	UpdateTransform();
+	UpdateTransform(false);
 }
 
 
@@ -165,5 +165,5 @@ void nsTransformComponent::DetachFromParent()
 	Parent->Children.Remove(this);
 	Parent = nullptr;
 	DirtyTransform = EDirtyTransform::LOCAL;
-	UpdateTransform();
+	UpdateTransform(false);
 }

@@ -165,7 +165,7 @@
     <ClInclude Include="Public\nsWindow.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Build_Core.cpp" />
+    <ClCompile Include="nsCore.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="nsCore.natvis" />

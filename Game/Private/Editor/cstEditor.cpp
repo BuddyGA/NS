@@ -148,7 +148,7 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 				NS_CONSOLE_Log(EditorLog, "Spawn actor from asset [%s]", *DragDropAssetInfo.Name);
 				nsSharedModelAsset ModelAsset = nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name);
 
-				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name, false, projectedPosition);
+				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name, true, projectedPosition);
 				{
 					nsMeshComponent* meshComp = newActor->AddComponent<nsMeshComponent>("mesh");
 					meshComp->SetMesh(ModelAsset);
@@ -531,6 +531,7 @@ void cstEditor::MoveFocusActorDownToFloor()
 	nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>();
 	if (collisionComp == nullptr)
 	{
+		NS_CONSOLE_Warning(EditorLog, "Cannot move actor [%s] down to floor. No collision component!", *FocusActor->Name);
 		return;
 	}
 

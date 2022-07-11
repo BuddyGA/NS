@@ -9,7 +9,8 @@ class cstCharacter : public nsActor
 	NS_DECLARE_OBJECT()
 
 private:
-	class nsCharacterMovementComponent* MovementComponent;
+	//class nsCharacterMovementComponent* MovementComponent;
+	class nsNavigationAgentComponent* NavigationAgentComponent;
 	class nsSkeletalMeshComponent* SkelMeshComponent;
 	class cstAttributeComponent* AttributeComponent;
 
@@ -22,11 +23,6 @@ public:
 	virtual void OnStartPlay() override;
 	virtual void OnDestroy() override;
 	void Move(float deltaTime, const nsVector3& worldDirection);
-
-
-	NS_NODISCARD_INLINE cstAttributeComponent* GetAttributeComponent() const
-	{
-		return AttributeComponent;
-	}
+	void SetMoveTargetPosition(const nsVector3& worldPosition);
 
 };

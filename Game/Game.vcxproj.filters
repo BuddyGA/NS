@@ -50,7 +50,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Build_Game.cpp">
+    <ClCompile Include="nsGame.Runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\Editor\cstEditor.cpp">
@@ -81,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\cstAttributeComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nsGame.Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

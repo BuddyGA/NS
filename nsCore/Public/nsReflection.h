@@ -340,37 +340,37 @@ namespace nsReflection
 };
 
 
-#define NS_CreateProperty(name, classType, propertyType, bSerializable) nsReflection::CreateProperty(#name, nsReflection::CreateType<propertyType>(), offsetof(classType, name), bSerializable)
+#define NS_CreateProperty(classType, propertyType, propertyName, bSerializable) nsReflection::CreateProperty(#propertyName, nsReflection::CreateType<propertyType>(), offsetof(classType, propertyName), bSerializable)
 
 
 
-#define NS_CLASS_BEGIN_NO_PARENT(classType)												\
-class classType##__Class : public nsTClass<classType>									\
-{																						\
-public:																					\
-	classType##__Class()																\
-		: nsTClass(#classType, nullptr)													\
+#define NS_CLASS_BEGIN_NO_PARENT(classType)															\
+class classType##__Class : public nsTClass<classType>												\
+{																									\
+public:																								\
+	classType##__Class()																			\
+		: nsTClass(#classType, nullptr)																\
 	{
 
 
-#define NS_CLASS_BEGIN(classType, parentClassType)										\
-class classType##__Class : public nsTClass<classType>									\
-{																						\
-public:																					\
-	classType##__Class()																\
-		: nsTClass(#classType, parentClassType::Class)									\
+#define NS_CLASS_BEGIN(classType, parentClassType)													\
+class classType##__Class : public nsTClass<classType>												\
+{																									\
+public:																								\
+	classType##__Class()																			\
+		: nsTClass(#classType, parentClassType::Class)												\
 	{																	
 
-#define NS_CLASS_AddProperty(classType, propertyName, propertyType, isSerializable)					\
-		Properties.Add(NS_CreateProperty(propertyName, classType, propertyType, isSerializable));	\
+#define NS_CLASS_AddProperty(classType, propertyType, propertyName, isSerializable)					\
+		Properties.Add(NS_CreateProperty(classType, propertyType, propertyName, isSerializable));	\
 
-#define NS_CLASS_END(classType)															\
-	}																					\
-};																						\
+#define NS_CLASS_END(classType)																		\
+	}																								\
+};																									\
 const nsClass* classType::Class = nsReflection::CreateClass<classType##__Class>();
 
 
-#define NS_DECLARE_OBJECT() \
-public: \
-	static const nsClass* Class; \
+#define NS_DECLARE_OBJECT()												\
+public:																	\
+	static const nsClass* Class;										\
 	virtual const nsClass* GetClass() const override { return Class; }

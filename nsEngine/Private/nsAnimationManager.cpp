@@ -49,7 +49,7 @@ void nsAnimationManager::Initialize()
 }
 
 
-void nsAnimationManager::UpdateAnimationPose(float deltaTime)
+void nsAnimationManager::UpdateAnimationPoses(float deltaTime)
 {
 	if (InstanceDatas.IsEmpty())
 	{

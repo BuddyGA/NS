@@ -9,11 +9,15 @@
 
 #ifndef __NS_ENGINE_SHIPPING__
 #define NS_ENGINE_DEBUG_DRAW
+#define NS_ENGINE_EDITOR
 #endif // !__NS_ENGINE_SHIPPING__
 
 
 // Frame buffering count
 #define NS_ENGINE_FRAME_BUFFERING									(3)
+
+// Maximum component count per actor
+#define NS_ENGINE_ACTOR_MAX_COMPONENT								(8)
 
 // Maximum children count in transform hierarchy
 #define NS_ENGINE_TRANSFORM_MAX_CHILDREN							(8)
@@ -53,6 +57,9 @@
 
 // Maximum bones per skeleton
 #define NS_ENGINE_ANIMATION_SKELETON_MAX_BONE						(64)
+
+// Maximum navigation agent
+#define NS_ENGINE_NAVIGATION_MAX_AGENT								(64)
 
 // Asset file signature (magic number) 
 #define NS_ENGINE_ASSET_FILE_SIGNATURE								(0x0000734E) // Ns
@@ -149,11 +156,7 @@ public:																						\
 
 
 NS_ENGINE_DECLARE_HANDLE(nsMeshID, nsMeshManager)
-NS_ENGINE_DECLARE_HANDLE(nsTextureID, nsTextureManager)
 NS_ENGINE_DECLARE_HANDLE(nsMaterialID, nsMaterialManager)
-NS_ENGINE_DECLARE_HANDLE(nsAnimationSkeletonID, nsAnimationManager)
-NS_ENGINE_DECLARE_HANDLE(nsAnimationClipID, nsAnimationManager)
-NS_ENGINE_DECLARE_HANDLE(nsAnimationInstanceID, nsAnimationManager)
 NS_ENGINE_DECLARE_HANDLE(nsRenderMeshID, nsRenderContextWorld)
 NS_ENGINE_DECLARE_HANDLE(nsRenderPointLightID, nsRenderContextWorld)
 

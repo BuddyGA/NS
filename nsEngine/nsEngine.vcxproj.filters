@@ -18,13 +18,7 @@
     <ClCompile Include="Private\ThirdParty\spirv_reflect.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Build_Engine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsActor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsActorComponents.cpp">
+    <ClCompile Include="nsEngine.Runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsAnimationManager.cpp">
@@ -57,9 +51,6 @@
     <ClCompile Include="Private\nsGUIFramework.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\nsLevel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Private\nsMaterial.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -78,25 +69,16 @@
     <ClCompile Include="Private\nsShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\nsTexture.cpp">
+    <ClCompile Include="Private\nsTextureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsViewport.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsWorld.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsAssetTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsPhysicsManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsRenderComponents.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsPhysicsComponents.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\nsRenderPrimitiveBatch.cpp">
@@ -120,16 +102,7 @@
     <ClCompile Include="Private\ThirdParty\RecastNavigation\Recast\Build_Recast.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\nsNavigationEditor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsActorEditor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsWorldEditor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\nsAssetEditor.cpp">
+    <ClCompile Include="nsEngine.Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -158,7 +131,7 @@
     <ClInclude Include="Public\nsMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\nsTexture.h">
+    <ClInclude Include="Public\nsTextureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsVulkan.h">
@@ -245,22 +218,7 @@
     <ClInclude Include="Public\nsNavigationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\nsPhysicsDebugDraw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsAnimationDebugDraw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsNavigationDebugDraw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsNavigationEditor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsActorEditor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsWorldEditor.h">
+    <ClInclude Include="Public\Editor\nsEditorNavigationBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsNavigationTypes.h">
@@ -272,7 +230,25 @@
     <ClInclude Include="Public\nsAnimationTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\nsAssetEditor.h">
+    <ClInclude Include="Public\nsTextureTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorActorInspector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorTransformGizmo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorWorldOutliner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorAssetExplorer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsNavigationComponents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsAnimationComponents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

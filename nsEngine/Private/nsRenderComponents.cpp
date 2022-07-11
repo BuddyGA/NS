@@ -73,7 +73,7 @@ void nsMeshComponent::OnRemovedFromLevel()
 }
 
 
-void nsMeshComponent::OnTransformChanged()
+void nsMeshComponent::OnTransformChanged(bool bPhysicsSync)
 {
 	RegisterMesh();
 }
@@ -126,7 +126,7 @@ void nsMeshComponent::RegisterMesh()
 
 void nsMeshComponent::UnregisterMesh()
 {
-	if (RenderMeshId == nsRenderMeshID::INVALID || !bAddedToLevel)
+	if (RenderMeshId == nsRenderMeshID::INVALID)
 	{
 		return;
 	}

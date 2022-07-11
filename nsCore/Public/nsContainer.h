@@ -1271,6 +1271,11 @@ public:
 			return Index;
 		}
 
+		NS_NODISCARD_INLINE T& GetValue() const noexcept
+		{
+			return (*Data)[Index];
+		}
+
 		NS_INLINE Iterator& operator++() noexcept
 		{
 			IterateNextValidIndex();
@@ -1355,6 +1360,11 @@ public:
 		NS_NODISCARD_INLINE int GetIndex() const noexcept
 		{
 			return Index;
+		}
+
+		NS_NODISCARD_INLINE const T& GetValue() const noexcept
+		{
+			return (*Data)[Index];
 		}
 
 		NS_INLINE ConstIterator& operator++() noexcept

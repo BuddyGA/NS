@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nsVulkan.h"
+#include "nsTextureTypes.h"
 
 
 

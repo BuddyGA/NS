@@ -22,7 +22,6 @@ nsActor::nsActor()
 	, Parent(nullptr)
 	, RootComponent(nullptr)
 {
-	Components.Reserve(4);
 	RootComponent = AddComponent<nsTransformComponent>(NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME);
 }
 
@@ -79,7 +78,7 @@ void nsActor::OnStopPlay()
 
 void nsActor::OnTickUpdate(float deltaTime)
 {
-	NS_Assert(Flags & nsEActorFlag::CallTickUpdate);
+	NS_Assert(Flags & nsEActorFlag::CallPrePhysicsTickUpdate);
 
 	for (int i = 0; i < Components.GetCount(); ++i)
 	{
@@ -124,7 +123,7 @@ void nsActor::OnDestroy()
 		ComponentMemory.DeallocateDestruct(comp);
 	}
 
-	Components.Clear(true);
+	Components.Clear();
 }
 
 
@@ -243,11 +242,13 @@ void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
 
 void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode)
 {
+	NS_ValidateV(0, "Not implemented yet!");
 }
 
 
 void nsActor::DetachFromParent()
 {
+	NS_ValidateV(0, "Not implemented yet!");
 }
 
 

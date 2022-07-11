@@ -3,6 +3,7 @@
 #include "nsFileSystem.h"
 #include "nsConsole.h"
 #include "nsMesh.h"
+#include "nsTextureManager.h"
 
 
 

@@ -88,7 +88,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private\ThirdParty\RecastNavigation\DebugUtils\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Detour\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourCrowd\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourTileCache\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Recast\Include;$(SolutionDir)nsCore\Public;$(SolutionDir)nsRenderer\Public;$(SolutionDir)Externals\Vulkan\Include;$(SolutionDir)Externals\shaderc\Include;$(SolutionDir)Externals\Compressonator\Include;$(SolutionDir)Externals\PhysX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4251;26451;26495;26812</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4251;26451;26495;26812;26813</DisableSpecificWarnings>
       <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
@@ -120,7 +120,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private\ThirdParty\RecastNavigation\DebugUtils\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Detour\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourCrowd\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourTileCache\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Recast\Include;$(SolutionDir)nsCore\Public;$(SolutionDir)nsRenderer\Public;$(SolutionDir)Externals\Vulkan\Include;$(SolutionDir)Externals\shaderc\Include;$(SolutionDir)Externals\Compressonator\Include;$(SolutionDir)Externals\PhysX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4251;26451;26495;26812</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4251;26451;26495;26812;26813</DisableSpecificWarnings>
       <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
@@ -150,7 +150,7 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
       <ExceptionHandling>false</ExceptionHandling>
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalIncludeDirectories>$(ProjectDir)Public;$(ProjectDir)Private\ThirdParty\RecastNavigation\DebugUtils\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Detour\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourCrowd\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\DetourTileCache\Include;$(ProjectDir)Private\ThirdParty\RecastNavigation\Recast\Include;$(SolutionDir)nsCore\Public;$(SolutionDir)nsRenderer\Public;$(SolutionDir)Externals\Vulkan\Include;$(SolutionDir)Externals\shaderc\Include;$(SolutionDir)Externals\Compressonator\Include;$(SolutionDir)Externals\PhysX\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>4251;26451;26495;26812</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4251;26451;26495;26812;26813</DisableSpecificWarnings>
       <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
@@ -166,12 +166,9 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Build_Engine.cpp" />
-    <ClCompile Include="Private\nsActor.cpp" />
-    <ClCompile Include="Private\nsActorComponents.cpp" />
-    <ClCompile Include="Private\nsActorEditor.cpp" />
+    <ClCompile Include="nsEngine.Runtime.cpp" />
+    <ClCompile Include="nsEngine.Editor.cpp" />
     <ClCompile Include="Private\nsAnimationManager.cpp" />
-    <ClCompile Include="Private\nsAssetEditor.cpp" />
     <ClCompile Include="Private\nsAssetImporter.cpp" />
     <ClCompile Include="Private\nsAssetManager.cpp" />
     <ClCompile Include="Private\nsAssetTypes.cpp" />
@@ -182,23 +179,17 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClCompile Include="Private\nsGeometryFactory.cpp" />
     <ClCompile Include="Private\nsGUICore.cpp" />
     <ClCompile Include="Private\nsGUIFramework.cpp" />
-    <ClCompile Include="Private\nsLevel.cpp" />
     <ClCompile Include="Private\nsMaterial.cpp" />
     <ClCompile Include="Private\nsMesh.cpp" />
-    <ClCompile Include="Private\nsNavigationEditor.cpp" />
     <ClCompile Include="Private\nsNavigationManager.cpp" />
-    <ClCompile Include="Private\nsPhysicsComponents.cpp" />
     <ClCompile Include="Private\nsPhysicsManager.cpp" />
-    <ClCompile Include="Private\nsRenderComponents.cpp" />
     <ClCompile Include="Private\nsRenderContextWorld.cpp" />
     <ClCompile Include="Private\nsRenderer.cpp" />
     <ClCompile Include="Private\nsRenderManager.cpp" />
     <ClCompile Include="Private\nsRenderPrimitiveBatch.cpp" />
     <ClCompile Include="Private\nsShaderManager.cpp" />
-    <ClCompile Include="Private\nsTexture.cpp" />
+    <ClCompile Include="Private\nsTextureManager.cpp" />
     <ClCompile Include="Private\nsViewport.cpp" />
-    <ClCompile Include="Private\nsWorld.cpp" />
-    <ClCompile Include="Private\nsWorldEditor.cpp" />
     <ClCompile Include="Private\ThirdParty\RecastNavigation\DebugUtils\Build_DebugUtils.cpp" />
     <ClCompile Include="Private\ThirdParty\RecastNavigation\DetourCrowd\Build_DetourCrowd.cpp" />
     <ClCompile Include="Private\ThirdParty\RecastNavigation\DetourTileCache\Build_DetourTileCache.cpp" />
@@ -207,14 +198,15 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClCompile Include="Private\ThirdParty\spirv_reflect.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Public\nsAssetEditor.h" />
-    <ClInclude Include="Public\nsActorEditor.h" />
-    <ClInclude Include="Public\nsAnimationDebugDraw.h" />
+    <ClInclude Include="Public\Editor\nsEditorActorInspector.h" />
+    <ClInclude Include="Public\Editor\nsEditorAssetExplorer.h" />
+    <ClInclude Include="Public\Editor\nsEditorTransformGizmo.h" />
+    <ClInclude Include="Public\Editor\nsEditorWorldOutliner.h" />
+    <ClInclude Include="Public\nsAnimationComponents.h" />
     <ClInclude Include="Public\nsAnimationTypes.h" />
-    <ClInclude Include="Public\nsNavigationDebugDraw.h" />
-    <ClInclude Include="Public\nsNavigationEditor.h" />
+    <ClInclude Include="Public\Editor\nsEditorNavigationBuilder.h" />
+    <ClInclude Include="Public\nsNavigationComponents.h" />
     <ClInclude Include="Public\nsNavigationTypes.h" />
-    <ClInclude Include="Public\nsPhysicsDebugDraw.h" />
     <ClInclude Include="Private\nsPhysics_PhysX.h" />
     <ClInclude Include="Private\ThirdParty\json.hpp" />
     <ClInclude Include="Private\ThirdParty\spirv.h" />
@@ -247,13 +239,13 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Public\nsRenderer.h" />
     <ClInclude Include="Public\nsRenderManager.h" />
     <ClInclude Include="Public\nsRenderPrimitiveBatch.h" />
+    <ClInclude Include="Public\nsTextureTypes.h" />
     <ClInclude Include="Public\nsViewport.h" />
     <ClInclude Include="Public\nsShaderManager.h" />
-    <ClInclude Include="Public\nsTexture.h" />
+    <ClInclude Include="Public\nsTextureManager.h" />
     <ClInclude Include="Public\nsVulkan.h" />
     <ClInclude Include="Public\nsWorld.h" />
     <ClInclude Include="Public\nsRenderContextWorld.h" />
-    <ClInclude Include="Public\nsWorldEditor.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

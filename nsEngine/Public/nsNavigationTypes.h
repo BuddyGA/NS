@@ -4,6 +4,13 @@
 
 
 
+NS_ENGINE_DECLARE_HANDLE(nsNavigationAgentID, nsNavigationManager)
+
+
+extern nsLogCategory NavigationLog;
+
+
+
 class nsNavigationInputGeometry
 {
 private:
@@ -111,3 +118,28 @@ public:
 	}
 
 };
+
+
+
+struct nsNavigationAgentParams
+{
+	float Height;
+	float Radius;
+	float MaxAcceleration;
+	float MaxSpeed;
+
+
+public:
+	nsNavigationAgentParams()
+	{
+		Height = 200.0f;
+		Radius = 36.0f;
+		MaxAcceleration = 300.0f;
+		MaxSpeed = 600.0f;
+	}
+
+};
+
+
+
+class nsNavigationAgentComponent;

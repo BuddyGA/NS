@@ -8,28 +8,36 @@ namespace nsEActorFlag
 {
 	enum
 	{
-		NONE					= (0),
-		Persistent				= (1 << 0),
-		CallStartStopPlay		= (1 << 1),
-		CallTickUpdate			= (1 << 2),
-		CallPhysicsTickUpdate	= (1 << 3),
-		CallPostTickUpdate		= (1 << 4),
-		Static					= (1 << 5),
-		Initialized				= (1 << 6),
-		AddedToLevel			= (1 << 7),
-		StartedPlay				= (1 << 8),
-		PendingDestroy			= (1 << 9),
-		EditorOnly				= (1 << 10),
+		NONE						= (0),
+		Initialized					= (1 << 0),
+		Persistent					= (1 << 1),
+		Static						= (1 << 2),
+		AddedToLevel				= (1 << 3),
+		StartedPlay					= (1 << 4),
+		PendingDestroy				= (1 << 5),
+		EditorOnly					= (1 << 6),
+		CallStartStopPlay			= (1 << 7),
+		CallPrePhysicsTickUpdate	= (1 << 8),
+		CallPhysicsTickUpdate		= (1 << 9),
+		CallPostPhysicsTickUpdate	= (1 << 10),
 	};
 };
 
 typedef uint32 nsActorFlags;
 
 
+typedef nsTArrayInline<nsActorComponent*, NS_ENGINE_ACTOR_MAX_COMPONENT> nsActorComponentArrayInline;
+typedef nsTArrayInline<nsActor*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> nsActorChildrenArrayInline;
+
+
 
 class NS_ENGINE_API nsActor : public nsObject
 {
 	NS_DECLARE_OBJECT()
+
+private:
+	static nsMemory ComponentMemory;
+
 
 protected:
 	nsLevel* Level;
@@ -38,11 +46,8 @@ protected:
 
 private:
 	nsActor* Parent;
-	nsTArray<nsActorComponent*> Components;
-	nsTArrayInline<nsActor*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> Children;
-
-
-	static nsMemory ComponentMemory;
+	nsActorComponentArrayInline Components;
+	nsActorChildrenArrayInline Children;
 
 
 public:
@@ -231,7 +236,6 @@ public:
 		TComponent* newComponent = ComponentMemory.AllocateConstruct<TComponent>();
 		newComponent->Name = name;
 		newComponent->Actor = this;
-		//newComponent->OnInitialize();
 
 		Components.Add(newComponent);
 

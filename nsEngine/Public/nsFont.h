@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nsEngineTypes.h"
+#include "nsTextureTypes.h"
 
 
 NS_ENGINE_DECLARE_HANDLE(nsFontID, nsFontManager)

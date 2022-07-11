@@ -10,7 +10,6 @@ class NS_ENGINE_API nsWorld : public nsObject
 	NS_DECLARE_OBJECT()
 
 private:
-	nsName Name;
 	float StartTimeSeconds;
 	float DeltaTimeSeconds;
 	bool bHasPhysics;
@@ -24,11 +23,8 @@ private:
 	nsTArray<nsActor*> StartStopPlayActors;
 	nsTArray<nsActor*> PrePhysicsTickUpdateActors;
 	nsTArray<nsActor*> PhysicsTickUpdateActors;
+	nsTArray<nsActor*> PostPhysicsTickUpdateActors;
 	nsTArray<nsActor*> PendingDestroyActors;
-
-
-public:
-	bool bOnlyTickAfterStartedPlay;
 
 
 public:
@@ -38,8 +34,9 @@ public:
 	void CleanupPendingDestroyLevelsAndActors();
 	void DispatchStartPlay();
 	void DispatchStopPlay();
-	void DispatchTickUpdate(float deltaTime);
+	void DispatchPrePhysicsTickUpdate(float deltaTime);
 	void DispatchPhysicsTickUpdate(float fixedDeltaTime);
+	void DispatchPostPhysicsTickUpdate();
 	void SyncActorTransformsWithPhysics();
 	bool PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());
 
@@ -94,11 +91,21 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE physx::PxScene* GetPhysicsScene() const noexcept
+	template<typename TActor>
+	NS_NODISCARD_INLINE void FindActorsOfClass(nsTArray<TActor*>& outActors) const
 	{
-		return PhysicsScene;
-	}
+		static_assert(std::is_base_of<nsActor, TActor>::value, "FindActorsOfClass type of <TActor> must be derived from type <nsActor>!");
 
+		const int actorCount = ActorList.GetCount();
+
+		for (int i = 0; i < actorCount; ++i)
+		{
+			if (TActor* actor = ns_Cast<TActor>(ActorList[i]))
+			{
+				outActors.Add(actor);
+			}
+		}
+	}
 
 
 	// Get all actors
@@ -108,9 +115,9 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE const nsName& GetName() const noexcept
+	NS_NODISCARD_INLINE physx::PxScene* GetPhysicsScene() const noexcept
 	{
-		return Name;
+		return PhysicsScene;
 	}
 
 

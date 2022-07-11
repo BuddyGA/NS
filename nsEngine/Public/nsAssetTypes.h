@@ -1,6 +1,7 @@
 #pragma once
 
-#include "nsEngineTypes.h"
+#include "nsAnimationTypes.h"
+#include "nsTextureTypes.h"
 
 
 

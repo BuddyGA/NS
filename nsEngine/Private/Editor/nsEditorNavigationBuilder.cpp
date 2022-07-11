@@ -1,4 +1,28 @@
-#include "nsNavigationEditor.h"
+#include "Editor/nsEditorNavigationBuilder.h"
+#include "nsConsole.h"
+
+
+
+NS_CLASS_BEGIN(nsNavigationVolumeActor, nsActor)
+NS_CLASS_END(nsNavigationVolumeActor)
+
+nsNavigationVolumeActor::nsNavigationVolumeActor()
+{
+	Flags |= nsEActorFlag::EditorOnly;
+}
+
+
+nsAABB nsNavigationVolumeActor::GetScaledBoundingBox()
+{
+	const nsTransform worldTransform = GetWorldTransform();
+	
+	nsAABB aabb;
+	aabb.Min = worldTransform.Position - (nsVector3(-256.0f) * worldTransform.Scale);
+	aabb.Max = worldTransform.Position + (nsVector3(356.0f) * worldTransform.Scale);
+
+	return aabb;
+}
+
 
 
 
@@ -10,6 +34,8 @@ nsNavigationEditor::nsNavigationEditor()
 	Window.bTitleBar = true;
 	Window.bMoveable = true;
 	Window.bResizable = false;
+
+	World = nullptr;
 }
 
 
@@ -27,10 +53,16 @@ void nsNavigationEditor::DrawGUI(nsGUIContext& context)
 			
 			if (button.Draw(context))
 			{
-
+				BuildNavMesh();
 			}
 		}
 		context.EndRegion();
 	}
 	Window.EndDraw(context);
+}
+
+
+void nsNavigationEditor::BuildNavMesh()
+{
+
 }

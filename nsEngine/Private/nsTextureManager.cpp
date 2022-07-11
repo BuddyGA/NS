@@ -1,4 +1,4 @@
-#include "nsTexture.h"
+#include "nsTextureManager.h"
 #include "API_VK/nsVulkanFunctions.h"
 
 

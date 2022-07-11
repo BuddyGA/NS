@@ -3,7 +3,7 @@
 
 
 NS_CLASS_BEGIN_NO_PARENT(nsObject)
-	NS_CLASS_AddProperty(nsObject, Name, nsName, true)
+	NS_CLASS_AddProperty(nsObject, nsName, Name, true)
 NS_CLASS_END(nsObject)
 
 nsObject::nsObject() noexcept

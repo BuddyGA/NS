@@ -8,6 +8,7 @@ enum class cstEPlayerControlState : uint8
 {
 	NONE = 0,
 	FREE_CAMERA,
+	TOP_DOWN_CAMERA,
 	CONTROLLING_CHARACTER
 };
 
@@ -27,10 +28,8 @@ private:
 	float CameraRotationSpeed;
 
 public:
-	// Viewport
 	nsViewport* Viewport;
-
-	// Character
+	nsWorld* World;
 	cstCharacter* Character;
 
 

@@ -1,5 +1,5 @@
 #include "nsRenderer.h"
-#include "nsTexture.h"
+#include "nsTextureManager.h"
 #include "nsMaterial.h"
 #include "nsMesh.h"
 #include "nsAnimationManager.h"

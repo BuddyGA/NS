@@ -28,8 +28,9 @@ nsWorld::nsWorld(nsName name, bool bInitPhysics)
 	ActorList.Reserve(64);
 	StartStopPlayActors.Reserve(64);
 	PrePhysicsTickUpdateActors.Reserve(64);
-
-	bOnlyTickAfterStartedPlay = true;
+	PhysicsTickUpdateActors.Reserve(64);
+	PostPhysicsTickUpdateActors.Reserve(64);
+	PendingDestroyActors.Reserve(64);
 }
 
 
@@ -85,7 +86,7 @@ void nsWorld::DispatchStartPlay()
 		return;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "Start play!");
+	NS_CONSOLE_Log(WorldLog, "%s: Start play!", *Name);
 
 	nsPhysicsManager::Get().bGlobalSimulate = true;
 
@@ -106,7 +107,7 @@ void nsWorld::DispatchStopPlay()
 		return;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "Stop play!");
+	NS_CONSOLE_Log(WorldLog, "%s: Stop play!", *Name);
 
 	nsPhysicsManager::Get().bGlobalSimulate = false;
 
@@ -120,9 +121,9 @@ void nsWorld::DispatchStopPlay()
 }
 
 
-void nsWorld::DispatchTickUpdate(float deltaTime)
+void nsWorld::DispatchPrePhysicsTickUpdate(float deltaTime)
 {
-	if (bOnlyTickAfterStartedPlay && !bHasStartedPlay)
+	if (!bHasStartedPlay)
 	{
 		return;
 	}
@@ -138,7 +139,7 @@ void nsWorld::DispatchTickUpdate(float deltaTime)
 
 void nsWorld::DispatchPhysicsTickUpdate(float fixedDeltaTime)
 {
-	if (bOnlyTickAfterStartedPlay && !bHasStartedPlay)
+	if (!bHasStartedPlay)
 	{
 		return;
 	}
@@ -146,6 +147,19 @@ void nsWorld::DispatchPhysicsTickUpdate(float fixedDeltaTime)
 	for (int i = 0; i < PrePhysicsTickUpdateActors.GetCount(); ++i)
 	{
 		PhysicsTickUpdateActors[i]->OnPhysicsTickUpdate(fixedDeltaTime);
+	}
+}
+
+
+void nsWorld::DispatchPostPhysicsTickUpdate()
+{
+	if (!bHasStartedPlay)
+	{
+		return;
+	}
+
+	for (int i = 0; i < PostPhysicsTickUpdateActors.GetCount(); ++i)
+	{
 	}
 }
 
@@ -177,6 +191,8 @@ void nsWorld::RefreshActorList()
 	ActorList.Clear();
 	StartStopPlayActors.Clear();
 	PrePhysicsTickUpdateActors.Clear();
+	PhysicsTickUpdateActors.Clear();
+	PostPhysicsTickUpdateActors.Clear();
 
 	for (int i = 0; i < Levels.GetCount(); ++i)
 	{
@@ -193,8 +209,9 @@ void nsWorld::RefreshActorList()
 
 		const uint16& flags = actor->Flags;
 		if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(actor);
-		if (flags & nsEActorFlag::CallTickUpdate) PrePhysicsTickUpdateActors.Add(actor);
+		if (flags & nsEActorFlag::CallPrePhysicsTickUpdate) PrePhysicsTickUpdateActors.Add(actor);
 		if (flags & nsEActorFlag::CallPhysicsTickUpdate) PhysicsTickUpdateActors.Add(actor);
+		if (flags & nsEActorFlag::CallPostPhysicsTickUpdate) PostPhysicsTickUpdateActors.Add(actor);
 	}
 }
 
@@ -276,8 +293,9 @@ void nsWorld::InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTra
 
 	uint32& flags = actor->Flags;
 	if (flags & nsEActorFlag::CallStartStopPlay) StartStopPlayActors.Add(actor);
-	if (flags & nsEActorFlag::CallTickUpdate) PrePhysicsTickUpdateActors.Add(actor);
+	if (flags & nsEActorFlag::CallPrePhysicsTickUpdate) PrePhysicsTickUpdateActors.Add(actor);
 	if (flags & nsEActorFlag::CallPhysicsTickUpdate) PhysicsTickUpdateActors.Add(actor);
+	if (flags & nsEActorFlag::CallPostPhysicsTickUpdate) PostPhysicsTickUpdateActors.Add(actor);
 
 	if (bIsStatic)
 	{
@@ -286,7 +304,6 @@ void nsWorld::InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTra
 
 	actor->SetWorldTransform(optTransform);
 	actor->OnInitialize();
-
 }
 
 

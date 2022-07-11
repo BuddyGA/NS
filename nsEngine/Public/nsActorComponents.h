@@ -24,13 +24,13 @@ protected:
 public:
 	nsActorComponent();
 	virtual void OnInitialize() {}
+	virtual void OnDestroy();
 	virtual void OnAddedToLevel();
 	virtual void OnRemovedFromLevel();
 	virtual void OnStartPlay();
 	virtual void OnStopPlay();
 	virtual void OnTickUpdate(float deltaTime) {}
 	virtual void OnPhysicsTickUpdate(float fixedDeltaTime) {}
-	virtual void OnDestroy();
 	virtual void OnStaticChanged() {}
 	virtual bool IsFullyLoaded() { return true; }
 	NS_NODISCARD nsWorld* GetWorld() const;
@@ -84,10 +84,10 @@ public:
 	nsTransformComponent();
 
 private:
-	void UpdateTransform();
+	void UpdateTransform(bool bPhysicsSync);
 
 protected:
-	virtual void OnTransformChanged() {}
+	virtual void OnTransformChanged(bool bPhysicsSync) {}
 	virtual void OnChildtAttached(nsTransformComponent* child, nsETransformAttachmentMode attachmentMode, nsName socketName) {}
 	virtual void OnChildDetached(nsTransformComponent* child) {}
 
@@ -106,7 +106,7 @@ public:
 	{
 		LocalTransform = transform;
 		DirtyTransform = EDirtyTransform::WORLD;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -114,7 +114,7 @@ public:
 	{
 		LocalTransform.Position = position;
 		DirtyTransform = EDirtyTransform::WORLD;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -122,7 +122,7 @@ public:
 	{
 		LocalTransform.Rotation = rotation;
 		DirtyTransform = EDirtyTransform::WORLD;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -130,7 +130,7 @@ public:
 	{
 		LocalTransform.Scale = scale;
 		DirtyTransform = EDirtyTransform::WORLD;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -138,7 +138,7 @@ public:
 	{
 		WorldTransform = transform;
 		DirtyTransform = EDirtyTransform::LOCAL;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -146,7 +146,7 @@ public:
 	{
 		WorldTransform.Position = position;
 		DirtyTransform = EDirtyTransform::LOCAL;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -154,7 +154,7 @@ public:
 	{
 		WorldTransform.Rotation = rotation;
 		DirtyTransform = EDirtyTransform::LOCAL;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
@@ -162,62 +162,62 @@ public:
 	{
 		WorldTransform.Scale = scale;
 		DirtyTransform = EDirtyTransform::LOCAL;
-		UpdateTransform();
+		UpdateTransform(false);
 	}
 
 
 	NS_NODISCARD_INLINE nsTransform GetLocalTransform()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return LocalTransform;
 	}
 
 
 	NS_NODISCARD_INLINE nsVector3 GetLocalPosition()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return LocalTransform.Position;
 	}
 
 
 	NS_NODISCARD_INLINE nsQuaternion GetLocalRotation()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return LocalTransform.Rotation;
 	}
 
 
 	NS_NODISCARD_INLINE nsVector3 GetLocalScale()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return LocalTransform.Scale;
 	}
 
 
 	NS_NODISCARD_INLINE nsTransform GetWorldTransform()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return WorldTransform;
 	}
 
 
 	NS_NODISCARD_INLINE nsVector3 GetWorldPosition()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return WorldTransform.Position;
 	}
 
 
 	NS_NODISCARD_INLINE nsQuaternion GetWorldRotation()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return WorldTransform.Rotation;
 	}
 
 
 	NS_NODISCARD_INLINE nsVector3 GetWorldScale()
 	{
-		UpdateTransform();
+		UpdateTransform(false);
 		return WorldTransform.Scale;
 	}
 
@@ -255,6 +255,14 @@ public:
 	NS_INLINE void AddWorldScale(nsVector3 delta)
 	{
 		SetWorldScale(delta + GetWorldScale());
+	}
+
+
+	NS_INLINE void Internal_SyncWithPhysicsTransform(nsTransform physicsTransformPose)
+	{
+		WorldTransform = physicsTransformPose;
+		DirtyTransform = EDirtyTransform::LOCAL;
+		UpdateTransform(true);
 	}
 
 };

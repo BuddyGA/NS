@@ -23,6 +23,7 @@ void cstGame::Initialize() noexcept
 
 	PlayerController = ns_CreateObject<cstPlayerController>();
 	PlayerController->Viewport = &MainViewport;
+	PlayerController->World = MainWorld;
 
 	cstCharacter* character = MainWorld->CreateActor<cstCharacter>("character_main", false, nsVector3(0.0f, 100.0f, -300.0f));
 	MainWorld->AddActorToLevel(character);
@@ -196,6 +197,10 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 	{
 		g_Editor->OnMouseButton(e);
 	}
+	else if (CurrentState == cstEGameState::PLAYING)
+	{
+		PlayerController->OnMouseButton(e);
+	}
 #endif // CST_GAME_WITH_EDITOR
 }
 
@@ -273,8 +278,9 @@ void cstGame::HandleGameState_Playing()
 {
 	MainWorld->DispatchStartPlay();
 	PlayerController->SetControlState(cstEPlayerControlState::CONTROLLING_CHARACTER);
-	SetMouseRelativeMode(true);
-	ShowMouseCursor(false);
+	//PlayerController->SetControlState(cstEPlayerControlState::TOP_DOWN_CAMERA);
+	//SetMouseRelativeMode(true);
+	//ShowMouseCursor(false);
 }
 
 

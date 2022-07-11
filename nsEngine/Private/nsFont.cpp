@@ -1,7 +1,7 @@
 #include "nsFont.h"
 #include "nsLogger.h"
 #include "nsFileSystem.h"
-#include "nsTexture.h"
+#include "nsTextureManager.h"
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "ThirdParty/stb_rect_pack.h"

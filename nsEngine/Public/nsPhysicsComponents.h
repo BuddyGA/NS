@@ -28,13 +28,13 @@ protected:
 public:
 	nsCollisionComponent();
 	virtual void OnInitialize() override;
+	virtual void OnDestroy() override;
 	virtual void OnStartPlay() override;
 	virtual void OnStopPlay() override;
-	virtual void OnDestroy() override;
 	virtual void OnStaticChanged() override;
 	virtual void OnAddedToLevel() override;
 	virtual void OnRemovedFromLevel() override;
-	virtual void OnTransformChanged() override;
+	virtual void OnTransformChanged(bool bPhysicsSync) override;
 
 protected:
 	void UpdateCollisionActor();
@@ -143,18 +143,6 @@ public:
 		return bIsTrigger;
 	}
 
-
-	NS_NODISCARD_INLINE physx::PxRigidActor* Internal_GetPhysicsActor() const
-	{
-		return PhysicsActor;
-	}
-
-
-	NS_NODISCARD_INLINE physx::PxShape* Internal_GetPhysicsShape() const
-	{
-		return PhysicsShape;
-	}
-
 };
 
 
@@ -168,7 +156,7 @@ class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
 	NS_DECLARE_OBJECT()
 
 public:
-	nsVector3 HalfExtent;
+	nsVector3 HalfExtents;
 
 
 public:
@@ -193,8 +181,8 @@ class NS_ENGINE_API nsCapsuleCollisionComponent : public nsCollisionComponent
 	NS_DECLARE_OBJECT()
 
 public:
-	float Height;
 	float Radius;
+	float Height;
 
 
 public:
@@ -205,6 +193,7 @@ protected:
 
 public:
 	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
+	void SetupCapsule(float radius, float height);
 
 };
 
@@ -249,13 +238,11 @@ public:
 // ================================================================================================================================== //
 // CHARACTER MOVEMENT COMPONENT
 // ================================================================================================================================== //
-class NS_ENGINE_API nsCharacterMovementComponent : public nsCollisionComponent
+class NS_ENGINE_API nsCharacterMovementComponent : public nsCapsuleCollisionComponent
 {
 	NS_DECLARE_OBJECT()
 
 public:
-	float CapsuleHeight;
-	float CapsuleRadius;
 	float ContactOffset;
 	float Acceleration;
 	float Deceleration;
@@ -274,22 +261,13 @@ private:
 
 public:
 	nsCharacterMovementComponent();
-	virtual void OnInitialize() override;
 
 protected:
-	virtual void UpdateCollisionShape() override;
-
-public:
-	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
-
-
-protected:
-	bool SweepCapsule(const nsTransform& worldTransform, const nsVector3& moveDirection);
-	nsPhysicsHitResult SweepCapsuleAndFindClosestHit(const nsTransform& worldTransform, const nsVector3& moveDirection);
+	bool SweepMove(const nsTransform& worldTransform, const nsVector3& moveDirection);
+	nsPhysicsHitResult SweepMoveAndGetClosestHit(const nsTransform& worldTransform, const nsVector3& moveDirection);
 	nsVector3 GetNewTargetPositionToSlideOnSurface(const nsVector3& currentPosition, const nsVector3& currentTargetPosition, const nsVector3& surfaceNormal);
 
 public:
 	virtual void Move(float deltaTime, const nsVector3& worldDirection);
-	void SetupCapsule(float height, float radius);
 
 };

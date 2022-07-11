@@ -41,6 +41,7 @@ public:
 private:
 	NS_INLINE void CopyChars(const char* cstr) noexcept
 	{
+		CharArray.Clear();
 		const int len = nsPlatform::String_Length(cstr);
 
 		if (len == 0)
@@ -521,7 +522,7 @@ public:
 private:
 	NS_INLINE void CopyChars(const char* cstr) noexcept
 	{
-		nsPlatform::Memory_Set(Chars, 0, N);
+		nsPlatform::Memory_Zero(Chars, N);
 		int len = nsPlatform::String_Length(cstr);
 
 		if (len == 0)

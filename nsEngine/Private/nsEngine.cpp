@@ -4,6 +4,7 @@
 #include "nsPhysicsManager.h"
 #include "nsRenderManager.h"
 #include "nsAnimationManager.h"
+#include "nsNavigationManager.h"
 #include "nsAssetManager.h"
 #include "nsAssetImporter.h"
 #include "nsGameApplication.h"
@@ -40,6 +41,7 @@ void nsEngine::Initialize()
 	nsPhysicsManager::Get().Initialize();
 	nsRenderManager::Get().Initialize();
 	nsAnimationManager::Get().Initialize();
+	nsNavigationManager::Get().Initialize();
 	nsAssetManager::Get().Initialize();
 	nsAssetImporter::Get().Initialize();
 
@@ -61,6 +63,26 @@ void nsEngine::Initialize()
 	}
 
 	StartTick = nsPlatform::PerformanceQuery_Counter();
+
+
+#ifndef __NS_ENGINE_SHIPPING__
+	NS_CONSOLE_RegisterCommand("navigation");
+#endif // !__NS_ENGINE_SHIPPING__
+
+}
+
+
+void nsEngine::HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount)
+{
+	if (command == "navigation" && paramCount > 0)
+	{
+		const nsString& param0 = params[0];
+
+		if (param0 == "build")
+		{
+			nsNavigationManager::Get().BuildNavMesh(Worlds[0]);
+		}
+	}
 }
 
 
@@ -195,11 +217,10 @@ void nsEngine::MainLoop()
 
 		for (int i = 0; i < Worlds.GetCount(); ++i)
 		{
-			Worlds[i]->DispatchTickUpdate(DeltaTimeSeconds);
+			Worlds[i]->DispatchPrePhysicsTickUpdate(DeltaTimeSeconds);
 		}
 
-
-		// TODO: AI update
+		nsNavigationManager::Get().MoveAgents(DeltaTimeSeconds);
 	}
 	
 
@@ -223,19 +244,23 @@ void nsEngine::MainLoop()
 	{
 		if (Game)
 		{
-			Game->PostPhysicsUpdate();
+			Game->PostPhysicsTickUpdate();
+		}
+
+		for (int i = 0; i < Worlds.GetCount(); ++i)
+		{
+			Worlds[i]->DispatchPostPhysicsTickUpdate();
 		}
 
 		// Update animation
-		nsAnimationManager::Get().UpdateAnimationPose(DeltaTimeSeconds);
-
-
-		if (Game && !Game->IsMinimized())
-		{
-			Game->DrawGUI();
-		}
+		nsAnimationManager::Get().UpdateAnimationPoses(DeltaTimeSeconds);
 	}
 
+
+	if (Game && !Game->IsMinimized())
+	{
+		Game->DrawGUI();
+	}
 
 
 	for (int i = 0; i < Worlds.GetCount(); ++i)
@@ -292,7 +317,7 @@ nsWorld* nsEngine::FindWorld(const nsName& name) const
 		nsWorld* world = Worlds[i];
 		NS_Assert(world);
 
-		if (world->GetName() == name)
+		if (world->Name == name)
 		{
 			return world;
 		}
@@ -332,7 +357,7 @@ void nsEngine::DestroyWorld(nsWorld*& world)
 
 	if (index != NS_ARRAY_INDEX_INVALID)
 	{
-		NS_CONSOLE_Log(EngineLog, "Destroy world [%s]", *world->GetName());
+		NS_CONSOLE_Log(EngineLog, "Destroy world [%s]", *world->Name);
 
 		nsRenderManager::Get().RemoveWorldRenderContext(world);
 		Worlds.RemoveAt(index);

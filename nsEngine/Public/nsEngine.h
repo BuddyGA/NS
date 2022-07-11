@@ -28,6 +28,7 @@ public:
 public:
 	nsEngine() noexcept;
 	void Initialize();
+	void HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount);
 
 private:
 	void ReloadGameModule(bool bIsHotReload);

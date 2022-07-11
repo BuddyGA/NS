@@ -3,6 +3,7 @@
 #include "nsViewport.h"
 #include "nsRenderContextWorld.h"
 #include "nsRenderPrimitiveBatch.h"
+#include "nsTextureTypes.h"
 
 
 class nsGUIContext;

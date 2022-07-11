@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nsMesh.h"
+#include "nsAnimationTypes.h"
 
 
 

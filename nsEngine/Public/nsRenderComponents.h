@@ -59,7 +59,7 @@ public:
 	virtual void OnRemovedFromLevel() override;
 
 protected:
-	virtual void OnTransformChanged() override;
+	virtual void OnTransformChanged(bool bPhysicsSync) override;
 	virtual void OnVisibilityChanged() override;
 	virtual void RegisterMesh();
 	virtual void UnregisterMesh();

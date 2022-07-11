@@ -65,7 +65,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Build_Core.cpp">
+    <ClCompile Include="nsCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

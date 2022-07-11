@@ -2,6 +2,7 @@
 #include "nsAssetManager.h"
 #include "nsPhysicsComponents.h"
 #include "nsRenderComponents.h"
+#include "nsNavigationComponents.h"
 #include "cstAttributeComponent.h"
 
 
@@ -11,10 +12,15 @@ NS_CLASS_END(cstCharacter)
 
 cstCharacter::cstCharacter()
 {
+	/*
 	MovementComponent = AddComponent<nsCharacterMovementComponent>("movement");
-	MovementComponent->CapsuleHeight = 120.0f;
-	MovementComponent->CapsuleRadius = 36.0f;
+	MovementComponent->Radius = 36.0f;
+	MovementComponent->Height = 120.0f;
 	RootComponent = MovementComponent;
+	*/
+
+	NavigationAgentComponent = AddComponent<nsNavigationAgentComponent>("nav_agent");
+	RootComponent = NavigationAgentComponent;
 
 	SkelMeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
 	SkelMeshComponent->bDebugDrawSkeleton = true;
@@ -52,5 +58,11 @@ void cstCharacter::OnDestroy()
 
 void cstCharacter::Move(float deltaTime, const nsVector3& worldDirection)
 {
-	MovementComponent->Move(deltaTime, worldDirection);
+	//MovementComponent->Move(deltaTime, worldDirection);
+}
+
+
+void cstCharacter::SetMoveTargetPosition(const nsVector3& worldPosition)
+{
+	NavigationAgentComponent->SetNavigationTarget(worldPosition);
 }

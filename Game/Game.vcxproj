@@ -166,7 +166,8 @@
     <ClInclude Include="Public\cstPlayer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Build_Game.cpp" />
+    <ClCompile Include="nsGame.Editor.cpp" />
+    <ClCompile Include="nsGame.Runtime.cpp" />
     <ClCompile Include="Private\cstAttributeComponent.cpp" />
     <ClCompile Include="Private\cstCharacter.cpp" />
     <ClCompile Include="Private\cstPlayer.cpp" />

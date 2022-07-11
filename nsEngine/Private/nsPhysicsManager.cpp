@@ -323,7 +323,7 @@ void nsPhysicsManager::Initialize()
 
 	PxTolerancesScale toleranceScale;
 	toleranceScale.length = 100.0f;
-	toleranceScale.speed = 100.0f;
+	toleranceScale.speed = 1000.0f;
 
 	Physics = PxCreatePhysics(PX_PHYSICS_VERSION, *Foundation, toleranceScale, true, PVD);
 
@@ -363,15 +363,15 @@ void nsPhysicsManager::SceneSyncTransforms(physx::PxScene* scene)
 
 		PxRigidActor* rigidActor = static_cast<PxRigidActor*>(activeActors[i]);
 
-		nsTransformComponent* actorTransformComp = static_cast<nsTransformComponent*>(rigidActor->userData);
+		nsCollisionComponent* collisionComponent = static_cast<nsCollisionComponent*>(rigidActor->userData);
 		const PxTransform globalPose = rigidActor->getGlobalPose();
 
 		nsTransform newTransform;
 		newTransform.Position = NS_FromPxVec3(globalPose.p);
 		newTransform.Rotation = NS_FromPxQuat(globalPose.q);
-		newTransform.Scale = actorTransformComp->GetWorldScale();
+		newTransform.Scale = collisionComponent->GetWorldScale();
 
-		actorTransformComp->SetWorldTransform(newTransform);
+		collisionComponent->Internal_SyncWithPhysicsTransform(newTransform);
 	}
 }
 
@@ -398,7 +398,6 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 #ifdef NS_ENGINE_DEBUG_DRAW
 	scene->setVisualizationParameter(PxVisualizationParameter::eSCALE, 1.0f);
 	scene->setVisualizationParameter(PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-#endif // NS_ENGINE_DEBUG_DRAW
 
 	PxPvdSceneClient* pvdClient = scene->getScenePvdClient();
 
@@ -408,6 +407,7 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
+#endif // NS_ENGINE_DEBUG_DRAW
 
 	SceneObjects.Add(scene);
 
