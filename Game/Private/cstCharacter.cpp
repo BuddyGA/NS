@@ -12,14 +12,9 @@ NS_CLASS_END(cstCharacter)
 
 cstCharacter::cstCharacter()
 {
-	/*
-	MovementComponent = AddComponent<nsCharacterMovementComponent>("movement");
-	MovementComponent->Radius = 36.0f;
-	MovementComponent->Height = 120.0f;
-	RootComponent = MovementComponent;
-	*/
-
 	NavigationAgentComponent = AddComponent<nsNavigationAgentComponent>("nav_agent");
+	NavigationAgentComponent->MaxAcceleration = 1200.0f;
+	NavigationAgentComponent->MaxSpeed = 300.0f;
 	RootComponent = NavigationAgentComponent;
 
 	SkelMeshComponent = AddComponent<nsSkeletalMeshComponent>("skeletal_mesh");
@@ -53,12 +48,6 @@ void cstCharacter::OnStartPlay()
 void cstCharacter::OnDestroy()
 {
 	nsActor::OnDestroy();
-}
-
-
-void cstCharacter::Move(float deltaTime, const nsVector3& worldDirection)
-{
-	//MovementComponent->Move(deltaTime, worldDirection);
 }
 
 

@@ -32,7 +32,7 @@ void nsRenderManager::Initialize() noexcept
 	nsTextureManager::Get().Initialize();
 	nsMaterialManager::Get().Initialize();
 	nsMeshManager::Get().Initialize();
-	nsFontManager::Initialize("../../../Assets/Fonts/Roboto_Regular.ttf", 15.0f);
+	nsFontManager::Initialize(TEXT("../../../Assets/Fonts/Roboto_Regular.ttf"), 15.0f);
 
 	bInitialized = true;
 }

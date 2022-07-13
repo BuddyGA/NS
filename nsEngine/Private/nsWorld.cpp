@@ -4,14 +4,14 @@
 
 
 
-static nsLogCategory WorldLog("nsWorldLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory WorldLog(TEXT("nsWorldLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
 NS_CLASS_BEGIN(nsWorld, nsObject)
 NS_CLASS_END(nsWorld)
 
-nsWorld::nsWorld(nsName name, bool bInitPhysics)
+nsWorld::nsWorld(nsString name, bool bInitPhysics)
 {
 	NS_Assert(name.GetLength() > 0);
 
@@ -47,7 +47,7 @@ void nsWorld::Initialize()
 
 void nsWorld::Destroy()
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
@@ -64,7 +64,7 @@ void nsWorld::CleanupPendingDestroyLevelsAndActors()
 		NS_Assert(level);
 		level->RemoveActor(actor);
 
-		NS_CONSOLE_Debug(WorldLog, "Destroy actor [%s]", *actor->Name);
+		NS_CONSOLE_Debug(WorldLog, TEXT("Destroy actor [%s]"), *actor->Name);
 		actor->OnDestroy();
 
 		ActorMemory.DeallocateDestruct(actor);
@@ -86,7 +86,7 @@ void nsWorld::DispatchStartPlay()
 		return;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "%s: Start play!", *Name);
+	NS_CONSOLE_Log(WorldLog, TEXT("%s: Start play!"), *Name);
 
 	nsPhysicsManager::Get().bGlobalSimulate = true;
 
@@ -107,7 +107,7 @@ void nsWorld::DispatchStopPlay()
 		return;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "%s: Stop play!", *Name);
+	NS_CONSOLE_Log(WorldLog, TEXT("%s: Stop play!"), *Name);
 
 	nsPhysicsManager::Get().bGlobalSimulate = false;
 
@@ -216,7 +216,7 @@ void nsWorld::RefreshActorList()
 }
 
 
-nsLevel* nsWorld::FindLevel(const nsName& levelName) const
+nsLevel* nsWorld::FindLevel(const nsString& levelName) const
 {
 	if (levelName.GetLength() == 0)
 	{
@@ -235,11 +235,11 @@ nsLevel* nsWorld::FindLevel(const nsName& levelName) const
 }
 
 
-nsLevel* nsWorld::CreateLevel(nsName levelName)
+nsLevel* nsWorld::CreateLevel(nsString levelName)
 {
 	if (levelName.GetLength() == 0)
 	{
-		NS_CONSOLE_Warning(WorldLog, "Fail to add level. [levelName] is empty!");
+		NS_CONSOLE_Warning(WorldLog, TEXT("Fail to add level. [levelName] is empty!"));
 		return nullptr;
 	}
 
@@ -247,11 +247,11 @@ nsLevel* nsWorld::CreateLevel(nsName levelName)
 
 	if (FindLevel(levelName))
 	{
-		NS_CONSOLE_Warning(WorldLog, "Fail to add level. Level with name [%s] already exists!", *levelName);
+		NS_CONSOLE_Warning(WorldLog, TEXT("Fail to add level. Level with name [%s] already exists!"), *levelName);
 		return nullptr;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "Create new level [%s]", *levelName);
+	NS_CONSOLE_Log(WorldLog, TEXT("Create new level [%s]"), *levelName);
 
 	nsLevel* newLevel = ns_CreateObject<nsLevel>(levelName);
 	newLevel->World = this;
@@ -261,7 +261,7 @@ nsLevel* nsWorld::CreateLevel(nsName levelName)
 }
 
 
-void nsWorld::DestroyLevel(nsName levelName)
+void nsWorld::DestroyLevel(nsString levelName)
 {
 	NS_Validate_IsMainThread();
 
@@ -269,11 +269,11 @@ void nsWorld::DestroyLevel(nsName levelName)
 
 	if (level == nullptr)
 	{
-		NS_CONSOLE_Warning(WorldLog, "Fail to remove level. Level with name [%s] not found!", *levelName);
+		NS_CONSOLE_Warning(WorldLog, TEXT("Fail to remove level. Level with name [%s] not found!"), *levelName);
 		return;
 	}
 
-	NS_CONSOLE_Log(WorldLog, "Destroy level [%s]", *levelName);
+	NS_CONSOLE_Log(WorldLog, TEXT("Destroy level [%s]"), *levelName);
 
 	level->Destroy();
 	Levels.Remove(level);
@@ -281,7 +281,7 @@ void nsWorld::DestroyLevel(nsName levelName)
 }
 
 
-void nsWorld::InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTransform& optTransform, nsActor* optParent)
+void nsWorld::InitActor(nsActor* actor, nsString name, bool bIsStatic, const nsTransform& optTransform, nsActor* optParent)
 {
 	NS_Validate_IsMainThread();
 
@@ -318,7 +318,7 @@ void nsWorld::DestroyActor(nsActor*& actor)
 
 	if (actor->Flags & nsEActorFlag::PendingDestroy)
 	{
-		NS_CONSOLE_Warning(WorldLog, "Ignoring destroy actor [%s] that has marked as pending destroy!", *actor->Name);
+		NS_CONSOLE_Warning(WorldLog, TEXT("Ignoring destroy actor [%s] that has marked as pending destroy!"), *actor->Name);
 		return;
 	}
 
@@ -327,14 +327,14 @@ void nsWorld::DestroyActor(nsActor*& actor)
 
 	nsWorld* world = level->World;
 	NS_Assert(world);
-	NS_AssertV(world == this, "Cannot destroy actor from different world!");
+	NS_AssertV(world == this, TEXT("Cannot destroy actor from different world!"));
 
 	for (int i = 0; i < actor->Children.GetCount(); ++i)
 	{
 		DestroyActor(actor->Children[i]);
 	}
 
-	NS_CONSOLE_Debug(WorldLog, "Mark actor [%s] as pending destroy", *actor->Name);
+	NS_CONSOLE_Debug(WorldLog, TEXT("Mark actor [%s] as pending destroy"), *actor->Name);
 
 	PendingDestroyActors.Add(actor);
 	actor->Flags |= nsEActorFlag::PendingDestroy;
@@ -349,7 +349,7 @@ void nsWorld::AddActorToLevel(nsActor* actor, nsLevel* level)
 		return;
 	}
 
-	NS_AssertV(actor->Level == nullptr, "Cannot add actor to level while inside another level. Call RemoveActorFromLevel() before add it to another level!");
+	NS_AssertV(actor->Level == nullptr, TEXT("Cannot add actor to level while inside another level. Call RemoveActorFromLevel() before add it to another level!"));
 	nsLevel* useLevel = level ? level : GetPersistentLevel();
 	actor->Level = useLevel;
 

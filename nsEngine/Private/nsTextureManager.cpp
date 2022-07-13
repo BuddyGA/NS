@@ -6,7 +6,7 @@ NS_ENGINE_DEFINE_HANDLE(nsTextureID);
 
 
 
-static nsLogCategory TextureLog("nsTextureLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory TextureLog(TEXT("nsTextureLog"), nsELogVerbosity::LV_DEBUG);
 
 static NS_INLINE VkFormat ns_ToVkFormat(nsETextureFormat format) noexcept
 {
@@ -54,7 +54,7 @@ void nsTextureManager::Initialize() noexcept
 		return;
 	}
 
-	NS_LogInfo(TextureLog, "Initialize texture manager");
+	NS_LogInfo(TextureLog, TEXT("Initialize texture manager"));
 
 	nsTextureID defaultTextures[2];
 	defaultTextures[0] = GetDefaultTexture2D_White();
@@ -106,7 +106,7 @@ void nsTextureManager::DeallocateTexture(nsTextureID texture) noexcept
 	NS_Validate_IsMainThread();
 
 	const int id = texture.Id;
-	NS_LogDebug(TextureLog, "Deallocate texture [%s]", *TextureNames[id]);
+	NS_LogDebug(TextureLog, TEXT("Deallocate texture [%s]"), *TextureNames[id].ToString());
 	
 	const uint32& flags = TextureFlags[texture.Id];
 	NS_Assert(flags & TextureFlag_PendingDestroy);
@@ -156,7 +156,7 @@ nsTextureID nsTextureManager::CreateTexture2D_Empty(nsName name) noexcept
 {
 	if (FindTexture(name) != nsTextureID::INVALID)
 	{
-		NS_LogWarning(TextureLog, "Fail to create texture2D. Texture with name [%s] already exists!", *name);
+		NS_LogWarning(TextureLog, TEXT("Fail to create texture2D. Texture with name [%s] already exists!"), *name.ToString());
 		return nsTextureID();
 	}
 
@@ -168,7 +168,7 @@ nsTextureID nsTextureManager::CreateTexture2D(nsName name, nsETextureFormat form
 {
 	if (FindTexture(name) != nsTextureID::INVALID)
 	{
-		NS_LogWarning(TextureLog, "Fail to create texture2D. Texture with name [%s] already exists!", *name);
+		NS_LogWarning(TextureLog, TEXT("Fail to create texture2D. Texture with name [%s] already exists!"), *name.ToString());
 		return nsTextureID();
 	}
 
@@ -196,11 +196,11 @@ nsTextureID nsTextureManager::CreateRenderTarget(nsName name, nsETextureFormat f
 {
 	if (FindTexture(name) != nsTextureID::INVALID)
 	{
-		NS_LogWarning(TextureLog, "Fail to create texture render target. Texture with name [%s] already exists!", *name);
+		NS_LogWarning(TextureLog, TEXT("Fail to create texture render target. Texture with name [%s] already exists!"), *name.ToString());
 		return nsTextureID();
 	}
 
-	NS_AssertV(format == nsETextureFormat::RENDER_TARGET_BGRA || format == nsETextureFormat::RENDER_TARGET_RGBA, "Invalid format for render target!");
+	NS_AssertV(format == nsETextureFormat::RENDER_TARGET_BGRA || format == nsETextureFormat::RENDER_TARGET_RGBA, TEXT("Invalid format for render target!"));
 
 	const nsTextureID renderTarget = AllocateTexture(name);
 
@@ -232,11 +232,11 @@ nsTextureID nsTextureManager::CreateDepthStencil(nsName name, nsETextureFormat f
 {
 	if (FindTexture(name) != nsTextureID::INVALID)
 	{
-		NS_LogWarning(TextureLog, "Fail to create texture depth stencil. Texture with name [%s] already exists!", *name);
+		NS_LogWarning(TextureLog, TEXT("Fail to create texture depth stencil. Texture with name [%s] already exists!"), *name);
 		return nsTextureID();
 	}
 
-	NS_AssertV(format == nsETextureFormat::DEPTH_STENCIL_D32 || format == nsETextureFormat::DEPTH_STENCIL_D24_S8, "Invalid format for depth stencil!");
+	NS_AssertV(format == nsETextureFormat::DEPTH_STENCIL_D32 || format == nsETextureFormat::DEPTH_STENCIL_D24_S8, TEXT("Invalid format for depth stencil!"));
 
 	const bool bHasStencil = (format == nsETextureFormat::DEPTH_STENCIL_D24_S8);
 	const nsTextureID depthStencil = AllocateTexture(name);
@@ -275,12 +275,12 @@ void nsTextureManager::DestroyTexture(nsTextureID& texture) noexcept
 
 		if (flags & TextureFlag_PendingDestroy)
 		{
-			NS_LogWarning(TextureLog, "Ignoring destroy texture [%s] that has already marked pending destroy!", *TextureNames[texture.Id]);
+			NS_LogWarning(TextureLog, TEXT("Ignoring destroy texture [%s] that has already marked pending destroy!"), *TextureNames[texture.Id].ToString());
 		}
 		else
 		{
 			flags |= TextureFlag_PendingDestroy;
-			NS_LogDebug(TextureLog, "Marked texture [%s] as pending destroy", *TextureNames[texture.Id]);
+			NS_LogDebug(TextureLog, TEXT("Marked texture [%s] as pending destroy"), *TextureNames[texture.Id].ToString());
 		}
 
 		FrameDatas[FrameIndex].TextureToDestroys.AddUnique(texture);
@@ -294,10 +294,10 @@ void nsTextureManager::UpdateTextureMipData(nsTextureID texture, int mipIndex, c
 	NS_Assert(IsTextureValid(texture));
 
 	nsTextureData& data = TextureDatas[texture.Id];
-	NS_AssertV(mipIndex >= 0 && mipIndex < data.Mips.GetCount(), "Invalid mip index!");
+	NS_AssertV(mipIndex >= 0 && mipIndex < data.Mips.GetCount(), TEXT("Invalid mip index!"));
 	NS_Assert(pixelData);
 	NS_Assert(pixelDataSize > 0);
-	NS_AssertV(!data.bIsRenderTarget && !data.bIsDepth && !data.bIsStencil, "Cannot update mip data for render target/depth-stencil!");
+	NS_AssertV(!data.bIsRenderTarget && !data.bIsDepth && !data.bIsStencil, TEXT("Cannot update mip data for render target/depth-stencil!"));
 
 	nsTextureData::Mip& mip = data.Mips[mipIndex];
 	mip.Pixels.Clear();
@@ -390,7 +390,7 @@ void nsTextureManager::BindTextures(const nsTextureID* textures, int count) noex
 
 		const int id = textures[i].Id;
 		uint32& flags = TextureFlags[id];
-		NS_AssertV(!(flags & TextureFlag_PendingDestroy), "Cannot bind texture that has marked pending destroy!");
+		NS_AssertV(!(flags & TextureFlag_PendingDestroy), TEXT("Cannot bind texture that has marked pending destroy!"));
 
 		if (flags & TextureFlag_Dirty)
 		{
@@ -485,7 +485,7 @@ void nsTextureManager::UpdateRenderResources() noexcept
 			}
 
 			textureToLoads.Add(id);
-			NS_LogDebug(TextureLog, "Load texture [%s] to GPU", *TextureNames[id]);
+			NS_LogDebug(TextureLog, TEXT("Load texture [%s] to GPU"), *TextureNames[id].ToString());
 		}
 
 		vkUpdateDescriptorSets(nsVulkan::GetVkDevice(), static_cast<uint32>(TextureWriteDescriptorSets.GetCount()), TextureWriteDescriptorSets.GetData(), 0, nullptr);

@@ -7,7 +7,7 @@
 NS_ENGINE_DEFINE_HANDLE(nsMeshID);
 
 
-static nsLogCategory MeshLog("nsMeshLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory MeshLog(TEXT("nsMeshLog"), nsELogVerbosity::LV_DEBUG);
 
 
 nsMeshManager::nsMeshManager() noexcept
@@ -29,7 +29,7 @@ void nsMeshManager::Initialize() noexcept
 		return;
 	}
 
-	NS_LogInfo(MeshLog, "Initialize mesh manager");
+	NS_LogInfo(MeshLog, TEXT("Initialize mesh manager"));
 
 	for (int i = 0; i < NS_ENGINE_FRAME_BUFFERING; ++i)
 	{
@@ -43,7 +43,7 @@ void nsMeshManager::Initialize() noexcept
 
 
 	// Initialize default meshes
-	NS_LogInfo(MeshLog, "Creating default meshes...");
+	NS_LogInfo(MeshLog, TEXT("Creating default meshes..."));
 	
 	// Floor
 	{
@@ -95,7 +95,7 @@ nsMeshID nsMeshManager::CreateMesh(nsName name) noexcept
 {
 	if (FindMesh(name) != nsMeshID::INVALID)
 	{
-		NS_LogWarning(MeshLog, "Mesh with name [%s] already exists!", *name);
+		NS_LogWarning(MeshLog, TEXT("Mesh with name [%s] already exists!"), *name.ToString());
 	}
 
 	const int nameId = MeshNames.Add(name);
@@ -119,7 +119,7 @@ void nsMeshManager::DestroyMesh(nsMeshID& mesh) noexcept
 {
 	if (IsMeshValid(mesh))
 	{
-		NS_LogDebug(MeshLog, "Destroy mesh [%s]", *MeshNames[mesh.Id]);
+		NS_LogDebug(MeshLog, TEXT("Destroy mesh [%s]"), *MeshNames[mesh.Id].ToString());
 
 		const int id = mesh.Id;
 		MeshNames.RemoveAt(id);
@@ -218,7 +218,7 @@ void nsMeshManager::BindMeshes(const nsMeshBindingInfo* bindingInfos, int count)
 		NS_Assert(IsMeshValid(info.Mesh));
 		
 		uint32& flags = MeshFlags[info.Mesh.Id];
-		NS_AssertV(!(flags & MeshFlag_PendingDestroy), "Cannot bind mesh that has marked pending destroy!");
+		NS_AssertV(!(flags & MeshFlag_PendingDestroy), TEXT("Cannot bind mesh that has marked pending destroy!"));
 
 		if (flags & MeshFlag_Dirty)
 		{
@@ -278,7 +278,7 @@ void nsMeshManager::UpdateRenderResources() noexcept
 			}
 			else
 			{
-				NS_LogWarning(MeshLog, "Binding mesh [%s] as skinned mesh, but that mesh has emtpy vertex skin data!", *MeshNames[id]);
+				NS_LogWarning(MeshLog, TEXT("Binding mesh [%s] as skinned mesh, but that mesh has emtpy vertex skin data!"), *MeshNames[id]);
 			}
 		}
 

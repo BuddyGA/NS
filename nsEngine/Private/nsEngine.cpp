@@ -12,7 +12,7 @@
 
 
 
-static nsLogCategory EngineLog("nsEngineLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory EngineLog(TEXT("nsEngineLog"), nsELogVerbosity::LV_DEBUG);
 nsMemory g_EngineDefaultMemory("engine_default", NS_MEMORY_SIZE_MiB(1), 16);
 
 
@@ -35,7 +35,7 @@ nsEngine::nsEngine() noexcept
 
 void nsEngine::Initialize()
 {
-	NS_LogInfo(EngineLog, "Initialize engine");
+	NS_LogInfo(EngineLog, TEXT("Initialize engine"));
 
 	nsConsoleManager::Get().Initialize();
 	nsPhysicsManager::Get().Initialize();
@@ -46,7 +46,7 @@ void nsEngine::Initialize()
 	nsAssetImporter::Get().Initialize();
 
 	nsCommandLines& commandLines = nsCommandLines::Get();
-	GameModuleName = commandLines.GetValue("game");
+	GameModuleName = commandLines.GetValue(TEXT("game"));
 
 	if (GameModuleName.GetLength() > 0)
 	{
@@ -54,7 +54,7 @@ void nsEngine::Initialize()
 	}
 	else
 	{
-		NS_LogWarning(EngineLog, "Game module name not specified in command lines! Ex: -game=[game_module_name]");
+		NS_LogWarning(EngineLog, TEXT("Game module name not specified in command lines! Ex: -game=[game_module_name]"));
 	}
 
 	if (Game)
@@ -66,7 +66,7 @@ void nsEngine::Initialize()
 
 
 #ifndef __NS_ENGINE_SHIPPING__
-	NS_CONSOLE_RegisterCommand("navigation");
+	NS_CONSOLE_RegisterCommand(TEXT("navigation"));
 #endif // !__NS_ENGINE_SHIPPING__
 
 }
@@ -90,13 +90,13 @@ void nsEngine::ReloadGameModule(bool bIsHotReload)
 {
 	NS_Assert(GameModuleName.GetLength() > 0);
 
-	static nsName _gameDLL = nsName::Format("%s.dll", *GameModuleName);
+	static nsString _gameDLL = nsString::Format(TEXT("%s.dll"), *GameModuleName);
 
 #if NS_ENGINE_GAME_MODULE_HOTRELOAD
 	if (nsCommandLines::Get().HasCommand("hotreload"))
 	{
 		static int _hotReloadCounter = 0;
-		static nsName _prevHotReloadDLL = "";
+		static nsString _prevHotReloadDLL = "";
 
 		if (GameModuleHandle)
 		{
@@ -104,13 +104,13 @@ void nsEngine::ReloadGameModule(bool bIsHotReload)
 			GameModuleHandle = nullptr;
 		}
 
-		const nsName hotReloadDLL = nsName::Format("%s_%i.dll", *GameModuleName, _hotReloadCounter);
+		const nsString hotReloadDLL = nsString::Format(TEXT("%s_%i.dll"), *GameModuleName, _hotReloadCounter);
 
 		bool bSuccess = nsPlatform::File_Copy(*_gameDLL, *hotReloadDLL);
 		NS_Assert(bSuccess);
 
 		GameModuleHandle = nsPlatform::Module_Load(*hotReloadDLL);
-		NS_ValidateV(GameModuleHandle, "Fail to load game module [%s]", *_gameDLL);
+		NS_ValidateV(GameModuleHandle, TEXT("Fail to load game module [%s]"), *_gameDLL);
 
 		if (_hotReloadCounter > 0)
 		{
@@ -122,7 +122,7 @@ void nsEngine::ReloadGameModule(bool bIsHotReload)
 
 		if (bIsHotReload)
 		{
-			NS_LogInfo(EngineLog, "Hot reload game module [%s]", *hotReloadDLL);
+			NS_LogInfo(EngineLog, TEXT("Hot reload game module [%s]"), *hotReloadDLL);
 		}
 	}
 	else
@@ -151,7 +151,7 @@ void nsEngine::ReloadGameModule(bool bIsHotReload)
 
 	if (!bIsHotReload)
 	{
-		NS_LogInfo(EngineLog, "Loaded game module [%s]", *GameModuleName);
+		NS_LogInfo(EngineLog, TEXT("Loaded game module [%s]"), *GameModuleName);
 	}
 }
 
@@ -305,7 +305,7 @@ void nsEngine::Shutdown()
 }
 
 
-nsWorld* nsEngine::FindWorld(const nsName& name) const
+nsWorld* nsEngine::FindWorld(const nsString& name) const
 {
 	if (name.GetLength() == 0)
 	{
@@ -327,15 +327,15 @@ nsWorld* nsEngine::FindWorld(const nsName& name) const
 }
 
 
-nsWorld* nsEngine::CreateWorld(nsName name, bool bHasPhysics)
+nsWorld* nsEngine::CreateWorld(nsString name, bool bHasPhysics)
 {
 	if (FindWorld(name))
 	{
-		NS_CONSOLE_Warning(EngineLog, "Fail to create world. World with name [%s] already exists!", *name);
+		NS_CONSOLE_Warning(EngineLog, TEXT("Fail to create world. World with name [%s] already exists!"), *name);
 		return nullptr;
 	}
 
-	NS_CONSOLE_Log(EngineLog, "Create new world [%s]", *name);
+	NS_CONSOLE_Log(EngineLog, TEXT("Create new world [%s]"), *name);
 
 	nsWorld* newWorld = ns_CreateObject<nsWorld>(name, bHasPhysics);
 	newWorld->Initialize();
@@ -357,7 +357,7 @@ void nsEngine::DestroyWorld(nsWorld*& world)
 
 	if (index != NS_ARRAY_INDEX_INVALID)
 	{
-		NS_CONSOLE_Log(EngineLog, "Destroy world [%s]", *world->Name);
+		NS_CONSOLE_Log(EngineLog, TEXT("Destroy world [%s]"), *world->Name);
 
 		nsRenderManager::Get().RemoveWorldRenderContext(world);
 		Worlds.RemoveAt(index);

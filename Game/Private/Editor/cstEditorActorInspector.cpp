@@ -58,19 +58,19 @@ void cstEditorActorInspector::DrawGUI(nsGUIContext& context)
 
 			if (control.bIsVisible)
 			{
-				context.AddDrawTextOnRect("TRANSFORM", 9, control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
+				context.AddDrawTextOnRect(TEXT("TRANSFORM"), 9, control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
 			}
 
 			bool bTransformChanged = false;
 
-			context.AddControlText("Position:");
+			context.AddControlText(TEXT("Position:"));
 
 			if (InputPosition.Draw(context, CachePosition))
 			{
 				bTransformChanged = true;
 			}
 
-			context.AddControlText("Rotation:");
+			context.AddControlText(TEXT("Rotation:"));
 
 			if (InputRotation.Draw(context, CacheRotation))
 			{
@@ -78,7 +78,7 @@ void cstEditorActorInspector::DrawGUI(nsGUIContext& context)
 				bTransformChanged = true;
 			}
 
-			context.AddControlText("Scale:");
+			context.AddControlText(TEXT("Scale:"));
 
 			if (InputScale.Draw(context, CacheScale))
 			{

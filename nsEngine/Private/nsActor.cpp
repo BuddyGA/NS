@@ -3,10 +3,10 @@
 #include "nsConsole.h"
 
 
-#define NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME	"default_root_component"
+#define NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME	TEXT("default_root_component")
 
 
-static nsLogCategory ActorLog("ActorLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory ActorLog(TEXT("nsActorLog"), nsELogVerbosity::LV_DEBUG);
 
 nsMemory nsActor::ComponentMemory("actor_components", NS_MEMORY_SIZE_MiB(1));
 
@@ -199,7 +199,7 @@ void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
 
 	if (newRootIndex == NS_ARRAY_INDEX_INVALID)
 	{
-		NS_CONSOLE_Warning(ActorLog, "Fail to set actor new root component. newRootComponent not found from component list! [actor: %s, newRootComponent: %s]", *Name, *newRootComponent->Name);
+		NS_CONSOLE_Warning(ActorLog, TEXT("Fail to set actor new root component. newRootComponent not found from component list! [actor: %s, newRootComponent: %s]"), *Name, *newRootComponent->Name);
 		return;
 	}
 
@@ -242,17 +242,17 @@ void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
 
 void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode)
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
 void nsActor::DetachFromParent()
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
-nsActorComponent* nsActor::FindComponent(const nsName& name) const
+nsActorComponent* nsActor::FindComponent(const nsString& name) const
 {
 	if (name.GetLength() == 0)
 	{
@@ -284,7 +284,7 @@ bool nsActor::RemoveComponent(nsActorComponent* component)
 
 	if (index == NS_ARRAY_INDEX_INVALID)
 	{
-		NS_CONSOLE_Warning(ActorLog, "Fail to remove component [%s] from actor [%s]. Actor does not own the component!", *component->Name, *Name);
+		NS_CONSOLE_Warning(ActorLog, TEXT("Fail to remove component [%s] from actor [%s]. Actor does not own the component!"), *component->Name, *Name);
 		return false;
 	}
 

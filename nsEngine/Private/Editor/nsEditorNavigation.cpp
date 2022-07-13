@@ -1,4 +1,4 @@
-#include "Editor/nsEditorNavigationBuilder.h"
+#include "Editor/nsEditorNavigation.h"
 #include "nsConsole.h"
 
 
@@ -26,7 +26,7 @@ nsAABB nsNavigationVolumeActor::GetScaledBoundingBox()
 
 
 
-nsNavigationEditor::nsNavigationEditor()
+nsEditorNavigationBuilder::nsEditorNavigationBuilder()
 {
 	Window.Name = "editor_navigation";
 	Window.Title = "Navigation System";
@@ -39,7 +39,7 @@ nsNavigationEditor::nsNavigationEditor()
 }
 
 
-void nsNavigationEditor::DrawGUI(nsGUIContext& context)
+void nsEditorNavigationBuilder::DrawGUI(nsGUIContext& context)
 {
 	Window.BeginDraw(context);
 	{
@@ -62,7 +62,7 @@ void nsNavigationEditor::DrawGUI(nsGUIContext& context)
 }
 
 
-void nsNavigationEditor::BuildNavMesh()
+void nsEditorNavigationBuilder::BuildNavMesh()
 {
 
 }

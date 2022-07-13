@@ -11,13 +11,13 @@ if (name.GetLength() > 0)														\
 	g_VulkanDebugObjectNamePairs.Add(reinterpret_cast<uint64>(handle), name);	\
 }
 
-#define NS_VK_PrintDestroyVulkanObject(handle)										\
-const uint64 __handle = reinterpret_cast<uint64>(handle);							\
-const nsName* __debugName = g_VulkanDebugObjectNamePairs.GetValueByKey(__handle);	\
-if (__debugName)																	\
-{																					\
-	NS_LogDebug(VulkanLog, "Destroy vulkan object [%s]", **__debugName);			\
-	g_VulkanDebugObjectNamePairs.Remove(__handle, false);							\
+#define NS_VK_PrintDestroyVulkanObject(handle)													\
+const uint64 __handle = reinterpret_cast<uint64>(handle);										\
+const nsName* __debugName = g_VulkanDebugObjectNamePairs.GetValueByKey(__handle);				\
+if (__debugName)																				\
+{																								\
+	NS_LogDebug(VulkanLog, TEXT("Destroy vulkan object [%s]"), *(*__debugName).ToString() );	\
+	g_VulkanDebugObjectNamePairs.Remove(__handle, false);										\
 }
 
 #else
@@ -417,7 +417,7 @@ private:
 
 
 public:
-	nsVulkanSwapchain(nsWindowHandle windowHandle) noexcept;
+	nsVulkanSwapchain(nsPlatformWindowHandle windowHandle) noexcept;
 	~nsVulkanSwapchain() noexcept;
 	void SetVsync(bool bEnabled) noexcept;
 	void Resize() noexcept;

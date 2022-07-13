@@ -3,7 +3,7 @@
 
 
 
-nsVulkanSwapchain::nsVulkanSwapchain(nsWindowHandle windowHandle) noexcept
+nsVulkanSwapchain::nsVulkanSwapchain(nsPlatformWindowHandle windowHandle) noexcept
 	: Surface(VK_NULL_HANDLE)
 	, SurfaceCapabilities()
 	, SurfaceFormat()
@@ -24,7 +24,7 @@ nsVulkanSwapchain::nsVulkanSwapchain(nsWindowHandle windowHandle) noexcept
 
 	if (!nsVulkan::CheckPresentSupport(Surface))
 	{
-		NS_LogError(VulkanLog, "Device does not support presentation!");
+		NS_LogError(VulkanLog, TEXT("Device does not support presentation!"));
 		NS_Abort();
 	}
 
@@ -46,7 +46,7 @@ nsVulkanSwapchain::nsVulkanSwapchain(nsWindowHandle windowHandle) noexcept
 
 	if (!bFoundRequiredFormat)
 	{
-		NS_LogError(VulkanLog, "Required surface format [VK_FORMAT_B8G8R8A8_UNORM] not supported!");
+		NS_LogError(VulkanLog, TEXT("Required surface format [VK_FORMAT_B8G8R8A8_UNORM] not supported!"));
 		NS_Abort();
 	}
 
@@ -106,7 +106,7 @@ void nsVulkanSwapchain::SetVsync(bool bEnabled) noexcept
 
 	if (!bFoundPresentMode)
 	{
-		NS_LogWarning(VulkanLog, "Requested present mode not found. Fallback to default present mode VK_PRESENT_MODE_FIFO_KHR!");
+		NS_LogWarning(VulkanLog, TEXT("Requested present mode not found. Fallback to default present mode VK_PRESENT_MODE_FIFO_KHR!"));
 		RequestedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 	}
 }

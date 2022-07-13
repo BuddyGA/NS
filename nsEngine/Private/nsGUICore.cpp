@@ -15,7 +15,7 @@
 #endif // NS_ENGINE_DEBUG_DRAW
 
 
-nsLogCategory GUILog("GUILog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory GUILog(TEXT("nsGUILog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -228,7 +228,7 @@ void nsGUIContext::AddDrawShape(const nsVertexGUI* vertices, int vertexCount, co
 }
 
 
-void nsGUIContext::AddDrawTriangle(const nsPointFloat& center, float halfWidth, float rotationDegree, const nsColor& color, nsTextureID texture, nsMaterialID material, uint8 orderZ) noexcept
+void nsGUIContext::AddDrawTriangle(const nsPointFloat& center, float halfWidth, float rotationDegree, nsColor color, nsTextureID texture, nsMaterialID material, uint8 orderZ) noexcept
 {
 	const int VERTEX_COUNT = 3;
 	nsVertexGUI vertices[VERTEX_COUNT] =
@@ -262,7 +262,7 @@ void nsGUIContext::AddDrawTriangle(const nsPointFloat& center, float halfWidth, 
 }
 
 
-void nsGUIContext::AddDrawRect(const nsGUIRect& rect, const nsColor& color, nsTextureID texture, nsMaterialID material, uint8 orderZ, const nsVector2& uv0, const nsVector2& uv1) noexcept
+void nsGUIContext::AddDrawRect(const nsGUIRect& rect, nsColor color, nsTextureID texture, nsMaterialID material, uint8 orderZ, const nsVector2& uv0, const nsVector2& uv1) noexcept
 {
 	const int VERTEX_COUNT = 4;
 	const nsVertexGUI vertices[VERTEX_COUNT] =
@@ -280,7 +280,7 @@ void nsGUIContext::AddDrawRect(const nsGUIRect& rect, const nsColor& color, nsTe
 }
 
 
-void nsGUIContext::AddDrawText(const char* text, int charLength, const nsPointFloat& position, const nsColor& color, nsFontID font, nsMaterialID material, uint8 orderZ) noexcept
+void nsGUIContext::AddDrawText(const wchar_t* text, int charLength, const nsPointFloat& position, nsColor color, nsFontID font, nsMaterialID material, uint8 orderZ) noexcept
 {
 	if (text == nullptr || charLength <= 0)
 	{
@@ -313,7 +313,7 @@ void nsGUIContext::AddDrawText(const char* text, int charLength, const nsPointFl
 }
 
 
-nsGUIRect nsGUIContext::AddDrawTextOnRect(const char* text, int charLength, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment, const nsColor& color, nsFontID font, nsMaterialID material) noexcept
+nsGUIRect nsGUIContext::AddDrawTextOnRect(const wchar_t* text, int charLength, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment, nsColor color, nsFontID font, nsMaterialID material) noexcept
 {
 	if (text == nullptr || charLength <= 0)
 	{
@@ -356,7 +356,7 @@ void nsGUIContext::BeginRegion(const char* uniqueId, const nsGUIRect& rect, cons
 {
 	if (uniqueId == nullptr && scrollOptions != nsEGUIScrollOption::None)
 	{
-		NS_LogWarning(GUILog, "Cannot cache scroll value data. Region <id> must not nullptr if <scrollOptions> is not None! [DebugName: %s]", *debugName);
+		NS_LogWarning(GUILog, TEXT("Cannot cache scroll value data. Region <id> must not nullptr if <scrollOptions> is not None! [DebugName: %s]"), *debugName.ToString());
 	}
 
 	const int parentRegionId = CurrentRegionId;
@@ -407,7 +407,7 @@ void nsGUIContext::BeginRegion(const char* uniqueId, const nsGUIRect& rect, cons
 
 	if (bScrollableX || bScrollableY)
 	{
-		NS_AssertV(newRegion.Id, "Must provide region id!");
+		NS_AssertV(newRegion.Id, TEXT("Must provide region id!"));
 		RegionData& data = CachedRegionDatas[newRegion.Id];
 
 		// Scroll-X
@@ -507,7 +507,7 @@ nsGUIControl nsGUIContext::TestControlInCurrentRegion(const nsPointFloat& size) 
 
 	if (currentRegion.ScrollOptions & nsEGUIScrollOption::Scrollable_X)
 	{
-		NS_AssertV(size.X > 0.0f, "size.X must be greater than 0.0f if scroll-x is enabled!");
+		NS_AssertV(size.X > 0.0f, TEXT("size.X must be greater than 0.0f if scroll-x is enabled!"));
 	}
 	else if (size.X <= 0.0f)
 	{
@@ -516,7 +516,7 @@ nsGUIControl nsGUIContext::TestControlInCurrentRegion(const nsPointFloat& size) 
 
 	if (currentRegion.ScrollOptions & nsEGUIScrollOption::Scrollable_Y)
 	{
-		NS_AssertV(size.Y > 0.0f, "size.Y must be greater than 0.0f if scroll-Y is enabled!");
+		NS_AssertV(size.Y > 0.0f, TEXT("size.Y must be greater than 0.0f if scroll-Y is enabled!"));
 	}
 	else if (size.Y <= 0.0f)
 	{
@@ -565,7 +565,7 @@ void nsGUIContext::UpdateControlInCurrentRegion(nsGUIControl& control, bool bIsR
 
 	if (currentRegion.ScrollOptions & nsEGUIScrollOption::Scrollable_X)
 	{
-		NS_AssertV(width > 0.0f, "width must be greater than 0.0f if scroll-X is enabled!");
+		NS_AssertV(width > 0.0f, TEXT("width must be greater than 0.0f if scroll-X is enabled!"));
 	}
 	else if (width <= 0.0f)
 	{
@@ -574,7 +574,7 @@ void nsGUIContext::UpdateControlInCurrentRegion(nsGUIControl& control, bool bIsR
 
 	if (currentRegion.ScrollOptions & nsEGUIScrollOption::Scrollable_Y)
 	{
-		NS_AssertV(height > 0.0f, "height must be greater than 0.0f if scroll-Y is enabled!");
+		NS_AssertV(height > 0.0f, TEXT("height must be greater than 0.0f if scroll-Y is enabled!"));
 	}
 	else if (height <= 0.0f)
 	{
@@ -639,7 +639,7 @@ void nsGUIContext::UpdateControlInCurrentRegion(nsGUIControl& control, bool bIsR
 }
 
 
-nsGUIControl nsGUIContext::AddControlText(const char* text, nsColor color, nsFontID font, nsMaterialID material) noexcept
+nsGUIControl nsGUIContext::AddControlText(const wchar_t* text, nsColor color, nsFontID font, nsMaterialID material) noexcept
 {
 	nsGUIControl textControl;
 	const int charLength = nsPlatform::String_Length(text);
@@ -671,7 +671,7 @@ nsGUIControl nsGUIContext::AddControlText(const char* text, nsColor color, nsFon
 }
 
 
-nsGUIControl nsGUIContext::AddControlTextOnRect(const char* text, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment, const nsColor& color, nsFontID font, nsMaterialID material) noexcept
+nsGUIControl nsGUIContext::AddControlTextOnRect(const wchar_t* text, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment, const nsColor& color, nsFontID font, nsMaterialID material) noexcept
 {
 	const int charLength = nsPlatform::String_Length(text);
 
@@ -772,7 +772,7 @@ void nsGUIContext::SetControlInputFocus(const char* controlUniqueId) noexcept
 
 	if (CurrentControlInputFocus)
 	{
-		NS_LogDebug(GUILog, "Set control input focus: %s", CurrentControlInputFocus);
+		NS_LogDebug(GUILog, TEXT("Set control input focus: %s"), CurrentControlInputFocus);
 	}
 }
 

@@ -24,11 +24,13 @@ namespace nsFileSystem
 
 	extern NS_CORE_API bool FileMove(const nsString& srcFilePath, const nsString& dstFilePath) noexcept;
 
-	extern NS_CORE_API void FileIterate(nsTArray<nsString>& outFiles, const nsString& folderPath, bool bIncludeSubfolders, const nsString& optExtension = "") noexcept;
+	extern NS_CORE_API void FileIterate(nsTArray<nsString>& outFiles, const nsString& folderPath, bool bIncludeSubfolders, const nsString& optExtension = TEXT("")) noexcept;
 
 	extern NS_CORE_API bool FileReadBinary(const nsString& filePath, nsTArray<uint8>& outResult) noexcept;
 
 	extern NS_CORE_API bool FileReadText(const nsString& filePath, nsString& outResult) noexcept;
+
+	extern NS_CORE_API bool FileReadText(const nsString& filePath, nsTArray<char>& outResult) noexcept;
 
 	extern NS_CORE_API bool FileWriteBinary(const nsString& filePath, const uint8* data, int dataSize) noexcept;
 	
@@ -51,6 +53,6 @@ namespace nsFileSystem
 	NS_NODISCARD extern NS_CORE_API nsString FileGetName(const nsString& file) noexcept;
 
 	// Get file extension with dot
-	NS_NODISCARD extern NS_CORE_API nsName FileGetExtension(const nsString& file) noexcept;
+	NS_NODISCARD extern NS_CORE_API nsString FileGetExtension(const nsString& file) noexcept;
 	
 };

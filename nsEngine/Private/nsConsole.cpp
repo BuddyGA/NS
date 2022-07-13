@@ -86,29 +86,6 @@ void nsConsoleManager::AddLogEntry(const nsString& log, nsColor color)
 }
 
 
-void nsConsoleManager::AddLogEntryWithCategory(const nsLogCategory& category, nsELogVerbosity verbosity, const nsString& log)
-{
-	if (verbosity < category.Verbosity || category.Verbosity < nsLogger::Get().GetGlobalVerbosity())
-	{
-		return;
-	}
-
-	nsString output = nsLogger::Get().OutputLogCategory(category, verbosity, log);
-	nsColor color = nsColor::WHITE;
-
-	if (verbosity == nsELogVerbosity::LV_WARNING)
-	{
-		color = nsColor::YELLOW;
-	}
-	else if (verbosity == nsELogVerbosity::LV_ERROR)
-	{
-		color = nsColor::RED;
-	}
-
-	AddLogEntry(output, color);
-}
-
-
 void nsConsoleManager::ExecuteCommand(const nsString& textCommand)
 {
 	if (textCommand.GetLength() == 0)
@@ -120,7 +97,7 @@ void nsConsoleManager::ExecuteCommand(const nsString& textCommand)
 	const nsTArray<nsString> inputs = lowerCaseTextCommand.Splits(' ');
 	const nsString& command = inputs[0];
 
-	if (command == "clear")
+	if (command == TEXT("clear"))
 	{
 		LogChars.Clear();
 		LogEntries.Clear();
@@ -131,11 +108,11 @@ void nsConsoleManager::ExecuteCommand(const nsString& textCommand)
 
 	if (commandCallback)
 	{
-		AddLogEntry(nsString::Format("Command: %s", *textCommand), nsColor::GREEN);
+		AddLogEntry(nsString::Format(TEXT("Command: %s"), *textCommand), nsColor::GREEN);
 		commandCallback->Broadcast(command, inputs.GetCount() > 1 ? &inputs[1] : nullptr, inputs.GetCount() - 1);
 	}
 	else
 	{
-		AddLogEntry(nsString::Format("Unrecognized command: %s", *command), nsColor::YELLOW);
+		AddLogEntry(nsString::Format(TEXT("Unrecognized command: %s"), *command), nsColor::YELLOW);
 	}
 }

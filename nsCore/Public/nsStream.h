@@ -179,7 +179,7 @@ public:
 class NS_CORE_API nsFileStreamReader : public nsStream
 {
 private:
-	nsFileHandle Handle;
+	nsPlatformFileHandle Handle;
 
 
 public:

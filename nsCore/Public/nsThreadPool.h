@@ -18,7 +18,7 @@ public:
 	virtual bool IsDone() const noexcept = 0;
 
 #ifdef _DEBUG
-	virtual nsString GetDebugName() const noexcept { return ""; }
+	virtual nsString GetDebugName() const noexcept { return TEXT(""); }
 #endif // _DEBUG
 
 };

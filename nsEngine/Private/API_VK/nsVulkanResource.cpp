@@ -44,7 +44,7 @@ void nsVulkanBuffer::Resize(VkDeviceSize newSize) noexcept
 		return;
 	}
 
-	NS_LogDebug(VulkanLog, "Resize buffer [%s] [PrevSize: %u, NewSize: %u]", *DebugName, Info.size, newSize);
+	NS_LogDebug(VulkanLog, TEXT("Resize buffer [%s] [PrevSize: %u, NewSize: %u]"), *DebugName.ToString(), Info.size, newSize);
 
 	Info.size = newSize;
 
@@ -73,7 +73,7 @@ void* nsVulkanBuffer::MapMemory() noexcept
 
 		VkMemoryPropertyFlags memoryPropertyFlags;
 		vmaGetMemoryTypeProperties(allocator, allocationInfo.memoryType, &memoryPropertyFlags);
-		NS_ValidateV(memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, "Memory not mappable!");
+		NS_ValidateV(memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, TEXT("Memory not mappable!"));
 
 		vmaMapMemory(allocator, Allocation, &MapPtr);
 	}

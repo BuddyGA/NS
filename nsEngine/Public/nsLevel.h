@@ -9,7 +9,6 @@ class NS_ENGINE_API nsLevel : public nsObject
 	NS_DECLARE_OBJECT()
 
 private:
-	nsName Name;
 	nsWorld* World;
 	nsTArray<nsActor*> Actors;
 	uint8 bPersistent : 1;
@@ -18,7 +17,7 @@ private:
 
 
 public:
-	nsLevel(nsName name);
+	nsLevel(nsString name);
 	void Destroy();
 	
 	// Add actor into level
@@ -26,12 +25,6 @@ public:
 
 	// Remove actor from level
 	bool RemoveActor(nsActor* actor) noexcept;
-
-
-	NS_NODISCARD_INLINE const nsName& GetName() const noexcept
-	{
-		return Name;
-	}
 
 
 	NS_NODISCARD_INLINE nsWorld* GetWorld() const noexcept

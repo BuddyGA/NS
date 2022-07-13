@@ -30,7 +30,7 @@ void nsMemory::Initialize(nsName name, int totalSize, int defaultAlignment) noex
 {
 	NS_Assert(totalSize >= 0);
 	NS_Assert(defaultAlignment >= 4);
-	NS_AssertV(Blocks == nullptr, "Memory allocator already initialized!");
+	NS_AssertV(Blocks == nullptr, TEXT("Memory allocator already initialized!"));
 
 	Name = name;
 
@@ -67,7 +67,7 @@ nsMemory::Block* nsMemory::FindFreeBlock(int requestedSize) const noexcept
 void* nsMemory::AllocateFromBlock(int size, nsName debugName) noexcept
 {
 	const int newBlockSize = sizeof(Block) + size;
-	NS_ValidateV(AllocatedSize + newBlockSize <= TotalSize, "Memory allocation failed. Not enough memory! [%s][RequestedBlockSize:%u, AllocatedSize: %u, TotalSize: %u]", Name, newBlockSize, AllocatedSize, TotalSize);
+	NS_ValidateV(AllocatedSize + newBlockSize <= TotalSize, TEXT("Memory allocation failed. Not enough memory! [%s][RequestedBlockSize:%u, AllocatedSize: %u, TotalSize: %u]"), *Name.ToString(), newBlockSize, AllocatedSize, TotalSize);
 
 	Block* block = FindFreeBlock(newBlockSize);
 
@@ -77,7 +77,7 @@ void* nsMemory::AllocateFromBlock(int size, nsName debugName) noexcept
 		block = FindFreeBlock(newBlockSize);
 	}
 
-	NS_ValidateV(block, "Not enough memory. No fit block found! [%s]", Name);
+	NS_ValidateV(block, TEXT("Not enough memory. No fit block found! [%s]"), *Name.ToString());
 
 	const uint32 remainingSize = block->Size - newBlockSize;
 
@@ -110,7 +110,7 @@ void* nsMemory::AllocateFromBlock(int size, nsName debugName) noexcept
 
 bool nsMemory::IsValidPtr(void* data) const noexcept
 {
-	NS_AssertV(Blocks, "Must call Initialize()");
+	NS_AssertV(Blocks, TEXT("Must call Initialize()"));
 
 	const uint8* memoryPtr = (uint8*)Blocks;
 	const uint8* dataPtr = (uint8*)data;
@@ -121,8 +121,8 @@ bool nsMemory::IsValidPtr(void* data) const noexcept
 
 void* nsMemory::Allocate(int size, nsName debugName) noexcept
 {
-	NS_AssertV(Blocks, "Must call Initialize()!");
-	NS_AssertV(size > 0, "size must be greater than 0!");
+	NS_AssertV(Blocks, TEXT("Must call Initialize()!"));
+	NS_AssertV(size > 0, TEXT("size must be greater than 0!"));
 
 	const int alignedSize = size + (DefaultAlignmentSize - (size % DefaultAlignmentSize)) % DefaultAlignmentSize;
 
@@ -132,8 +132,8 @@ void* nsMemory::Allocate(int size, nsName debugName) noexcept
 
 void* nsMemory::AllocateAligned(int size, int alignment, nsName debugName) noexcept
 {
-	NS_AssertV(Blocks, "Must call Initialize()!");
-	NS_AssertV(size > 0, "size must be greater than 0!");
+	NS_AssertV(Blocks, TEXT("Must call Initialize()!"));
+	NS_AssertV(size > 0, TEXT("size must be greater than 0!"));
 
 	const int alignedSize = size + (alignment - (size % alignment)) % alignment;
 
@@ -144,10 +144,10 @@ void* nsMemory::AllocateAligned(int size, int alignment, nsName debugName) noexc
 void nsMemory::Deallocate(void* data) noexcept
 {
 	NS_Assert(data);
-	NS_AssertV(IsValidPtr(data), "Invalid pointer memory!");
+	NS_ValidateV(IsValidPtr(data), TEXT("Invalid pointer memory!"));
 
 	Block* block = (Block*)data - 1;
-	NS_AssertV(block->IsFree == 0, "Cannot deallocate an already freed block!");
+	NS_ValidateV(block->IsFree == 0, TEXT("Cannot deallocate an already freed block!"));
 
 	const uint32 dataSize = block->Size - sizeof(Block);
 	nsPlatform::Memory_Set(data, -11, dataSize);
@@ -159,7 +159,7 @@ void nsMemory::Deallocate(void* data) noexcept
 
 void nsMemory::Defragment() noexcept
 {
-	NS_AssertV(Blocks, "Must call Initialize()");
+	NS_AssertV(Blocks, TEXT("Must call Initialize()"));
 
 	Block* block = Blocks;
 

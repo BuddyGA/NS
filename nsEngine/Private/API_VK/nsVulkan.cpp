@@ -134,10 +134,10 @@ NS_VK_DEFINE_FUNCTION(vkCmdInsertDebugUtilsLabelEXT);
 #define NS_VK_GetDeviceFunction(func) func = (PFN_##func)vkGetDeviceProcAddr(Device, #func)
 
 
-nsLogCategory VulkanLog("nsVulkanLog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory VulkanLog(TEXT("nsVulkanLog"), nsELogVerbosity::LV_DEBUG);
 
-static nsMemory VulkanMemory("vulkan_default", NS_MEMORY_SIZE_KiB(128), 16);
-static nsModuleHandle Module;
+static nsMemory VulkanMemory("vulkan_heap", NS_MEMORY_SIZE_KiB(128), 16);
+static nsPlatformModuleHandle Module;
 static VkInstance Instance;
 static VkDebugUtilsMessengerEXT DebugUtilsMessenger;
 static VkPhysicalDevice PhysicalDevice;
@@ -228,13 +228,18 @@ static VkBool32 ns_VulkanDebugMessengerCallback(VkDebugUtilsMessageSeverityFlagB
 		type = "GENERAL";
 	}
 
-	nsString message = nsString::Format("[%s]\n\t%s\n", type, pCallbackData->pMessage);
+	wchar_t wBuffer[2048] = {};
+	nsPlatform::String_ConvertToWide(wBuffer, pCallbackData->pMessage, nsPlatform::String_Length(pCallbackData->pMessage));
+
+	nsString message = nsString::Format(TEXT("[%s]\n\t%s\n"), type, wBuffer);
 
 	if (pCallbackData->objectCount > 0)
 	{
 		for (uint32 i = 0; i < pCallbackData->objectCount; ++i)
 		{
-			message += nsString::Format("\tObjectName: %s\n", pCallbackData->pObjects[i].pObjectName);
+			wchar_t wObjectName[256] = {};
+			nsPlatform::String_ConvertToWide(wObjectName, pCallbackData->pObjects[i].pObjectName, nsPlatform::String_Length(pCallbackData->pObjects[i].pObjectName));
+			message += nsString::Format(TEXT("\tObjectName: %s\n"), wObjectName);
 		}
 	}
 
@@ -242,7 +247,9 @@ static VkBool32 ns_VulkanDebugMessengerCallback(VkDebugUtilsMessageSeverityFlagB
 	{
 		for (uint32 i = 0; i < pCallbackData->queueLabelCount; ++i)
 		{
-			message += nsString::Format("\tQueue: %s\n", pCallbackData->pQueueLabels[i].pLabelName);
+			wchar_t wLabelName[256] = {};
+			nsPlatform::String_ConvertToWide(wLabelName, pCallbackData->pQueueLabels[i].pLabelName, nsPlatform::String_Length(pCallbackData->pQueueLabels[i].pLabelName));
+			message += nsString::Format(TEXT("\tQueue: %s\n"), wLabelName);
 		}
 	}
 
@@ -257,7 +264,7 @@ static VkBool32 ns_VulkanDebugMessengerCallback(VkDebugUtilsMessageSeverityFlagB
 	else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
 		NS_LogError(VulkanLog, *message);
-		NS_ValidateV(0, "Vulkan validation error!");
+		NS_ValidateV(0, TEXT("Vulkan validation error!"));
 	}
 	else
 	{
@@ -343,11 +350,11 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 		return;
 	}
 
-	NS_LogInfo(VulkanLog, "Initialize vulkan");
+	NS_LogInfo(VulkanLog, TEXT("Initialize vulkan"));
 	bValidationLayer = bEnableValidationLayer;
 
 	NS_Assert(Module == nullptr);
-	Module = nsPlatform::Module_Load(NS_VK_MODULE_NAME);
+	Module = nsPlatform::Module_Load(TEXT("vulkan-1.dll"));
 
 	vkGetInstanceProcAddr = nsPlatform::Module_GetFunctionAs<PFN_vkGetInstanceProcAddr>(Module, "vkGetInstanceProcAddr");
 	vkEnumerateInstanceLayerProperties = nsPlatform::Module_GetFunctionAs<PFN_vkEnumerateInstanceLayerProperties>(Module, "vkEnumerateInstanceLayerProperties");
@@ -385,7 +392,10 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 		if (!bSupported)
 		{
-			NS_LogError(VulkanLog, "Required instance layer %s not supported!", name);
+			wchar_t wName[256] = {};
+			nsPlatform::String_ConvertToWide(wName, name, nsPlatform::String_Length(name));
+
+			NS_LogError(VulkanLog, TEXT("Required instance layer %s not supported!"), wName);
 			NS_Abort();
 			return;
 		}
@@ -451,7 +461,10 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 		if (!bSupported)
 		{
-			NS_LogError(VulkanLog, "Fail to initialize vulkan. Required instance extension %s not supported!", name);
+			wchar_t wName[256] = {};
+			nsPlatform::String_ConvertToWide(wName, name, nsPlatform::String_Length(name));
+
+			NS_LogError(VulkanLog, TEXT("Fail to initialize vulkan. Required instance extension %s not supported!"), wName);
 			NS_Abort();
 			return;
 		}
@@ -652,8 +665,12 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 			PresentSupportQueueFamilyIndex = UINT32_MAX;
 			bFoundSuitableGPU = true;
 
-			NS_LogDebug(VulkanLog, "Found supported GPU [Vendor: %s, Name: %s, DriverVersion: %u.%u.%u, VideoMemory: %u MiB]",
-				ns_VendorName(static_cast<int>(properties.vendorID)), properties.deviceName,
+			wchar_t wDeviceName[256] = {};
+			nsPlatform::String_ConvertToWide(wDeviceName, properties.deviceName, nsPlatform::String_Length(properties.deviceName));
+
+			NS_LogDebug(VulkanLog, TEXT("Found supported GPU [Vendor: %s, Name: %s, DriverVersion: %u.%u.%u, VideoMemory: %u MiB]"),
+				ns_VendorName(static_cast<int>(properties.vendorID)), 
+				wDeviceName,
 				VK_VERSION_MAJOR(properties.driverVersion), VK_VERSION_MINOR(properties.driverVersion), VK_VERSION_PATCH(properties.driverVersion),
 				0 / NS_MEMORY_SIZE_MiB(1)
 			);
@@ -664,7 +681,7 @@ void nsVulkan::Initialize(bool bEnableValidationLayer) noexcept
 
 	if (!bFoundSuitableGPU)
 	{
-		NS_LogError(VulkanLog, "GPU with vulkan support not found!");
+		NS_LogError(VulkanLog, TEXT("GPU with vulkan support not found!"));
 		NS_Abort();
 	}
 
@@ -1322,7 +1339,7 @@ VkSampler nsVulkan::GetDefaultSampler() noexcept
 VkCommandBuffer nsVulkan::AllocateGraphicsCommandBuffer() noexcept
 {
 	nsVulkanFrame& frame = FrameDatas[FrameIndex];
-	NS_AssertV(frame.GraphicsCommandBufferAllocateIndex + 1 < frame.GraphicsCommandBuffers.GetCount(), "Exceeds maximum capacity graphics command buffer pool!");
+	NS_AssertV(frame.GraphicsCommandBufferAllocateIndex + 1 < frame.GraphicsCommandBuffers.GetCount(), TEXT("Exceeds maximum capacity graphics command buffer pool!"));
 	return frame.GraphicsCommandBuffers[frame.GraphicsCommandBufferAllocateIndex++];
 }
 
@@ -1344,7 +1361,7 @@ void nsVulkan::SubmitGraphicsCommandBuffer(const VkCommandBuffer* commandBuffers
 VkCommandBuffer nsVulkan::AllocateTransferCommandBuffer() noexcept
 {
 	nsVulkanFrame& frame = FrameDatas[FrameIndex];
-	NS_AssertV(frame.TransferCommandBufferAllocateIndex + 1 < frame.TransferCommandBuffers.GetCount(), "Exceeds maximum capacity transfer command buffer pool!");
+	NS_AssertV(frame.TransferCommandBufferAllocateIndex + 1 < frame.TransferCommandBuffers.GetCount(), TEXT("Exceeds maximum capacity transfer command buffer pool!"));
 	return frame.TransferCommandBuffers[frame.TransferCommandBufferAllocateIndex++];
 }
 

@@ -345,7 +345,7 @@ public:
 	{
 		if (ConsoleFont == nsFontID::INVALID)
 		{
-			ConsoleFont = nsFontManager::CreateFontTTF("../../../Assets/Fonts/ShareTechMono_Regular.ttf", 15.0f);
+			ConsoleFont = nsFontManager::CreateFontTTF(TEXT("../../../Assets/Fonts/ShareTechMono_Regular.ttf"), 15.0f);
 		}
 
 		if (!bOpened)

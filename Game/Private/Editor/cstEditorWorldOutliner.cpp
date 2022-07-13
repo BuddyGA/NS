@@ -47,8 +47,7 @@ nsActor* cstEditorWorldOutliner::DrawGUI(nsGUIContext& context, nsWorld* world, 
 
 				if (control.bIsVisible)
 				{
-					const nsName& name = actor->Name;
-					context.AddDrawTextOnRect(*name, name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
+					context.AddDrawTextOnRect(*actor->Name, actor->Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
 
 					if (control.Interactions & nsEGUIRectInteraction::Pressed)
 					{

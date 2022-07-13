@@ -78,7 +78,7 @@ static NS_NODISCARD_INLINE CMP_FORMAT ns_ConvertTextureFormatToCMP(nsETextureFor
 		default: break;
 	}
 
-	NS_ValidateV(0, "Unsupported texture format!");
+	NS_ValidateV(0, TEXT("Unsupported texture format!"));
 	return CMP_FORMAT_Unknown;
 }
 
@@ -87,30 +87,32 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 {
 	if (!nsFileSystem::FileExists(option.SourceFile))
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import texture. Source file [%s] does not exists!", *option.SourceFile);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import texture. Source file [%s] does not exists!"), *option.SourceFile);
 		return;
 	}
 
 	if (!nsFileSystem::FolderCreate(dstFolderPath))
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import texture from file [%s]. Fail to create destination folder [%s]", *option.SourceFile, *dstFolderPath);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import texture from file [%s]. Fail to create destination folder [%s]"), *option.SourceFile, *dstFolderPath);
 		return;
 	}
 
-	const nsName fileName = *nsFileSystem::FileGetName(option.SourceFile);
-	const nsName fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
+	const nsString fileName = nsFileSystem::FileGetName(option.SourceFile);
+	const nsString fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
 
-	if (!(fileExt == ".bmp" || fileExt == ".png" || fileExt == ".tga"))
+	if (!(fileExt == TEXT(".bmp") || fileExt == TEXT(".png") || fileExt == TEXT(".tga") ))
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import texture from file [%s]. File format not supported!", *option.SourceFile);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import texture from file [%s]. File format not supported!"), *option.SourceFile);
 		return;
 	}
 
 	CMP_MipSet srcMipSet = {};
+	char sourceFileCstr[256];
+	nsPlatform::String_ConvertToMultiByte(sourceFileCstr, *option.SourceFile, option.SourceFile.GetLength());
 
-	if (CMP_LoadTexture(*option.SourceFile, &srcMipSet) != CMP_OK)
+	if (CMP_LoadTexture(sourceFileCstr, &srcMipSet) != CMP_OK)
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import texture from file [%s]. Compressonator: Load texture data failed!", *option.SourceFile);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import texture from file [%s]. Compressonator: Load texture data failed!"), *option.SourceFile);
 		return;
 	}
 
@@ -132,7 +134,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 
 		if (CMP_ProcessTexture(&srcMipSet, &dstMipSet, options, nullptr) != CMP_OK)
 		{
-			NS_CONSOLE_Warning(AssetLog, "Fail to import texture from file [%s]. Compressonator: Fail to process texture compression!", *option.SourceFile);
+			NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import texture from file [%s]. Compressonator: Fail to process texture compression!"), *option.SourceFile);
 			CMP_FreeMipSet(&srcMipSet);
 			CMP_FreeMipSet(&dstMipSet);
 			return;
@@ -144,7 +146,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 	const CMP_MipSet* useMipSet = bCompressed ? &dstMipSet : &srcMipSet;
 
 	nsTextureManager& textureManager = nsTextureManager::Get();
-	const nsTextureID texture = textureManager.CreateTexture2D(fileName, option.Format, useMipSet->m_nWidth, useMipSet->m_nHeight);
+	const nsTextureID texture = textureManager.CreateTexture2D(*fileName, option.Format, useMipSet->m_nWidth, useMipSet->m_nHeight);
 
 	const CMP_MipLevelTable& mipLevelTable0 = useMipSet->m_pMipLevelTable[0];
 	textureManager.UpdateTextureMipData(texture, 0, mipLevelTable0->m_pbData, mipLevelTable0->m_dwLinearSize);
@@ -160,9 +162,9 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 	CMP_FreeMipSet(&srcMipSet);
 	CMP_FreeMipSet(&dstMipSet);
 
-	NS_CONSOLE_Log(AssetLog, "Imported texture from source file: %s", *option.SourceFile);
+	NS_CONSOLE_Log(AssetLog, TEXT("Imported texture from source file: %s"), *option.SourceFile);
 
-	nsAssetManager::Get().SaveTextureAsset(fileName, texture, dstFolderPath, false);
+	nsAssetManager::Get().SaveTextureAsset(*fileName, texture, dstFolderPath, false);
 }
 
 
@@ -181,20 +183,20 @@ void nsAssetImporter::ImportAssetFromModelFile(const nsAssetImportOption_Model& 
 {
 	if (!nsFileSystem::FileExists(option.SourceFile))
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import model. Source file [%s] does not exists!", *option.SourceFile);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import model. Source file [%s] does not exists!"), *option.SourceFile);
 		return;
 	}
 
-	const nsName fileName = *nsFileSystem::FileGetName(option.SourceFile);
-	const nsName fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
+	const nsString fileName = *nsFileSystem::FileGetName(option.SourceFile);
+	const nsString fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
 
-	if (!(fileExt == ".glb" || fileExt == ".gltf" || fileExt == ".fbx"))
+	if (!(fileExt == TEXT(".glb") || fileExt == TEXT(".fbx")) )
 	{
-		NS_CONSOLE_Warning(AssetLog, "Fail to import model from file [%s]. File format not supported!", *option.SourceFile);
+		NS_CONSOLE_Warning(AssetLog, TEXT("Fail to import model from file [%s]. File format not supported!"), *option.SourceFile);
 		return;
 	}
 
-	if (fileExt == ".glb")
+	if (fileExt == TEXT(".glb") )
 	{
 		ImportAssetFromModelFile_GLB(option, dstFolderPath);
 	}

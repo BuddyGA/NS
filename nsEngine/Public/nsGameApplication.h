@@ -29,7 +29,7 @@ public:
 
 
 public:
-	nsGameApplication(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
+	nsGameApplication(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
 	virtual void Initialize() noexcept;
 	virtual void Shutdown() noexcept;
 	virtual void HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount) noexcept;

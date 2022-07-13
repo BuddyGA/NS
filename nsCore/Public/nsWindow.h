@@ -26,8 +26,8 @@ class NS_CORE_API nsWindow
 	NS_DECLARE_NOCOPY(nsWindow)
 
 private:
-	char Title[32];
-	nsWindowHandle WindowHandle;
+	wchar_t Title[32];
+	nsPlatformWindowHandle WindowHandle;
 	nsEWindowSizeState WindowSizeState;
 	nsEWindowFullscreenMode WindowFullscreenMode;
 	nsPointInt PrevMousePosition;
@@ -37,7 +37,7 @@ private:
 
 
 public:
-	nsWindow(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
+	nsWindow(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
 	virtual ~nsWindow() noexcept;
 
 	// Get window dimension
@@ -77,15 +77,22 @@ public:
 	}
 
 
+	// Set mouse cursor clip inside rect
+	NS_INLINE void ClipMouseCursor(nsRectInt rect) noexcept
+	{
+		nsPlatform::Mouse_ClipCursor(true, WindowHandle, rect);
+	}
+
+
 	// Get window title
-	NS_NODISCARD_INLINE const char* GetTitle() const noexcept
+	NS_NODISCARD_INLINE const wchar_t* GetTitle() const noexcept
 	{
 		return Title;
 	}
 
 
 	// Get window handle
-	NS_NODISCARD_INLINE nsWindowHandle GetHandle() const noexcept
+	NS_NODISCARD_INLINE nsPlatformWindowHandle GetHandle() const noexcept
 	{
 		return WindowHandle;
 	}

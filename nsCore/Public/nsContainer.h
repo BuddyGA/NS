@@ -9,7 +9,7 @@
 #define NS_ARRAY_INDEX_FIRST		(0)
 #define NS_ARRAY_INDEX_LAST			(INT32_MAX - 1)
 #define NS_ARRAY_MAX_COUNT			(INT32_MAX)
-#define NS_ARRAY_ValidateIndex(i)	NS_ValidateV(i >= 0 && i < Count, "Array index [%i] is out of bound!", i)
+#define NS_ARRAY_ValidateIndex(i)	NS_ValidateV(i >= 0 && i < Count, TEXT("Array index [%i] is out of bound!"), i)
 
 
 
@@ -166,7 +166,7 @@ public:
 		}
 
 		Data = static_cast<T*>(nsPlatform::Memory_Realloc(Data, sizeof(T) * newCapacity));
-		NS_ValidateV(Data, "nsTArray memory realloc failed!");
+		NS_ValidateV(Data, TEXT("nsTArray memory realloc failed!"));
 		Capacity = newCapacity;
 	}
 
@@ -633,7 +633,7 @@ public:
 			return;
 		}
 
-		NS_ValidateV(newCount <= CAPACITY, "nsTArrayInline exceeds capacity!");
+		NS_ValidateV(newCount <= CAPACITY, TEXT("nsTArrayInline exceeds capacity!"));
 		const int lastIndex = Count;
 
 		if (newCount > Count)
@@ -1140,7 +1140,7 @@ public:
 
 	NS_INLINE void RemoveAt(int index)
 	{
-		NS_ValidateV(IsValid(index), "nsTArrayFreeList element at index %i is not valid!", index);
+		NS_ValidateV(IsValid(index), TEXT("nsTArrayFreeList element at index %i is not valid!"), index);
 
 		T& data = Array[index];
 		data.~T();
@@ -1218,14 +1218,14 @@ public:
 
 	inline T& operator[](int index)
 	{
-		NS_ValidateV(IsValid(index), "nsTArrayFreeList element at index %i is not valid!", index);
+		NS_ValidateV(IsValid(index), TEXT("nsTArrayFreeList element at index %i is not valid!"), index);
 		return Array[index];
 	}
 
 
 	inline const T& operator[](int index) const
 	{
-		NS_ValidateV(IsValid(index), "nsTArrayFreeList element at index %i is not valid!", index);
+		NS_ValidateV(IsValid(index), TEXT("nsTArrayFreeList element at index %i is not valid!"), index);
 		return Array[index];
 	}
 
@@ -1501,7 +1501,7 @@ public:
 		{
 		#if NS_MAP_CHECK_COLLISION
 			const int keyIndex = Keys.Find(key);
-			NS_ValidateV(keyIndex != NS_ARRAY_INDEX_INVALID, "nsTMap collision!");
+			NS_ValidateV(keyIndex != NS_ARRAY_INDEX_INVALID, TEXT("nsTMap collision!"));
 		#endif // NS_MAP_CHECK_COLLISION
 		}
 
@@ -1526,7 +1526,7 @@ public:
 		{
 		#if NS_MAP_CHECK_COLLISION
 			const int keyIndex = Keys.Find(key);
-			NS_ValidateV(keyIndex != NS_ARRAY_INDEX_INVALID, "nsTMap collision!");
+			NS_ValidateV(keyIndex != NS_ARRAY_INDEX_INVALID, TEXT("nsTMap collision!"));
 		#endif // NS_MAP_CHECK_COLLISION
 
 			Values[index] = TValue(std::forward<TConstructorArgs>(args)...);
@@ -1665,7 +1665,7 @@ public:
 	NS_INLINE const TValue& operator[](const TUniqueKey& key) const
 	{
 		const int index = FindIndex(ns_GetHash(key));
-		NS_ValidateV(index != NS_ARRAY_INDEX_INVALID, "nsTMap key not found!");
+		NS_ValidateV(index != NS_ARRAY_INDEX_INVALID, TEXT("nsTMap key not found!"));
 
 		return Values[index];
 	}

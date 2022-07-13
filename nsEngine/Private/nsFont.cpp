@@ -2,6 +2,7 @@
 #include "nsLogger.h"
 #include "nsFileSystem.h"
 #include "nsTextureManager.h"
+#include "nsConsole.h"
 
 #define STB_RECT_PACK_IMPLEMENTATION
 #include "ThirdParty/stb_rect_pack.h"
@@ -13,7 +14,7 @@
 NS_ENGINE_DEFINE_HANDLE(nsFontID);
 
 
-static nsLogCategory FontLog = { "nsFontLog", nsELogVerbosity::LV_DEBUG };
+static nsLogCategory FontLog(TEXT("nsFontLog"), nsELogVerbosity::LV_DEBUG);
 
 
 struct nsFontData
@@ -56,8 +57,8 @@ nsFontID nsFontManager::CreateFontTTF(const nsString& ttfFile, float fontSize)
 	const int texId = FontTextures.Add();
 	NS_Assert(infoId == dataId && dataId == texId);
 
-	const nsName ext = nsFileSystem::FileGetExtension(ttfFile);
-	NS_ValidateV(ext == ".ttf", "File must be a valid TTF File!");
+	const nsString ext = nsFileSystem::FileGetExtension(ttfFile);
+	NS_ValidateV(ext == TEXT(".ttf"), TEXT("File must be a valid TTF File!"));
 
 	const nsString name = nsFileSystem::FileGetName(ttfFile);
 
@@ -68,7 +69,7 @@ nsFontID nsFontManager::CreateFontTTF(const nsString& ttfFile, float fontSize)
 
 	if (fileData.IsEmpty())
 	{
-		NS_LogError(FontLog, "Fail to create font. Cannot read data from file [%s]!", *ttfFile);
+		NS_CONSOLE_Error(FontLog, TEXT("Fail to create font. Cannot read data from file [%s]!"), *ttfFile);
 		return nsFontID::INVALID;
 	}
 
@@ -77,7 +78,7 @@ nsFontID nsFontManager::CreateFontTTF(const nsString& ttfFile, float fontSize)
 	{
 		const int error = stbtt_InitFont(&fontInfo, fileData.GetData(), 0);
 		NS_Assert(error != 0);
-		NS_LogInfo(FontLog, "Create new font [%s, %ipx]", *name, static_cast<int>(fontSize));
+		NS_CONSOLE_Log(FontLog, TEXT("Create new font [%s, %ipx]"), *name, static_cast<int>(fontSize));
 	}
 
 
@@ -121,7 +122,7 @@ bool nsFontManager::IsFontValid(nsFontID font) noexcept
 }
 
 
-nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& position, const char* text, int length)
+nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& position, const wchar_t* text, int length)
 {
 	nsRectFloat rect;
 	rect.X = position.X;
@@ -139,10 +140,10 @@ nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& posi
 
 	for (int i = 0; i < length; ++i)
 	{
-		char c = text[i];
-		NS_Assert(c != '\0');
+		wchar_t c = text[i];
+		NS_Assert(c != TEXT('\0'));
 
-		if (c == '\n')
+		if (c == TEXT('\n'))
 		{
 			rect.Height += data.LineSpace;
 			continue;
@@ -157,7 +158,7 @@ nsRectFloat nsFontManager::CalculateRect(nsFontID font, const nsPointFloat& posi
 }
 
 
-nsRectFloat nsFontManager::CalculateSelectedRect(nsFontID font, const nsPointFloat& position, const char* text, int length, int selectedIndex, int selectedCount) noexcept
+nsRectFloat nsFontManager::CalculateSelectedRect(nsFontID font, const nsPointFloat& position, const wchar_t* text, int length, int selectedIndex, int selectedCount) noexcept
 {
 	nsRectFloat rect;
 	rect.X = position.X;
@@ -176,9 +177,9 @@ nsRectFloat nsFontManager::CalculateSelectedRect(nsFontID font, const nsPointFlo
 
 	for (int i = 0; i < selectedIndex; ++i)
 	{
-		char c = text[i];
+		wchar_t c = text[i];
 
-		if (c == '\n' || c == '\0')
+		if (c == TEXT('\n') || c == TEXT('\0'))
 		{
 			continue;
 		}
@@ -190,9 +191,9 @@ nsRectFloat nsFontManager::CalculateSelectedRect(nsFontID font, const nsPointFlo
 
 	for (int i = selectedIndex; i < (selectedIndex + selectedCount); ++i)
 	{
-		char c = text[i];
+		wchar_t c = text[i];
 
-		if (c == '\n' || c == '\0')
+		if (c == TEXT('\n') || c == TEXT('\0'))
 		{
 			continue;
 		}
@@ -228,7 +229,7 @@ float nsFontManager::CalculateCaretPositionX(nsFontID font, const nsString& text
 			break;
 		}
 
-		char c = text[i];
+		wchar_t c = text[i];
 		advance += data.PackedCharacters[c - 32].xadvance;
 	}
 
@@ -236,7 +237,7 @@ float nsFontManager::CalculateCaretPositionX(nsFontID font, const nsString& text
 }
 
 
-int nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, const char* text, int length, const nsColor& color, nsTArray<nsVertexGUI>& outVertices, nsTArray<uint32>& outIndices)
+int nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, const wchar_t* text, int length, const nsColor& color, nsTArray<nsVertexGUI>& outVertices, nsTArray<uint32>& outIndices)
 {
 	if (text == nullptr || length <= 0)
 	{
@@ -257,10 +258,10 @@ int nsFontManager::GenerateVertices(nsFontID font, nsPointFloat& position, const
 
 	for (int i = 0; i < length; ++i)
 	{
-		char c = text[i];
-		NS_Assert(c != '\0');
+		wchar_t c = text[i];
+		NS_Assert(c != TEXT('\0'));
 
-		if (c == '\n')
+		if (c == TEXT('\n'))
 		{
 			position.X = initialPosition.X;
 			position.Y += data.LineSpace;

@@ -278,19 +278,14 @@ void nsSkeletalMeshComponent::SetSkeleton(nsSharedSkeletonAsset newSkeleton)
 
 	if (SkeletonAsset.IsValid())
 	{
-		AnimationInstance = animationManager.CreateInstance("anim_instance", SkeletonAsset.GetSkeleton());
+		AnimationInstance = animationManager.CreateInstance(nsName::Format("%s.anim_instance", *Actor->Name), SkeletonAsset.GetSkeleton());
 	}
 }
 
 
 void nsSkeletalMeshComponent::PlayAnimation(nsSharedAnimationAsset animation, float playRate, bool bLoop)
 {
-	if (!SkeletonAsset.IsValid())
-	{
-		return;
-	}
-
-	if (!animation.IsValid())
+	if (!SkeletonAsset.IsValid() || !animation.IsValid())
 	{
 		return;
 	}

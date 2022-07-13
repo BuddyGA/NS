@@ -28,7 +28,7 @@ private:
 
 
 public:
-	nsWorld(nsName name, bool bInitPhysics);
+	nsWorld(nsString name, bool bInitPhysics);
 	void Initialize();
 	void Destroy();
 	void CleanupPendingDestroyLevelsAndActors();
@@ -44,9 +44,9 @@ private:
 	void RefreshActorList();
 
 public:
-	NS_NODISCARD nsLevel* FindLevel(const nsName& levelName) const;
-	nsLevel* CreateLevel(nsName levelName);
-	void DestroyLevel(nsName levelName);
+	NS_NODISCARD nsLevel* FindLevel(const nsString& levelName) const;
+	nsLevel* CreateLevel(nsString levelName);
+	void DestroyLevel(nsString levelName);
 
 
 	// Get persistent level
@@ -64,7 +64,7 @@ public:
 
 
 private:
-	void InitActor(nsActor* actor, nsName name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr);
+	void InitActor(nsActor* actor, nsString name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr);
 
 public:
 	void DestroyActor(nsActor*& actor);
@@ -73,7 +73,7 @@ public:
 
 
 	template<typename TActor = nsActor>
-	NS_NODISCARD_INLINE TActor* CreateActor(nsName name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr)
+	NS_NODISCARD_INLINE TActor* CreateActor(nsString name, bool bIsStatic, const nsTransform& optTransform = nsTransform(), nsActor* optParent = nullptr)
 	{
 		static_assert(std::is_base_of<nsActor, TActor>::value, "CreateActor type of <TActor> must be derived from type <nsActor>!");
 
@@ -85,7 +85,7 @@ public:
 
 
 	template<typename TActor = nsActor>
-	NS_NODISCARD_INLINE TActor* CreateActor(nsName name, bool bIsStatic, const nsVector3& position, const nsQuaternion& rotation, const nsVector3& scale = nsVector3(1.0f))
+	NS_NODISCARD_INLINE TActor* CreateActor(nsString name, bool bIsStatic, const nsVector3& position, const nsQuaternion& rotation, const nsVector3& scale = nsVector3(1.0f))
 	{
 		return CreateActor<TActor>(name, bIsStatic, nsTransform(position, rotation, scale));
 	}

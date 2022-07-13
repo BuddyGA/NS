@@ -7,26 +7,24 @@
 
 
 #ifdef NS_PLATFORM_WINDOWS
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
-	nsCommandLines::Get().Initialize(GetCommandLineA());
+	nsCommandLines::Get().Initialize(GetCommandLine());
 
-	if (nsCommandLines::Get().HasCommand("console") && AllocConsole())
+	if (nsCommandLines::Get().HasCommand(TEXT("console")) && AllocConsole())
 	{
 		ShowWindow(GetConsoleWindow(), SW_SHOW);
 	}
 
 #else
-int main(int argc, char* argv[])
-{
-	nsCommandLines::Get().Initialize(argc, argv);
+#error Unknown platform!
 
 #endif // NS_PLATFORM_WINDOWS
 
 
 	nsPlatform::Initialize();
 
-	nsLogger::Get().Initialize(nsELogVerbosity::LV_DEBUG, "Log.txt");
+	nsLogger::Get().Initialize(nsELogVerbosity::LV_DEBUG, TEXT("Log.txt"));
 
 	nsThreadPool::Initialize();
 

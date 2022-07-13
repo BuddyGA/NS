@@ -10,7 +10,7 @@
 
 
 
-nsGameApplication::nsGameApplication(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
+nsGameApplication::nsGameApplication(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
 	: nsWindow(title, width, height, fullscreenMode)
 {
 	bShowFPS = true;
@@ -33,14 +33,14 @@ nsGameApplication::nsGameApplication(const char* title, int width, int height, n
 
 void nsGameApplication::Initialize() noexcept
 {
-	NS_CONSOLE_RegisterCommand("fps");
+	NS_CONSOLE_RegisterCommand(TEXT("fps"));
 
 #ifndef __NS_ENGINE_SHIPPING__
-	NS_CONSOLE_RegisterCommand("class");
-	NS_CONSOLE_RegisterCommand("gui");
+	NS_CONSOLE_RegisterCommand(TEXT("class"));
+	NS_CONSOLE_RegisterCommand(TEXT("gui"));
 #endif // __NS_ENGINE_SHIPPING__
 
-	MainWorld = g_Engine->CreateWorld("world_main", true);
+	MainWorld = g_Engine->CreateWorld(TEXT("world_main"), true);
 
 	const nsPointInt windowDimension = GetDimension();
 	MainViewport.SetDimension(static_cast<float>(windowDimension.X), static_cast<float>(windowDimension.Y));
@@ -62,32 +62,32 @@ void nsGameApplication::Shutdown() noexcept
 
 void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount) noexcept
 {
-	if (command == "fps")
+	if (command == TEXT("fps"))
 	{
 		bShowFPS = !bShowFPS;
 	}
 
 
 #ifndef __NS_ENGINE_SHIPPING__
-	if (command == "class" && paramCount > 0)
+	if (command == TEXT("class") && paramCount > 0)
 	{
 		const nsTArray<const nsClass*> classes = nsReflection::FindAllClasses(*params[0]);
-		nsString stringMessage = "Class list:\n";
+		nsString stringMessage = TEXT("Class list:\n");
 
 		for (int i = 0; i < classes.GetCount(); ++i)
 		{
-			stringMessage += nsString::Format("%s\n", *classes[i]->GetName());
+			stringMessage += nsString::Format(TEXT("%s\n"), *classes[i]->GetName());
 		}
 
-		NS_CONSOLE_Log(nsSystemLog, "%s", *stringMessage);
+		NS_CONSOLE_Log(nsTempLog, TEXT("%s"), *stringMessage);
 	}
-	else if (command == "gui" && paramCount > 0)
+	else if (command == TEXT("gui") && paramCount > 0)
 	{
-		if (params[0] == "debugrect")
+		if (params[0] == TEXT("debugrect"))
 		{
 			GUIContext.bDrawDebugRect = !GUIContext.bDrawDebugRect;
 		}
-		else if (params[0] == "debugrecth")
+		else if (params[0] == TEXT("debugrecth"))
 		{
 			GUIContext.bDrawDebugHoveredRect = !GUIContext.bDrawDebugHoveredRect;
 		}
@@ -152,7 +152,7 @@ void nsGameApplication::DrawGUI() noexcept
 		float fps = 0.0f;
 		g_Engine->GetAverageFPS(fpsTime, fps);
 
-		const nsName fpsText = nsName::Format("Frame: %.2f ms (%i FPS)", fpsTime, static_cast<int>(fps));
+		const nsString fpsText = nsString::Format(TEXT("Frame: %.2f ms (%i FPS)"), fpsTime, static_cast<int>(fps));
 		nsColor fpsTextColor = nsColor::GREEN;
 
 		if (fpsTime > 20.0f && fpsTime < 33.333f)
@@ -344,21 +344,21 @@ void nsGameApplication::OnCharInput(char c) noexcept
 
 void nsGameApplication::OnMinimized() noexcept
 {
-	NS_CONSOLE_Log(nsTempLog, "Window [%s] minimized!", GetTitle());
+	NS_CONSOLE_Log(nsTempLog, TEXT("Window [%s] minimized!"), GetTitle());
 	nsRenderManager::Get().UnregisterRenderer(MainRenderer);
 }
 
 
 void nsGameApplication::OnMaximized() noexcept
 {
-	NS_CONSOLE_Log(nsTempLog, "Window [%s] maximized!", GetTitle());
+	NS_CONSOLE_Log(nsTempLog, TEXT("Window [%s] maximized!"), GetTitle());
 	nsRenderManager::Get().RegisterRenderer(MainRenderer);
 }
 
 
 void nsGameApplication::OnRestored() noexcept
 {
-	NS_CONSOLE_Log(nsTempLog, "Window [%s] restored!", GetTitle());
+	NS_CONSOLE_Log(nsTempLog, TEXT("Window [%s] restored!"), GetTitle());
 	nsRenderManager::Get().RegisterRenderer(MainRenderer);
 }
 
@@ -475,7 +475,7 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		{
 			for (int z = 0; z < boxCountZ; ++z)
 			{
-				nsActor* actor = MainWorld->CreateActor(nsName::Format("box_actor_%i", count++), false, spawnPosition, nsQuaternion::FromRotation(nsMath::RandomInRange(-30.0f, 30.0f), nsMath::RandomInRange(-80.0f, 80.0f), 0.0f));
+				nsActor* actor = MainWorld->CreateActor(nsString::Format(TEXT("box_actor_%i"), count++), false, spawnPosition, nsQuaternion::FromRotation(nsMath::RandomInRange(-30.0f, 30.0f), nsMath::RandomInRange(-80.0f, 80.0f), 0.0f));
 				{
 					nsBoxCollisionComponent* boxCollisionComp = actor->AddComponent<nsBoxCollisionComponent>("box_collision");
 

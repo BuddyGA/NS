@@ -69,7 +69,7 @@ void cstEditorAssetExplorer::DrawAssetFolder(nsGUIContext& context, float indent
 	if (control.bIsVisible)
 	{
 		context.AddDrawRect(control.Rect, SelectedAssetFolder == &assetFolder ? nsColor::GRAY : nsColor::BLACK_TRANSPARENT);
-		context.AddDrawTextOnRect(*assetFolder.Name, assetFolder.Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
+		context.AddDrawTextOnRect(*assetFolder.Name.ToString(), assetFolder.Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
 
 		if (control.Interactions & nsEGUIRectInteraction::Pressed)
 		{
@@ -118,7 +118,7 @@ void cstEditorAssetExplorer::DrawAssetInfo(nsGUIContext& context, const nsAssetI
 			g_Editor->BeginDragDropAsset(assetInfo);
 		}
 
-		context.AddDrawTextOnRect(*assetInfo.Name, assetInfo.Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
+		context.AddDrawTextOnRect(*assetInfo.Name.ToString(), assetInfo.Name.GetLength(), control.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER);
 
 	#ifdef NS_ENGINE_DEBUG_DRAW
 		if (context.bDrawDebugRect)
@@ -197,6 +197,6 @@ void cstEditorAssetExplorer::DrawGUI(nsGUIContext& context)
 
 	if (bOpenImportAssetFileDialog)
 	{
-		NS_CONSOLE_Log(EditorLog, "Open import asset file dialog");
+		NS_CONSOLE_Log(EditorLog, TEXT("Open import asset file dialog"));
 	}
 }

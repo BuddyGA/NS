@@ -10,8 +10,8 @@ class nsGameApplication;
 class NS_ENGINE_API nsEngine 
 {
 private:
-	nsName GameModuleName;
-	nsModuleHandle GameModuleHandle;
+	nsString GameModuleName;
+	nsPlatformModuleHandle GameModuleHandle;
 	nsGameApplication* Game;
 	int64 StartTick;
 	int64 PrevTick;
@@ -37,8 +37,8 @@ private:
 public:
 	void MainLoop();
 	void Shutdown();
-	NS_NODISCARD nsWorld* FindWorld(const nsName& name) const;
-	nsWorld* CreateWorld(nsName name, bool bHasPhysics);
+	NS_NODISCARD nsWorld* FindWorld(const nsString& name) const;
+	nsWorld* CreateWorld(nsString name, bool bHasPhysics);
 	void DestroyWorld(nsWorld*& world);
 
 

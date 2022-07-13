@@ -76,7 +76,7 @@ void nsFileStreamReader::SerializeData(void* data, int dataSize) noexcept
 void nsFileStreamReader::Open(const nsString& file) noexcept
 {
 	Handle = nsPlatform::File_Open(*file, nsEPlatformFileOpenMode::READ);
-	NS_ValidateV(Handle, "Fail to open file!", *file);
+	NS_ValidateV(Handle, TEXT("Fail to open file!"), *file);
 }
 
 

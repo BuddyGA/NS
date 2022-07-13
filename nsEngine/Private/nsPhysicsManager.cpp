@@ -9,7 +9,7 @@
 #include "physx/foundation//PxErrorCallback.h"
 
 
-static nsLogCategory PhysXLog("nsPhysXLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory PhysXLog(TEXT("nsPhysXLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -54,16 +54,16 @@ public:
 	{
 		if (code == PxErrorCode::eABORT || code == PxErrorCode::eINTERNAL_ERROR || code == PxErrorCode::eOUT_OF_MEMORY)
 		{
-			NS_CONSOLE_Error(PhysXLog, "Error: %s", message);
+			NS_CONSOLE_Error(PhysXLog, TEXT("Error: %s"), message);
 			NS_Validate(0);
 		}
 		else if (code == PxErrorCode::eDEBUG_WARNING || code == PxErrorCode::ePERF_WARNING)
 		{
-			NS_CONSOLE_Warning(PhysXLog, "%s", message);
+			NS_CONSOLE_Warning(PhysXLog, TEXT("%s"), message);
 		}
 		else if (code == PxErrorCode::eINVALID_OPERATION || code == PxErrorCode::eINVALID_PARAMETER)
 		{
-			NS_CONSOLE_Error(PhysXLog, "%s", message);
+			NS_CONSOLE_Error(PhysXLog, TEXT("%s"), message);
 		}
 	}
 
@@ -212,7 +212,7 @@ bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHi
 
 bool nsPhysX::SceneQueryRayCastMany(physx::PxScene* scene, nsPhysicsHitResultMany& outHitResultMany, const PxVec3& origin, const PxVec3& direction, float distance, const nsPhysicsQueryParams& params)
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 	return false;
 }
 
@@ -309,7 +309,7 @@ void nsPhysicsManager::Initialize()
 		return;
 	}
 
-	NS_CONSOLE_Log(PhysXLog, "Initialize physics manager [PhysX]");
+	NS_CONSOLE_Log(PhysXLog, TEXT("Initialize physics manager [PhysX]"));
 
 	Foundation = PxCreateFoundation(PX_PHYSICS_VERSION, PhysXAllocatorCallback, PhysXErrorCallback);
 
@@ -380,7 +380,7 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 {
 	if (SceneNames.Find(name) != NS_ARRAY_INDEX_INVALID)
 	{
-		NS_CONSOLE_Debug(PhysXLog, "Fail to create scene. Scene with name [%s] already exists!", *name);
+		NS_CONSOLE_Debug(PhysXLog, TEXT("Fail to create scene. Scene with name [%s] already exists!"), *name.ToString());
 		return nullptr;
 	}
 
@@ -417,7 +417,7 @@ physx::PxScene* nsPhysicsManager::CreateScene(nsName name)
 
 void nsPhysicsManager::DestroyScene(physx::PxScene*& scene)
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 

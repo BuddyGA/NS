@@ -202,9 +202,8 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Public\Editor\nsEditorAssetExplorer.h" />
     <ClInclude Include="Public\Editor\nsEditorTransformGizmo.h" />
     <ClInclude Include="Public\Editor\nsEditorWorldOutliner.h" />
-    <ClInclude Include="Public\nsAnimationComponents.h" />
     <ClInclude Include="Public\nsAnimationTypes.h" />
-    <ClInclude Include="Public\Editor\nsEditorNavigationBuilder.h" />
+    <ClInclude Include="Public\Editor\nsEditorNavigation.h" />
     <ClInclude Include="Public\nsNavigationComponents.h" />
     <ClInclude Include="Public\nsNavigationTypes.h" />
     <ClInclude Include="Private\nsPhysics_PhysX.h" />

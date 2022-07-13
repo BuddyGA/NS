@@ -213,7 +213,7 @@ public:
 
 
 
-	nsActorComponent* FindComponent(const nsName& name) const;
+	nsActorComponent* FindComponent(const nsString& name) const;
 	bool RemoveComponent(nsActorComponent* component);
 
 
@@ -224,14 +224,14 @@ public:
 
 
 	template<typename TComponent = nsActorComponent>
-	NS_INLINE TComponent* AddComponent(nsName name)
+	NS_INLINE TComponent* AddComponent(nsString name)
 	{
 		static_assert(std::is_base_of<nsActorComponent, TComponent>::value, "AddComponent() type of <TComponent> must be derived from type <nsActorComponent>!");
 
 		NS_Validate_IsMainThread();
 
 		nsActorComponent* checkComponent = FindComponent(name);
-		NS_ValidateV(checkComponent == nullptr, "Actor [%s] already had component with name [%s]!", *Name, *name);
+		NS_ValidateV(checkComponent == nullptr, TEXT("Actor [%s] already had component with name [%s]!"), *Name, *name);
 
 		TComponent* newComponent = ComponentMemory.AllocateConstruct<TComponent>();
 		newComponent->Name = name;

@@ -5,7 +5,7 @@
 #include "ThirdParty/json.hpp"
 
 
-static nsLogCategory AssetImporterGLB("nsAssetImporterGLB", nsELogVerbosity::LV_INFO);
+static nsLogCategory AssetImporterGLB(TEXT("nsAssetImporterGLB"), nsELogVerbosity::LV_INFO);
 
 
 static constexpr uint32 GLB_MAGIC					= 0x46546C67; // glTF
@@ -121,7 +121,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 	if (!jsonData.contains("meshes"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import model from file [%s]. <meshes> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import model from file [%s]. <meshes> not found in json data!"), *option.SourceFile);
 		return;
 	}
 
@@ -140,7 +140,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 		if (!jsonModel.contains("primitives"))
 		{
-			NS_CONSOLE_Warning(AssetImporterGLB, "Fail to import model [%s] from file [%s]. <primitives> data not found!", *glbModel.Name, *option.SourceFile);
+			NS_CONSOLE_Warning(AssetImporterGLB, TEXT("Fail to import model [%s] from file [%s]. <primitives> data not found!"), *glbModel.Name.ToString(), *option.SourceFile);
 			continue;
 		}
 
@@ -157,7 +157,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 			// Vertex position
 			bool bSuccess = ns_GLB_GetVertexData(mesh.VertexPositions, "POSITION", binData, jsonData, jsonVertexAttributes);
-			NS_ValidateV(bSuccess, "Fail to get vertex [POSITION] data from model [%s] in GLB file [%s]", *mesh.Name, *option.SourceFile);
+			NS_ValidateV(bSuccess, TEXT("Fail to get vertex [POSITION] data from model [%s] in GLB file [%s]"), *mesh.Name.ToString(), *option.SourceFile);
 
 			for (int vtx = 0; vtx < mesh.VertexPositions.GetCount(); ++vtx)
 			{
@@ -166,17 +166,17 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 			// Vertex normal
 			bSuccess = ns_GLB_GetVertexData(mesh.VertexNormals, "NORMAL", binData, jsonData, jsonVertexAttributes);
-			NS_ValidateV(bSuccess, "Fail to get vertex [NORMAL] data from model [%s] in GLB file [%s]", *mesh.Name, *option.SourceFile);
+			NS_ValidateV(bSuccess, TEXT("Fail to get vertex [NORMAL] data from model [%s] in GLB file [%s]"), *mesh.Name.ToString(), *option.SourceFile);
 			NS_Validate(mesh.VertexNormals.GetCount() == mesh.VertexPositions.GetCount());
 
 			// Vertex tangent
 			bSuccess = ns_GLB_GetVertexData(mesh.VertexTangents, "TANGENT", binData, jsonData, jsonVertexAttributes);
-			NS_ValidateV(bSuccess, "Fail to get vertex [TANGENT] data from model [%s] in GLB file [%s]", *mesh.Name, *option.SourceFile);
+			NS_ValidateV(bSuccess, TEXT("Fail to get vertex [TANGENT] data from model [%s] in GLB file [%s]"), *mesh.Name.ToString(), *option.SourceFile);
 			NS_Validate(mesh.VertexTangents.GetCount() == mesh.VertexPositions.GetCount());
 
 			// Vertex texCoord_0
 			bSuccess = ns_GLB_GetVertexData(mesh.VertexTexCoords_0, "TEXCOORD_0", binData, jsonData, jsonVertexAttributes);
-			NS_ValidateV(bSuccess, "Fail to get vertex [TEXCOORD_0] data from model [%s] in GLB file [%s]", *mesh.Name, *option.SourceFile);
+			NS_ValidateV(bSuccess, TEXT("Fail to get vertex [TEXCOORD_0] data from model [%s] in GLB file [%s]"), *mesh.Name.ToString(), *option.SourceFile);
 			NS_Validate(mesh.VertexTexCoords_0.GetCount() == mesh.VertexPositions.GetCount());
 
 			// Vertex weights
@@ -265,7 +265,7 @@ static void ns_GLB_ImportModels(const nsAssetImportOption_Model& option, const n
 
 		nsAssetManager::Get().SaveModelAsset(glbModel.Name, modelMeshes, dstFolderPath, false);
 
-		NS_CONSOLE_Log(AssetImporterGLB, "Imported model [%s] from source file [%s]", *glbModel.Name, *option.SourceFile);
+		NS_CONSOLE_Log(AssetImporterGLB, TEXT("Imported model [%s] from source file [%s]"), *glbModel.Name.ToString(), *option.SourceFile);
 	}
 }
 
@@ -373,7 +373,7 @@ static void ns_GLB_ImportAnimations(const nsAssetImportOption_Model& option, con
 
 	if (!jsonData.contains("animations"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import animation from file [%s]. <animations> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import animation from file [%s]. <animations> not found in json data!"), *option.SourceFile);
 		return;
 	}
 
@@ -466,7 +466,7 @@ static void ns_GLB_ImportAnimations(const nsAssetImportOption_Model& option, con
 			}
 			else
 			{
-				NS_ValidateV(0, "Unknown path type [%s]!", *pathType);
+				NS_ValidateV(0, TEXT("Unknown path type [%s]!"), *pathType);
 			}
 		}
 
@@ -526,7 +526,7 @@ static void ns_GLB_ImportAnimations(const nsAssetImportOption_Model& option, con
 		}
 
 		nsAssetManager::Get().SaveAnimationAsset(glbAnimation.Name, clip, dstFolderPath, false);
-		NS_CONSOLE_Log(AssetImporterGLB, "Imported animation [%s] from source file [%s]", *glbAnimation.Name, *option.SourceFile);
+		NS_CONSOLE_Log(AssetImporterGLB, TEXT("Imported animation [%s] from source file [%s]"), *glbAnimation.Name, *option.SourceFile);
 	}
 }
 
@@ -540,7 +540,7 @@ static void ns_GLB_ImportSkeletonAndAnimations(const nsAssetImportOption_Model& 
 
 	if (!jsonData.contains("skins"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import skeleton or animation from file [%s]. <skins> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import skeleton or animation from file [%s]. <skins> not found in json data!"), *option.SourceFile);
 		return;
 	}
 
@@ -618,7 +618,7 @@ static void ns_GLB_ImportSkeletonAndAnimations(const nsAssetImportOption_Model& 
 	if (option.bImportSkeleton)
 	{
 		nsAssetManager::Get().SaveSkeletonAsset(glbSkeleton.Name, skeleton, dstFolderPath, false);
-		NS_CONSOLE_Log(AssetImporterGLB, "Imported skeleton [%s] from source file [%s]", *glbSkeleton.Name, *option.SourceFile);
+		NS_CONSOLE_Log(AssetImporterGLB, TEXT("Imported skeleton [%s] from source file [%s]"), *glbSkeleton.Name.ToString(), *option.SourceFile);
 	}
 
 	if (option.bImportAnimation)
@@ -635,7 +635,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 	if (!nsFileSystem::FileReadBinary(option.SourceFile, bytes))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Fail to read data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Fail to read data!"), *option.SourceFile);
 		return;
 	}
 
@@ -648,7 +648,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (magic != GLB_MAGIC)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Invalid GLB file!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Invalid GLB file!"), *option.SourceFile);
 			return;
 		}
 
@@ -657,7 +657,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 		
 		if (version != 2)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Asset importer for GLB only support GLB file version 2! [Source GLB File Version: %u]", *option.SourceFile, version);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Asset importer for GLB only support GLB file version 2! [Source GLB File Version: %u]"), *option.SourceFile, version);
 			return;
 		}
 
@@ -666,7 +666,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (length <= 12)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Emtpy GLB data!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Emtpy GLB data!"), *option.SourceFile);
 			return;
 		}
 	}
@@ -680,7 +680,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (chunkLength == 0)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Empty chunk-0 (JSON) data size!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Empty chunk-0 (JSON) data size!"), *option.SourceFile);
 			return;
 		}
 
@@ -689,17 +689,17 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (chunkType != GLB_CHUNK_TYPE_JSON)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Invalid chunk-0 type!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Invalid chunk-0 type!"), *option.SourceFile);
 			return;
 		}
 
-		nsString jsonString;
+		nsTArray<char> jsonString;
 		jsonString.Resize(chunkLength);
-		reader.SerializeData(*jsonString, chunkLength);
+		reader.SerializeData(jsonString.GetData(), chunkLength);
 
-		nsFileSystem::FileWriteText("debug_glb_import.json", *jsonString);
+		nsFileSystem::FileWriteText("debug_glb_import.json", jsonString.GetData());
 
-		jsonData = nlohmann::json::parse(*jsonString);
+		jsonData = nlohmann::json::parse(jsonString.GetData());
 	}
 
 
@@ -711,7 +711,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (chunkLength == 0)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Empty chunk-1 (Binary) data size!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Empty chunk-1 (Binary) data size!"), *option.SourceFile);
 			return;
 		}
 
@@ -720,7 +720,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 		if (chunkType != GLB_CHUNK_TYPE_BIN)
 		{
-			NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. Invalid chunk-1 type!", *option.SourceFile);
+			NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. Invalid chunk-1 type!"), *option.SourceFile);
 			return;
 		}
 
@@ -731,13 +731,13 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 
 	if (!jsonData.contains("accessors"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. <accessors> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. <accessors> not found in json data!"), *option.SourceFile);
 		return;
 	}
 
 	if (!jsonData.contains("bufferViews"))
 	{
-		NS_CONSOLE_Error(AssetImporterGLB, "Fail to import asset from file [%s]. <bufferViews> not found in json data!", *option.SourceFile);
+		NS_CONSOLE_Error(AssetImporterGLB, TEXT("Fail to import asset from file [%s]. <bufferViews> not found in json data!"), *option.SourceFile);
 		return;
 	}
 

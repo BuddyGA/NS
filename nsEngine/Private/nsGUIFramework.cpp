@@ -257,7 +257,7 @@ void nsGUIWindow::BeginDraw(nsGUIContext& context) noexcept
 	if (bTitleBar)
 	{
 		DrawBorderControl(context, TitleBarControl, useBorderColor);
-		context.AddDrawTextOnRect(*Title, Title.GetLength(), TitleBarControl.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER, nsPointFloat(4.0f, 0.0f));
+		context.AddDrawTextOnRect(*Title.ToString(), Title.GetLength(), TitleBarControl.Rect, nsEGUIAlignmentHorizontal::LEFT, nsEGUIAlignmentVertical::CENTER, nsPointFloat(4.0f, 0.0f));
 	}
 
 	nsGUIRect backgroundRect;
@@ -325,7 +325,7 @@ bool nsGUIButton::Draw(nsGUIContext& context)
 
 	if (textLength > 0)
 	{
-		context.AddDrawTextOnRect(*Text, textLength, buttonControl.Rect, nsEGUIAlignmentHorizontal::CENTER, nsEGUIAlignmentVertical::CENTER, nsPointFloat(), TextColor);
+		context.AddDrawTextOnRect(*Text.ToString(), textLength, buttonControl.Rect, nsEGUIAlignmentHorizontal::CENTER, nsEGUIAlignmentVertical::CENTER, nsPointFloat(), TextColor);
 	}
 
 	return bReleased;
@@ -446,8 +446,10 @@ bool nsGUITextBox::Draw(nsGUIContext& context) noexcept
 				IsValidChar(charInput[0]))
 			{
 				RemoveSelectedChars();
+				wchar_t wInputs[8];
+				nsPlatform::String_ConvertToWide(wInputs, charInput, nsPlatform::String_Length(charInput));
 
-				if (TextValue.InsertAt(charInput, CaretCharIndex))
+				if (TextValue.InsertAt(wInputs, CaretCharIndex))
 				{
 					CaretCharIndex++;
 				}
@@ -734,7 +736,7 @@ bool nsGUIInputFloat::Draw(nsGUIContext& context) noexcept
 	{
 		const nsPointFloat dragValue = GetDragValue();
 		FloatValue = nsMath::Clamp(FloatValue + dragValue.X, MinValue, MaxValue);
-		TextValue = nsString::Format("%.3f", FloatValue);
+		TextValue = nsString::FromFloat(FloatValue);
 		ClearDragValue();
 	}
 
@@ -1006,7 +1008,7 @@ void nsGUITable::EndDraw(nsGUIContext& context) noexcept
 
 void nsGUITable::BeginColumn(nsGUIContext& context, int columnIndex, const nsPointFloat& elementSpace) noexcept
 {
-	NS_AssertV(columnIndex < Columns.GetCount(), "columnIndex out of range!");
+	NS_AssertV(columnIndex < Columns.GetCount(), TEXT("columnIndex out of range!"));
 
 	Column& col = Columns[columnIndex];
 
@@ -1095,7 +1097,7 @@ void nsGUIConsoleWindow::Draw(nsGUIContext& context) noexcept
 				const nsGUIScrollOptions scrollOptions = bScrollToEndLine ? (nsEGUIScrollOption::Scrollable_Y | nsEGUIScrollOption::AutoScroll_Y) : nsEGUIScrollOption::Scrollable_Y;
 				context.BeginRegion(*LogAreaName, logAreaRect, nsPointFloat(2.0f), nsEGUIElementLayout::VERTICAL, scrollOptions, "console_logs");
 				{
-					const nsTArray<char>& logChars = consoleManager.GetLogChars();
+					const nsTArray<wchar_t>& logChars = consoleManager.GetLogChars();
 
 					for (int i = 0; i < logEntries.GetCount(); ++i)
 					{

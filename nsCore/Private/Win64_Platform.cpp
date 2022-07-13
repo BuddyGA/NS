@@ -2,7 +2,7 @@
 
 
 
-static char PlatformDirectoryPath[NS_PLATFORM_MAX_PATH];
+static wchar_t PlatformDirectoryPath[NS_PLATFORM_MAX_PATH];
 
 
 
@@ -116,7 +116,7 @@ void nsPlatform::Initialize() noexcept
 		}
 	}
 
-	nsPlatform::Output("Initialize platform [Windows]\n");
+	ConsoleOutput(TEXT("Initialize platform [Windows]\n"));
 }
 
 
@@ -126,13 +126,13 @@ void nsPlatform::Shutdown() noexcept
 }
 
 
-const char* nsPlatform::GetDirectoryPath() noexcept
+const wchar_t* nsPlatform::GetDirectoryPath() noexcept
 {
 	return PlatformDirectoryPath;
 }
 
 
-void nsPlatform::Output(const char* message, nsPlatformConsoleTextColorMasks colorMasks) noexcept
+void nsPlatform::ConsoleOutput(const wchar_t* message, nsPlatformConsoleTextColorMasks colorMasks) noexcept
 {
 	const int len = String_Length(message);
 
@@ -154,32 +154,51 @@ void nsPlatform::Output(const char* message, nsPlatformConsoleTextColorMasks col
 
 		if (colorMasks != 0)
 		{
-			SetConsoleTextAttribute(consoleOutputHandle, colorMasks);
+			WORD colorWord = 0;
+
+			if (colorMasks & nsEPlatformConsoleOutputColor::Red)
+			{
+				colorWord |= FOREGROUND_RED;
+			}
+
+			if (colorMasks & nsEPlatformConsoleOutputColor::Green)
+			{
+				colorWord |= FOREGROUND_GREEN;
+			}
+
+			if (colorMasks & nsEPlatformConsoleOutputColor::Blue)
+			{
+				colorWord |= FOREGROUND_BLUE;
+			}
+
+			SetConsoleTextAttribute(consoleOutputHandle, colorWord);
 		}
 
 		DWORD writtenCount = 0;
 		WriteConsole(consoleOutputHandle, message, len, &writtenCount, NULL);
 
+		/*
 		if (colorMasks != 0)
 		{
 			SetConsoleTextAttribute(consoleOutputHandle, defaultColorAttribute);
 		}
+		*/
 	}
 }
 
 
-void nsPlatform::OutputFormat(const char* format, ...) noexcept
+void nsPlatform::ConsoleOutputFormat(nsPlatformConsoleTextColorMasks colorMasks, const wchar_t* format, ...) noexcept
 {
 	if (format == nullptr)
 	{
 		return;
 	}
 
-	char outputBuffer[NS_PLATFORM_OUTPUT_BUFFER_SIZE];
-	
+	wchar_t outputBuffer[NS_PLATFORM_OUTPUT_BUFFER_SIZE];
+
 	va_list args;
 	va_start(args, format);
-	int charCount = vsnprintf(outputBuffer, NS_PLATFORM_OUTPUT_BUFFER_SIZE, format, args);
+	int charCount = vswprintf(outputBuffer, NS_PLATFORM_OUTPUT_BUFFER_SIZE, format, args);
 	va_end(args);
 
 	NS_Assert(charCount < NS_PLATFORM_OUTPUT_BUFFER_SIZE - 2);
@@ -187,30 +206,7 @@ void nsPlatform::OutputFormat(const char* format, ...) noexcept
 	outputBuffer[charCount++] = '\0';
 	NS_Assert(charCount <= NS_PLATFORM_OUTPUT_BUFFER_SIZE);
 
-	Output(outputBuffer);
-}
-
-
-void nsPlatform::OutputFormatColored(nsPlatformConsoleTextColorMasks colorMasks, const char* format, ...) noexcept
-{
-	if (format == nullptr)
-	{
-		return;
-	}
-
-	char outputBuffer[NS_PLATFORM_OUTPUT_BUFFER_SIZE];
-
-	va_list args;
-	va_start(args, format);
-	int charCount = vsnprintf(outputBuffer, NS_PLATFORM_OUTPUT_BUFFER_SIZE, format, args);
-	va_end(args);
-
-	NS_Assert(charCount < NS_PLATFORM_OUTPUT_BUFFER_SIZE - 2);
-	outputBuffer[charCount++] = '\n';
-	outputBuffer[charCount++] = '\0';
-	NS_Assert(charCount <= NS_PLATFORM_OUTPUT_BUFFER_SIZE);
-
-	Output(outputBuffer, colorMasks);
+	ConsoleOutput(outputBuffer, colorMasks);
 }
 
 
@@ -287,9 +283,26 @@ int nsPlatform::String_Length(const char* cstr) noexcept
 }
 
 
+int nsPlatform::String_Length(const wchar_t* wstr) noexcept
+{
+	if (wstr == nullptr)
+	{
+		return 0;
+	}
+
+	return static_cast<int>(wcslen(wstr));
+}
+
+
 void nsPlatform::String_Copy(char* dst, const char* src) noexcept
 {
 	strcpy(dst, src);
+}
+
+
+void nsPlatform::String_Copy(wchar_t* dst, const wchar_t* src) noexcept
+{
+	wcscpy(dst, src);
 }
 
 
@@ -303,6 +316,22 @@ int nsPlatform::String_Format(char* buffer, int bufferCount, const char* format,
 	va_list args;
 	va_start(args, format);
 	const int n = vsnprintf(buffer, bufferCount, format, args);
+	va_end(args);
+
+	return n;
+}
+
+
+int nsPlatform::String_Format(wchar_t* buffer, int bufferCount, const wchar_t* format, ...) noexcept
+{
+	if (buffer == nullptr || bufferCount <= 0 || format == nullptr)
+	{
+		return 0;
+	}
+
+	va_list args;
+	va_start(args, format);
+	const int n = vswprintf(buffer, bufferCount, format, args);
 	va_end(args);
 
 	return n;
@@ -346,6 +375,60 @@ bool nsPlatform::String_Compare(const char* cstrA, const char* cstrB, bool bIgno
 }
 
 
+bool nsPlatform::String_Compare(const wchar_t* wstrA, const wchar_t* wstrB, bool bIgnoreCase) noexcept
+{
+	if (wstrA == wstrB)
+	{
+		return true;
+	}
+
+	const int lenA = String_Length(wstrA);
+	const int lenB = String_Length(wstrB);
+
+	if (lenA == 0 && lenB == 0)
+	{
+		return true;
+	}
+
+	if (lenA != lenB)
+	{
+		return false;
+	}
+
+	bool bEquals = true;
+
+	if (bIgnoreCase)
+	{
+		for (int i = 0; i < lenA; ++i)
+		{
+			if (towlower(wstrA[i]) != towlower(wstrB[i]))
+			{
+				bEquals = false;
+				break;
+			}
+		}
+	}
+	else
+	{
+		bEquals = wcscmp(wstrA, wstrB) == 0;
+	}
+
+	return bEquals;
+}
+
+
+int nsPlatform::String_ConvertToWide(wchar_t* dst, const char* src, int length)
+{
+	return static_cast<int>(mbstowcs(dst, src, length));
+}
+
+
+int nsPlatform::String_ConvertToMultiByte(char* dst, const wchar_t* src, int length)
+{
+	return static_cast<int>(wcstombs(dst, src, length));
+}
+
+
 void nsPlatform::String_ToLower(char* cstr) noexcept
 {
 	const int len = String_Length(cstr);
@@ -358,6 +441,22 @@ void nsPlatform::String_ToLower(char* cstr) noexcept
 	for (int i = 0; i < len; ++i)
 	{
 		cstr[i] = tolower(cstr[i]);
+	}
+}
+
+
+void nsPlatform::String_ToLower(wchar_t* wstr) noexcept
+{
+	const int len = String_Length(wstr);
+
+	if (len == 0)
+	{
+		return;
+	}
+
+	for (int i = 0; i < len; ++i)
+	{
+		wstr[i] = towlower(wstr[i]);
 	}
 }
 
@@ -378,6 +477,22 @@ void nsPlatform::String_ToUpper(char* cstr) noexcept
 }
 
 
+void nsPlatform::String_ToUpper(wchar_t* wstr) noexcept
+{
+	const int len = String_Length(wstr);
+
+	if (len == 0)
+	{
+		return;
+	}
+
+	for (int i = 0; i < len; ++i)
+	{
+		wstr[i] = towupper(wstr[i]);
+	}
+}
+
+
 int nsPlatform::String_ToInt(const char* cstr) noexcept
 {
 	const int len = String_Length(cstr);
@@ -391,6 +506,19 @@ int nsPlatform::String_ToInt(const char* cstr) noexcept
 }
 
 
+int nsPlatform::String_ToInt(const wchar_t* wstr) noexcept
+{
+	const int len = String_Length(wstr);
+
+	if (len == 0)
+	{
+		return 0;
+	}
+
+	return wcstol(wstr, nullptr, 10);
+}
+
+
 float nsPlatform::String_ToFloat(const char* cstr) noexcept
 {
 	const int len = String_Length(cstr);
@@ -401,6 +529,19 @@ float nsPlatform::String_ToFloat(const char* cstr) noexcept
 	}
 
 	return static_cast<float>(atof(cstr));
+}
+
+
+float nsPlatform::String_ToFloat(const wchar_t* wstr) noexcept
+{
+	const int len = String_Length(wstr);
+
+	if (len == 0)
+	{
+		return 0.0f;
+	}
+
+	return wcstof(wstr, nullptr);
 }
 
 
@@ -430,7 +571,33 @@ uint64 nsPlatform::String_Hash(const char* cstr) noexcept
 }
 
 
-bool nsPlatform::File_Exists(const char* filePath) noexcept
+uint64 nsPlatform::String_Hash(const wchar_t* wstr) noexcept
+{
+	const int length = String_Length(wstr);
+
+	if (length == 0)
+	{
+		return 0;
+	}
+
+	uint64 hash = 0;
+
+	for (int i = 0; i < length; ++i)
+	{
+		hash += wstr[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return hash;
+}
+
+
+bool nsPlatform::File_Exists(const wchar_t* filePath) noexcept
 {
 	const int len = String_Length(filePath);
 
@@ -447,7 +614,7 @@ bool nsPlatform::File_Exists(const char* filePath) noexcept
 }
 
 
-nsFileHandle nsPlatform::File_Open(const char* filePath, nsEPlatformFileOpenMode mode) noexcept
+nsPlatformFileHandle nsPlatform::File_Open(const wchar_t* filePath, nsEPlatformFileOpenMode mode) noexcept
 {
 	const int len = String_Length(filePath);
 
@@ -477,32 +644,32 @@ nsFileHandle nsPlatform::File_Open(const char* filePath, nsEPlatformFileOpenMode
 		createDisposition = OPEN_ALWAYS;
 	}
 
-	nsFileHandle handle = CreateFile(filePath, desiredAccess, FILE_SHARE_READ, NULL, createDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
+	nsPlatformFileHandle handle = CreateFile(filePath, desiredAccess, FILE_SHARE_READ, NULL, createDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
 	const DWORD error = GetLastError();
 
 	if (handle == INVALID_HANDLE_VALUE)
 	{
 		if (error == ERROR_SHARING_VIOLATION)
 		{
-			OutputFormatColored(FOREGROUND_RED, "\nOpen file [%s] failed. Error sharing violation!\n", filePath);
+			ConsoleOutputFormat(nsEPlatformConsoleOutputColor::Red, TEXT("\nOpen file [%s] failed. Error sharing violation!\n"), filePath);
 		}
 		else if (error == ERROR_PATH_NOT_FOUND)
 		{
-			OutputFormatColored(FOREGROUND_RED, "\nOpen file [%s] failed. Error path not found!\n", filePath);
+			ConsoleOutputFormat(nsEPlatformConsoleOutputColor::Red, TEXT("\nOpen file [%s] failed. Error path not found!\n"), filePath);
 		}
 	}
 
-	NS_ValidateV(handle && handle != INVALID_HANDLE_VALUE, "Fail to open file!");
+	NS_ValidateV(handle && handle != INVALID_HANDLE_VALUE, TEXT("Fail to open file!"));
 
 	return handle;
 }
 
 
-bool nsPlatform::File_Seek(nsFileHandle fileHandle, int byteOffset, nsEFileSeekMode mode) noexcept
+bool nsPlatform::File_Seek(nsPlatformFileHandle fileHandle, int byteOffset, nsEPlatformFileSeekMode mode) noexcept
 {
 	if (fileHandle == NULL || fileHandle == INVALID_HANDLE_VALUE)
 	{
-		nsPlatform::Output("Fail to set file pointer (seek). Invalid file handle!\n", FOREGROUND_GREEN | FOREGROUND_RED);
+		ConsoleOutput(TEXT("Fail to set file pointer (seek). Invalid file handle!\n"), nsEPlatformConsoleOutputColor::Red);
 		return false;
 	}
 
@@ -510,7 +677,7 @@ bool nsPlatform::File_Seek(nsFileHandle fileHandle, int byteOffset, nsEFileSeekM
 }
 
 
-bool nsPlatform::File_Read(nsFileHandle fileHandle, void* outResult, int byteSize) noexcept
+bool nsPlatform::File_Read(nsPlatformFileHandle fileHandle, void* outResult, int byteSize) noexcept
 {
 	if (fileHandle == NULL || fileHandle == INVALID_HANDLE_VALUE)
 	{
@@ -521,11 +688,11 @@ bool nsPlatform::File_Read(nsFileHandle fileHandle, void* outResult, int byteSiz
 }
 
 
-bool nsPlatform::File_Write(nsFileHandle fileHandle, const void* data, int dataSize) noexcept
+bool nsPlatform::File_Write(nsPlatformFileHandle fileHandle, const void* data, int dataSize) noexcept
 {
 	if (fileHandle == NULL || fileHandle == INVALID_HANDLE_VALUE)
 	{
-		nsPlatform::Output("Fail to write file. Invalid file handle!\n", FOREGROUND_GREEN | FOREGROUND_RED);
+		ConsoleOutput(TEXT("Fail to write file. Invalid file handle!\n"), nsEPlatformConsoleOutputColor::Red);
 		return false;
 	}
 
@@ -540,7 +707,7 @@ bool nsPlatform::File_Write(nsFileHandle fileHandle, const void* data, int dataS
 }
 
 
-void nsPlatform::File_Close(nsFileHandle& fileHandle) noexcept
+void nsPlatform::File_Close(nsPlatformFileHandle& fileHandle) noexcept
 {
 	if (fileHandle && fileHandle != INVALID_HANDLE_VALUE)
 	{
@@ -550,7 +717,7 @@ void nsPlatform::File_Close(nsFileHandle& fileHandle) noexcept
 }
 
 
-bool nsPlatform::File_Copy(const char* srcFilePath, const char* dstFilePath) noexcept
+bool nsPlatform::File_Copy(const wchar_t* srcFilePath, const wchar_t* dstFilePath) noexcept
 {
 	const int srcLen = String_Length(srcFilePath);
 	const int dstLen = String_Length(dstFilePath);
@@ -561,7 +728,7 @@ bool nsPlatform::File_Copy(const char* srcFilePath, const char* dstFilePath) noe
 }
 
 
-bool nsPlatform::File_Delete(const char* filePath) noexcept
+bool nsPlatform::File_Delete(const wchar_t* filePath) noexcept
 {
 	const int len = String_Length(filePath);
 	
@@ -576,11 +743,11 @@ bool nsPlatform::File_Delete(const char* filePath) noexcept
 }
 
 
-int nsPlatform::File_GetSize(nsFileHandle fileHandle) noexcept
+int nsPlatform::File_GetSize(nsPlatformFileHandle fileHandle) noexcept
 {
 	if (fileHandle == NULL || fileHandle == INVALID_HANDLE_VALUE)
 	{
-		nsPlatform::Output("Fail to get file size. Invalid file handle!", FOREGROUND_GREEN | FOREGROUND_RED);
+		ConsoleOutput(TEXT("Fail to get file size. Invalid file handle!"), nsEPlatformConsoleOutputColor::Red);
 		return 0;
 	}
 
@@ -588,7 +755,7 @@ int nsPlatform::File_GetSize(nsFileHandle fileHandle) noexcept
 }
 
 
-nsModuleHandle nsPlatform::Module_Load(const char* moduleFile) noexcept
+nsPlatformModuleHandle nsPlatform::Module_Load(const wchar_t* moduleFile) noexcept
 {
 	NS_Assert(moduleFile);
 
@@ -596,7 +763,7 @@ nsModuleHandle nsPlatform::Module_Load(const char* moduleFile) noexcept
 }
 
 
-void nsPlatform::Module_Unload(nsModuleHandle& moduleHandle) noexcept
+void nsPlatform::Module_Unload(nsPlatformModuleHandle& moduleHandle) noexcept
 {
 	if (moduleHandle && moduleHandle != INVALID_HANDLE_VALUE)
 	{
@@ -606,9 +773,9 @@ void nsPlatform::Module_Unload(nsModuleHandle& moduleHandle) noexcept
 }
 
 
-void* nsPlatform::Module_GetFunction(nsModuleHandle moduleHandle, const char* functionName) noexcept
+void* nsPlatform::Module_GetFunction(nsPlatformModuleHandle moduleHandle, const char* functionName) noexcept
 {
-	NS_ValidateV(moduleHandle, "Invalid module handle!");
+	NS_ValidateV(moduleHandle, TEXT("Invalid module handle!"));
 
 	return GetProcAddress(moduleHandle, functionName);
 }
@@ -653,7 +820,7 @@ void nsPlatform::Mouse_SetCursorShape(nsEMouseCursorShape shape) noexcept
 }
 
 
-void nsPlatform::Mouse_SetCapture(nsWindowHandle windowHandle, bool bCapture) noexcept
+void nsPlatform::Mouse_SetCapture(nsPlatformWindowHandle windowHandle, bool bCapture) noexcept
 {
 	NS_Assert(windowHandle);
 
@@ -668,7 +835,7 @@ void nsPlatform::Mouse_SetCapture(nsWindowHandle windowHandle, bool bCapture) no
 }
 
 
-void nsPlatform::Mouse_SetCursorWindowPosition(nsWindowHandle windowHandle, const nsPointInt& position) noexcept
+void nsPlatform::Mouse_SetCursorWindowPosition(nsPlatformWindowHandle windowHandle, const nsPointInt& position) noexcept
 {
 	NS_Assert(windowHandle);
 
@@ -681,7 +848,7 @@ void nsPlatform::Mouse_SetCursorWindowPosition(nsWindowHandle windowHandle, cons
 }
 
 
-void nsPlatform::Mouse_ClipCursor(bool bClip, nsWindowHandle windowHandle, const nsRectInt& rect) noexcept
+void nsPlatform::Mouse_ClipCursor(bool bClip, nsPlatformWindowHandle windowHandle, const nsRectInt& rect) noexcept
 {
 	if (bClip)
 	{

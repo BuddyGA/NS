@@ -9,16 +9,16 @@ int main(int argc, char* argv[])
 	nsUnitTest::TestString();
 	nsUnitTest::TestMath();
 
-	const nsString file = "C:/Users/Buddy/AppData/Local/Temp.txt";
+	const nsString file = TEXT("C:/Users/Buddy/AppData/Local/Temp.txt");
 	
 	const nsString path = nsFileSystem::FileGetPath(file);
-	NS_Validate(path == "C:/Users/Buddy/AppData/Local");
+	NS_Validate(path == TEXT("C:/Users/Buddy/AppData/Local"));
 
 	const nsString name = nsFileSystem::FileGetName(file);
-	NS_Validate(name == "Temp");
+	NS_Validate(name == TEXT("Temp"));
 
-	const nsName ext = nsFileSystem::FileGetExtension(file);
-	NS_Validate(ext == ".txt");
+	const nsString ext = nsFileSystem::FileGetExtension(file);
+	NS_Validate(ext == TEXT(".txt"));
 
 	return 0;
 }

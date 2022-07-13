@@ -96,7 +96,7 @@ public:
 
 
 public:
-	nsRenderer(nsWindowHandle optWindowHandleForSwapchain = nullptr) noexcept;
+	nsRenderer(nsPlatformWindowHandle optWindowHandleForSwapchain = nullptr) noexcept;
 	~nsRenderer() noexcept;
 
 private:

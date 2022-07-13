@@ -9,12 +9,12 @@ static nsTArray<nsTestObject> TestArray_Move()
 	nsTestObject& obj0 = testObjects[0];
 	obj0.I = 110011;
 	obj0.F = 11.0011f;
-	obj0.S = "test_move_0";
+	obj0.S = TEXT("test_move_0");
 
 	nsTestObject& obj1 = testObjects[1];
 	obj1.I = 220022;
 	obj1.F = 22.0022f;
-	obj1.S = "test_move_1";
+	obj1.S = TEXT("test_move_1");
 
 	return testObjects;
 }
@@ -146,34 +146,34 @@ void nsUnitTest::TestArray()
 	nsTestObject& obj0 = TestObjects[0];
 	obj0.I = 11111;
 	obj0.F = 11.11f;
-	obj0.S = "TestObject_0";
+	obj0.S = TEXT("TestObject_0");
 
 	nsTestObject& obj1 = TestObjects[1];
 	obj1.I = 22222;
 	obj1.F = 22.22f;
-	obj1.S = "TestObject_1";
+	obj1.S = TEXT("TestObject_1");
 
 	nsTestObject& obj2 = TestObjects[2];
 	obj2.I = 33333;
 	obj2.F = 33.33f;
-	obj2.S = "TestObject_2";
+	obj2.S = TEXT("TestObject_2");
 
 	nsTestObject& obj3 = TestObjects[3];
 	obj3.I = 44444;
 	obj3.F = 44.44f;
-	obj3.S = "TestObject_3";
+	obj3.S = TEXT("TestObject_3");
 
 	{
 		nsTestObject add;
 		add.I = 55555;
 		add.F = 55.55f;
-		add.S = "TestObject_4";
+		add.S = TEXT("TestObject_4");
 
 		TestObjects.Add(add);
 	}
 	NS_Validate(TestObjects[4].I == 55555);
 	NS_Validate(TestObjects[4].F == 55.55f);
-	NS_Validate(TestObjects[4].S == "TestObject_4");
+	NS_Validate(TestObjects[4].S == TEXT("TestObject_4"));
 
 
 	// Move
@@ -181,10 +181,10 @@ void nsUnitTest::TestArray()
 	NS_Validate(testObjectMove.GetCount() == 3);
 	NS_Validate(testObjectMove[0].I == 110011);
 	NS_Validate(testObjectMove[0].F == 11.0011f);
-	NS_Validate(testObjectMove[0].S == "test_move_0");
+	NS_Validate(testObjectMove[0].S == TEXT("test_move_0"));
 	NS_Validate(testObjectMove[1].I == 220022);
 	NS_Validate(testObjectMove[1].F == 22.0022f);
-	NS_Validate(testObjectMove[1].S == "test_move_1");
+	NS_Validate(testObjectMove[1].S == TEXT("test_move_1"));
 
 
 	// Find

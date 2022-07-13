@@ -93,7 +93,7 @@ public:
 		NS_Assert(width > 0 && height > 0);
 
 		nsTextureData& data = TextureDatas[texture.Id];
-		NS_AssertV(!data.bIsRenderTarget && !data.bIsDepth && !data.bIsStencil, "Cannot add mip level to render target/depth-stencil!");
+		NS_AssertV(!data.bIsRenderTarget && !data.bIsDepth && !data.bIsStencil, TEXT("Cannot add mip level to render target/depth-stencil!"));
 
 		const int mipIndex = data.Mips.GetCount();
 
@@ -119,7 +119,7 @@ public:
 	{
 		NS_Assert(IsTextureValid(texture));
 		const nsTextureResource& resource = TextureResources[texture.Id];
-		NS_AssertV(mipIndex >= 0 && mipIndex < resource.SubresourceViews.GetCount(), "Invalid mip index!");
+		NS_AssertV(mipIndex >= 0 && mipIndex < resource.SubresourceViews.GetCount(), TEXT("Invalid mip index!"));
 
 		return resource.SubresourceViews[mipIndex];
 	}

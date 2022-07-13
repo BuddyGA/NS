@@ -30,8 +30,8 @@ namespace nsAlgorithm
 	template<typename T, typename TPredicate>
 	static NS_INLINE int Sort_Partition(T* data, int count, int left, int right, TPredicate predicate) noexcept
 	{
-		NS_ValidateV(left >= 0 && left < count, "Out of range!");
-		NS_ValidateV(right >= 0 && right < count, "Out of range!");
+		NS_ValidateV(left >= 0 && left < count, TEXT("Out of range!"));
+		NS_ValidateV(right >= 0 && right < count, TEXT("Out of range!"));
 		NS_Validate(left < right);
 
 		const T pivot = data[right];

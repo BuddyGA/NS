@@ -3,7 +3,7 @@
 
 
 
-nsLogCategory AssetLog("nsAssetLog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory AssetLog(TEXT("nsAssetLog"), nsELogVerbosity::LV_DEBUG);
 
 
 

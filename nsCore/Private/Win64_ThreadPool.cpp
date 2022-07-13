@@ -15,7 +15,7 @@ struct nsThreadWorker
 };
 
 
-static nsLogCategory ThreadPoolLog("nsThreadPoolLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory ThreadPoolLog(TEXT("nsThreadPoolLog"), nsELogVerbosity::LV_DEBUG);
 static DWORD MainThreadId;
 static nsThreadWorker ThreadWorkers[32];
 static int NumThreads;
@@ -49,14 +49,14 @@ static DWORD WINAPI ns_ThreadProc(_In_ LPVOID lpParameter) noexcept
 			nsIThreadTask* task = cachedTasks[i];
 
 		#ifdef _DEBUG
-			NS_LogDebug(ThreadPoolLog, "[Thread-%u] execute task [%s]", worker->Id, *task->GetDebugName());
+			NS_LogDebug(ThreadPoolLog, TEXT("[Thread-%u] execute task [%s]"), worker->Id, *task->GetDebugName());
 		#endif // _DEBUG
 
 			task->Execute();
 		}
 
 		cachedTasks.Clear();
-		NS_LogDebug(ThreadPoolLog, "[Thread-%u] All tasks finished", worker->Id);
+		NS_LogDebug(ThreadPoolLog, TEXT("[Thread-%u] All tasks finished"), worker->Id);
 	}
 
 	return 0;
@@ -73,13 +73,13 @@ static void ns_ExecuteMainThreadTasks() noexcept
 		nsIThreadTask* task = mainThreadTasks[i];
 
 	#ifdef _DEBUG
-		NS_LogDebug(ThreadPoolLog, "[Thread-main] execute task [%s]", *task->GetDebugName());
+		NS_LogDebug(ThreadPoolLog, TEXT("[Thread-main] execute task [%s]"), *task->GetDebugName());
 	#endif // _DEBUG
 
 		task->Execute();
 	}
 
-	NS_LogDebug(ThreadPoolLog, "[Thread-main] All tasks finished");
+	NS_LogDebug(ThreadPoolLog, TEXT("[Thread-main] All tasks finished"));
 }
 
 
@@ -136,7 +136,7 @@ void nsThreadPool::Initialize() noexcept
 
 	bInitialized = true;
 
-	NS_LogInfo(ThreadPoolLog, "Initialize thread pool [NumWorkerThreads: %i]", NumThreads - 1);
+	NS_LogInfo(ThreadPoolLog, TEXT("Initialize thread pool [NumWorkerThreads: %i]"), NumThreads - 1);
 }
 
 
@@ -144,7 +144,7 @@ void nsThreadPool::Shutdown() noexcept
 {
 	if (bInitialized)
 	{
-		NS_LogInfo(ThreadPoolLog, "Shutdown threadpool");
+		NS_LogInfo(ThreadPoolLog, TEXT("Shutdown threadpool"));
 
 		bShuttingDown.Set(1);
 		nsTArrayInline<HANDLE, 32> workerThreadHandles;

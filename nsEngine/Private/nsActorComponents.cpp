@@ -4,7 +4,7 @@
 
 
 
-nsLogCategory nsComponentLog("nsComponentLog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory nsComponentLog(TEXT("nsComponentLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -24,7 +24,7 @@ nsActorComponent::nsActorComponent()
 
 void nsActorComponent::OnDestroy()
 {
-	Name = "";
+	Name = TEXT("");
 	Actor = nullptr;
 	bAddedToLevel = false;
 }
@@ -115,13 +115,13 @@ void nsTransformComponent::AttachToParent(nsTransformComponent* parent, nsETrans
 {
 	if (parent == nullptr)
 	{
-		NS_CONSOLE_Warning(nsComponentLog, "Ignore attach transform component [%s] to parent. parent is NULL!", *Name);
+		NS_CONSOLE_Warning(nsComponentLog, TEXT("Ignore attach transform component [%s] to parent. parent is NULL!"), *Name);
 		return;
 	}
 
 	if (this == parent)
 	{
-		NS_CONSOLE_Warning(nsComponentLog, "Fail attach actor [%s] to parent. Cannot attach to itself!", *Name);
+		NS_CONSOLE_Warning(nsComponentLog, TEXT("Fail attach actor [%s] to parent. Cannot attach to itself!"), *Name);
 		return;
 	}
 

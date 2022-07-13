@@ -4,7 +4,7 @@
 
 
 
-static nsLogCategory ShaderLog("nsShaderLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory ShaderLog(TEXT("nsShaderLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -41,7 +41,7 @@ void nsShaderCompileTask::Execute() noexcept
 		default: break;
 	}
 
-	nsString glslString;
+	nsTArray<char> glslString;
 	nsFileSystem::FileReadText(ShaderFile, glslString);
 
 	shaderc::CompileOptions options;
@@ -53,11 +53,11 @@ void nsShaderCompileTask::Execute() noexcept
 	}
 
 	shaderc::Compiler compiler;
-	shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(*glslString, glslString.GetLength(), shaderKind, *Name, "main", options);
+	shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(glslString.GetData(), glslString.GetCount(), shaderKind, *Name, "main", options);
 
 	if (result.GetCompilationStatus() == shaderc_compilation_status_success)
 	{
-		NS_LogDebug(ShaderLog, "Compile shader [%s] SUCCESS [Errors: %i, Warnings: %i]", *Name, result.GetNumErrors(), result.GetNumWarnings());
+		NS_LogDebug(ShaderLog, TEXT("Compile shader [%s] SUCCESS [Errors: %i, Warnings: %i]"), *Name.ToString(), result.GetNumErrors(), result.GetNumWarnings());
 		const int wordCount = static_cast<int>(result.cend() - result.cbegin());
 		NS_Assert((sizeof(uint32) * wordCount) % 4 == 0);
 		ShaderCodes.Clear();
@@ -66,7 +66,7 @@ void nsShaderCompileTask::Execute() noexcept
 	}
 	else
 	{
-		NS_LogError(ShaderLog, "Compile shader [%s] FAILED [Errors: %i, Warnings: %i]\n%s", *Name, result.GetNumErrors(), result.GetNumWarnings(), result.GetErrorMessage().c_str());
+		NS_LogError(ShaderLog, TEXT("Compile shader [%s] FAILED [Errors: %i, Warnings: %i]\n%s"), *Name.ToString(), result.GetNumErrors(), result.GetNumWarnings(), result.GetErrorMessage().c_str());
 	}
 
 	bDone.Set(1);
@@ -95,7 +95,7 @@ bool nsShaderCompileTask::IsDone() const noexcept
 
 nsString nsShaderCompileTask::GetDebugName() const noexcept
 {
-	return nsString::Format("nsShaderCompileTask:%s", *Name);
+	return nsString::Format(TEXT("nsShaderCompileTask:%s"), *Name.ToString());
 }
 
 #endif // _DEBUG
@@ -120,7 +120,7 @@ void nsShaderManager::Initialize() noexcept
 	}
 
 	// Compile default shaders
-	NS_LogDebug(ShaderLog, "Compiling default shaders...");
+	NS_LogDebug(ShaderLog, TEXT("Compiling default shaders..."));
 	const nsString shaderDirPath = "../../../Shaders/";
 
 	// vertex shaders
@@ -148,7 +148,7 @@ void nsShaderManager::Initialize() noexcept
 
 void nsShaderManager::AddShader(nsName name, const nsString& glslFile, VkShaderStageFlagBits shaderType, nsTArray<nsName> optionalCompileMacros) noexcept
 {
-	NS_AssertV(ShaderNames.Find(name) == NS_ARRAY_INDEX_INVALID, "Shader with name [%s] already exists!", *name);
+	NS_AssertV(ShaderNames.Find(name) == NS_ARRAY_INDEX_INVALID, TEXT("Shader with name [%s] already exists!"), *name.ToString());
 
 	ShaderNames.Add(name);
 	ShaderFlags.Add(Flag_Dirty);
@@ -233,7 +233,7 @@ void nsShaderManager::CompileShaders(bool bWaitUntilFinished) noexcept
 			nsVulkanShader*& shader = ShaderResources[i];
 			nsVulkan::DestroyShaderModule(shader);
 			shader = nsVulkan::CreateShaderModule(task.ShaderType, task.ShaderCodes.GetData(), sizeof(uint32) * task.ShaderCodes.GetCount(), task.Name);
-			NS_LogDebug(ShaderLog, "Create shader module [%s]", *task.Name);
+			NS_LogDebug(ShaderLog, TEXT("Create shader module [%s]"), *task.Name.ToString());
 
 			task.ShaderCodes.Clear(true);
 			task.bCompileSuccess = false;

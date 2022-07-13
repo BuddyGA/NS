@@ -34,11 +34,10 @@
 */
 
 #include "Private/nsActor.cpp"
-#include "Private/nsActorComponents.cpp"
 #include "Private/nsLevel.cpp"
 #include "Private/nsWorld.cpp"
 
+#include "Private/nsActorComponents.cpp"
 #include "Private/nsRenderComponents.cpp"
 #include "Private/nsPhysicsComponents.cpp"
-#include "Private/nsAnimationComponents.cpp"
 #include "Private/nsNavigationComponents.cpp"

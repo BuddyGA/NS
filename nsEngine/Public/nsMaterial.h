@@ -127,6 +127,8 @@ struct nsMaterialResource
 
 class NS_ENGINE_API nsMaterialManager
 {
+	NS_DECLARE_SINGLETON(nsMaterialManager)
+
 private:
 	bool bInitialized;
 
@@ -342,8 +344,5 @@ public:
 	{
 		return DefaultFullscreen;
 	}
-
-
-	NS_DECLARE_SINGLETON(nsMaterialManager)
 
 };

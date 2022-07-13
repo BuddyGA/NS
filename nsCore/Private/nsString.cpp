@@ -1,7 +1,7 @@
 #include "nsString.h"
 
 
-
+/*
 nsString nsString::Format(const char* format, ...) noexcept
 {
 	constexpr int BUFFER_SIZE = 2048;
@@ -70,8 +70,7 @@ nsName nsName::Format(const char* format, ...) noexcept
 
 	return name;
 }
+*/
 
 
-
-
-nsName nsName::NONE("");
+nsName nsName::NONE;

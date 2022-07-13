@@ -20,7 +20,7 @@
 NS_ENGINE_DEFINE_HANDLE(nsNavigationAgentID);
 
 
-nsLogCategory NavigationLog("nsNavigationLog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory NavigationLog(TEXT("nsNavigationLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -31,15 +31,15 @@ public:
 	{
 		if (category == RC_LOG_PROGRESS)
 		{
-			NS_CONSOLE_Debug(NavigationLog, "Recast: %s", msg);
+			NS_CONSOLE_Debug(NavigationLog, TEXT("Recast: %s"), msg);
 		}
 		else if (category == RC_LOG_WARNING)
 		{
-			NS_CONSOLE_Warning(NavigationLog, "Recast: %s", msg);
+			NS_CONSOLE_Warning(NavigationLog, TEXT("Recast: %s"), msg);
 		}
 		else if (category == RC_LOG_ERROR)
 		{
-			NS_CONSOLE_Error(NavigationLog, "Recast: %s", msg);
+			NS_CONSOLE_Error(NavigationLog, TEXT("Recast: %s"), msg);
 		}
 	}
 
@@ -73,13 +73,13 @@ public:
 
 	virtual void depthMask(bool state) override
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 
 	virtual void texture(bool state) override
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 
@@ -119,7 +119,7 @@ public:
 	///  @param color [in] color of the verts.
 	virtual void vertex(const float* pos, unsigned int color, const float* uv) override
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 
@@ -128,7 +128,7 @@ public:
 	///  @param color [in] color of the verts.
 	virtual void vertex(const float x, const float y, const float z, unsigned int color, const float u, const float v) override
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 
@@ -165,7 +165,7 @@ public:
 		}
 		else
 		{
-			NS_ValidateV(0, "Not implemented yet!");
+			NS_ValidateV(0, TEXT("Not implemented yet!"));
 		}
 	}
 
@@ -251,7 +251,7 @@ public:
 
 	virtual void Execute() noexcept override
 	{
-		NS_CONSOLE_Log(NavigationLog, "Building navigation mesh");
+		NS_CONSOLE_Log(NavigationLog, TEXT("Building navigation mesh"));
 
 		nsAABB bounding;
 		bounding.Min = nsVector3(-2000.0f, -16.0f, -2000.0f);
@@ -514,6 +514,7 @@ void nsNavigationManager::DestroyAgent(nsNavigationAgentID& agent)
 		}
 
 		AgentParams.RemoveAt(agent.Id);
+		AgentActiveStates.RemoveAt(agent.Id);
 	}
 
 	agent = nsNavigationAgentID::INVALID;
@@ -603,7 +604,7 @@ void nsNavigationManager::SetAgentMoveTarget(nsNavigationAgentID agent, const ns
 
 		if (!bSuccess)
 		{
-			NS_CONSOLE_Warning(NavigationLog, "Request move target failed!");
+			NS_CONSOLE_Warning(NavigationLog, TEXT("Request move target failed!"));
 		}
 	}
 }

@@ -4,37 +4,53 @@
 
 
 #ifdef _WIN64
+#define NS_PLATFORM_WINDOWS
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
 
-#define NS_PLATFORM_WINDOWS
-typedef HWND		nsWindowHandle;
-typedef HMODULE		nsModuleHandle;
-typedef HANDLE		nsFileHandle;
+typedef HWND		nsPlatformWindowHandle;
+typedef HMODULE		nsPlatformModuleHandle;
+typedef HANDLE		nsPlatformFileHandle;
 
-enum class nsEFileSeekMode : uint8
-{
-	BEGIN	= FILE_BEGIN,
-	CURRENT	= FILE_CURRENT,
-	END		= FILE_END
-};
 
-namespace nsEPlatformConsoleTextColor
-{
-	enum Mask
-	{
-		Blue	= FOREGROUND_BLUE,
-		Green	= FOREGROUND_GREEN,
-		Red		= FOREGROUND_RED,
-	};
-};
+#define NS_Abort()			abort()
 
-#define NS_Abort() abort()
+#ifdef _DEBUG
+#include <intrin.h>
+#define NS_DebugBreak()		__debugbreak()
+#else
+#define NS_DebugBreak()
+#endif // _DEBUG
+
+#else
+#error Unknown Platform
+
 #endif // _WIN64
 
 
+
+namespace nsEPlatformConsoleOutputColor
+{
+	enum Mask
+	{
+		Red		= (1 << 0),
+		Green	= (1 << 1),
+		Blue	= (1 << 2)
+	};
+};
+
 typedef uint8 nsPlatformConsoleTextColorMasks;
+
+
+
+enum class nsEPlatformFileSeekMode : uint8
+{
+	BEGIN,
+	CURRENT,
+	END
+};
+
 
 
 enum class nsEPlatformFileOpenMode : uint8
@@ -281,10 +297,10 @@ namespace nsPlatform
 {
 	extern NS_CORE_API void Initialize() noexcept;
 	extern NS_CORE_API void Shutdown() noexcept;
-	NS_NODISCARD extern const char* GetDirectoryPath() noexcept;
-	extern NS_CORE_API void Output(const char* message, nsPlatformConsoleTextColorMasks colorMasks = 0) noexcept;
-	extern NS_CORE_API void OutputFormat(const char* format, ...) noexcept;
-	extern NS_CORE_API void OutputFormatColored(nsPlatformConsoleTextColorMasks colorMasks, const char* format, ...) noexcept;
+	NS_NODISCARD extern const wchar_t* GetDirectoryPath() noexcept;
+
+	extern NS_CORE_API void ConsoleOutput(const wchar_t* message, nsPlatformConsoleTextColorMasks colorMasks = 0) noexcept;
+	extern NS_CORE_API void ConsoleOutputFormat(nsPlatformConsoleTextColorMasks colorMasks, const wchar_t* format, ...) noexcept;
 
 	extern NS_CORE_API void Memory_Zero(void* dst, uint64 size) noexcept;
 	extern NS_CORE_API void Memory_Set(void* dst, int value, uint64 size) noexcept;
@@ -294,32 +310,43 @@ namespace nsPlatform
 	NS_NODISCARD extern NS_CORE_API void* Memory_Realloc(void* oldData, uint64 size) noexcept;
 	extern NS_CORE_API void Memory_Free(void* data) noexcept;
 
-	extern NS_CORE_API int String_Length(const char* cstr) noexcept;
+	NS_NODISCARD extern NS_CORE_API int String_Length(const char* cstr) noexcept;
+	NS_NODISCARD extern NS_CORE_API int String_Length(const wchar_t* wstr) noexcept;
 	extern NS_CORE_API void String_Copy(char* dst, const char* src) noexcept;
+	extern NS_CORE_API void String_Copy(wchar_t* dst, const wchar_t* src) noexcept;
 	extern NS_CORE_API int String_Format(char* buffer, int bufferCount, const char* format, ...) noexcept;
-	extern NS_CORE_API bool String_Compare(const char* cstrA, const char* cstrB, bool bIgnoreCase = false) noexcept;
+	extern NS_CORE_API int String_Format(wchar_t* buffer, int bufferCount, const wchar_t* format, ...) noexcept;
+	NS_NODISCARD extern NS_CORE_API bool String_Compare(const char* cstrA, const char* cstrB, bool bIgnoreCase) noexcept;
+	NS_NODISCARD extern NS_CORE_API bool String_Compare(const wchar_t* wstrA, const wchar_t* wstrB, bool bIgnoreCase) noexcept;
+	extern NS_CORE_API int String_ConvertToWide(wchar_t* dst, const char* src, int length);
+	extern NS_CORE_API int String_ConvertToMultiByte(char* dst, const wchar_t* src, int length);
 	extern NS_CORE_API void String_ToLower(char* cstr) noexcept;
+	extern NS_CORE_API void String_ToLower(wchar_t* wstr) noexcept;
 	extern NS_CORE_API void String_ToUpper(char* cstr) noexcept;
+	extern NS_CORE_API void String_ToUpper(wchar_t* wstr) noexcept;
 	NS_NODISCARD extern NS_CORE_API int String_ToInt(const char* cstr) noexcept;
+	NS_NODISCARD extern NS_CORE_API int String_ToInt(const wchar_t* wstr) noexcept;
 	NS_NODISCARD extern NS_CORE_API float String_ToFloat(const char* cstr) noexcept;
+	NS_NODISCARD extern NS_CORE_API float String_ToFloat(const wchar_t* wstr) noexcept;
 	NS_NODISCARD extern NS_CORE_API uint64 String_Hash(const char* cstr) noexcept;
+	NS_NODISCARD extern NS_CORE_API uint64 String_Hash(const wchar_t* wstr) noexcept;
 
-	NS_NODISCARD extern NS_CORE_API bool File_Exists(const char* filePath) noexcept;
-	NS_NODISCARD extern NS_CORE_API nsFileHandle File_Open(const char* filePath, nsEPlatformFileOpenMode mode) noexcept;
-	extern NS_CORE_API bool File_Seek(nsFileHandle fileHandle, int byteOffset, nsEFileSeekMode mode = nsEFileSeekMode::BEGIN) noexcept;
-	extern NS_CORE_API bool File_Read(nsFileHandle fileHandle, void* outResult, int byteSize) noexcept;
-	extern NS_CORE_API bool File_Write(nsFileHandle fileHandle, const void* data, int dataSize) noexcept;
-	extern NS_CORE_API void File_Close(nsFileHandle& fileHandle) noexcept;
-	extern NS_CORE_API bool File_Copy(const char* srcFilePath, const char* dstFilePath) noexcept;
-	extern NS_CORE_API bool File_Delete(const char* filePath) noexcept;
-	NS_NODISCARD extern NS_CORE_API int File_GetSize(nsFileHandle fileHandle) noexcept;
+	NS_NODISCARD extern NS_CORE_API bool File_Exists(const wchar_t* filePath) noexcept;
+	NS_NODISCARD extern NS_CORE_API nsPlatformFileHandle File_Open(const wchar_t* filePath, nsEPlatformFileOpenMode mode) noexcept;
+	extern NS_CORE_API bool File_Seek(nsPlatformFileHandle fileHandle, int byteOffset, nsEPlatformFileSeekMode mode = nsEPlatformFileSeekMode::BEGIN) noexcept;
+	extern NS_CORE_API bool File_Read(nsPlatformFileHandle fileHandle, void* outResult, int byteSize) noexcept;
+	extern NS_CORE_API bool File_Write(nsPlatformFileHandle fileHandle, const void* data, int dataSize) noexcept;
+	extern NS_CORE_API void File_Close(nsPlatformFileHandle& fileHandle) noexcept;
+	extern NS_CORE_API bool File_Copy(const wchar_t* srcFilePath, const wchar_t* dstFilePath) noexcept;
+	extern NS_CORE_API bool File_Delete(const wchar_t* filePath) noexcept;
+	NS_NODISCARD extern NS_CORE_API int File_GetSize(nsPlatformFileHandle fileHandle) noexcept;
 
-	NS_NODISCARD extern NS_CORE_API nsModuleHandle Module_Load(const char* moduleFile) noexcept;
-	NS_NODISCARD extern NS_CORE_API void Module_Unload(nsModuleHandle& moduleHandle) noexcept;
-	NS_NODISCARD extern NS_CORE_API void* Module_GetFunction(nsModuleHandle moduleHandle, const char* functionName) noexcept;
+	NS_NODISCARD extern NS_CORE_API nsPlatformModuleHandle Module_Load(const wchar_t* moduleFile) noexcept;
+	NS_NODISCARD extern NS_CORE_API void Module_Unload(nsPlatformModuleHandle& moduleHandle) noexcept;
+	NS_NODISCARD extern NS_CORE_API void* Module_GetFunction(nsPlatformModuleHandle moduleHandle, const char* functionName) noexcept;
 
 	template<typename TFunction>
-	NS_NODISCARD_INLINE TFunction Module_GetFunctionAs(nsModuleHandle moduleHandle, const char* functionName) noexcept
+	NS_NODISCARD_INLINE TFunction Module_GetFunctionAs(nsPlatformModuleHandle moduleHandle, const char* functionName) noexcept
 	{
 		return static_cast<TFunction>(Module_GetFunction(moduleHandle, functionName));
 	}
@@ -330,9 +357,9 @@ namespace nsPlatform
 
 	extern NS_CORE_API void Mouse_ShowCursor(bool bShow) noexcept;
 	extern NS_CORE_API void Mouse_SetCursorShape(nsEMouseCursorShape shape) noexcept;
-	extern NS_CORE_API void Mouse_SetCapture(nsWindowHandle windowHandle, bool bCapture) noexcept;
-	extern NS_CORE_API void Mouse_SetCursorWindowPosition(nsWindowHandle windowHandle, const nsPointInt& position) noexcept;
-	extern NS_CORE_API void Mouse_ClipCursor(bool bClip, nsWindowHandle windowHandle = NULL, const nsRectInt& rect = nsRectInt()) noexcept;
+	extern NS_CORE_API void Mouse_SetCapture(nsPlatformWindowHandle windowHandle, bool bCapture) noexcept;
+	extern NS_CORE_API void Mouse_SetCursorWindowPosition(nsPlatformWindowHandle windowHandle, const nsPointInt& position) noexcept;
+	extern NS_CORE_API void Mouse_ClipCursor(bool bClip, nsPlatformWindowHandle windowHandle = NULL, const nsRectInt& rect = nsRectInt()) noexcept;
 	NS_NODISCARD extern NS_CORE_API bool Mouse_IsCursorHidden() noexcept;
 
 	extern NS_CORE_API void Thread_Sleep(int ms) noexcept;
@@ -342,30 +369,30 @@ namespace nsPlatform
 
 
 #define NS_AssertOutputV(expr, message, ...) \
-char messageBuffer[1024]; \
+wchar_t messageBuffer[1024]; \
 nsPlatform::String_Format(messageBuffer, 1024, message, __VA_ARGS__); \
-nsPlatform::OutputFormatColored(nsEPlatformConsoleTextColor::Red, "\nAssertion failed! (%s)\nMessage: %s\nFile: %s\nLine: %i\n", #expr, messageBuffer, __FILE__, __LINE__) \
+nsPlatform::ConsoleOutputFormat(nsEPlatformConsoleOutputColor::Red, TEXT("\nAssertion failed! (%s)\nMessage: %s\nFile: %s\nLine: %i\n"), TEXT(#expr), messageBuffer, TEXT(__FILE__), __LINE__) \
 
-#define NS_AssertOutput(expr) nsPlatform::OutputFormatColored(nsEPlatformConsoleTextColor::Red, "\nAssertion failed! (%s)\nFile: %s\nLine: %i\n", #expr, __FILE__, __LINE__)
+#define NS_AssertOutput(expr) nsPlatform::ConsoleOutputFormat(nsEPlatformConsoleOutputColor::Red, TEXT("\nAssertion failed! (%s)\nFile: %s\nLine: %i\n"), TEXT(#expr), TEXT(__FILE__), __LINE__)
+
 
 
 #ifdef _DEBUG
 
 #ifdef NS_PLATFORM_WINDOWS
-#include <intrin.h>
 
 #define NS_AssertV(expr, message, ...)				\
 if (!(expr))										\
 {													\
 	NS_AssertOutputV(expr, message, __VA_ARGS__);	\
-	__debugbreak();									\
+	NS_DebugBreak();								\
 }
 
 #define NS_Assert(expr)			\
 if (!(expr))					\
 {								\
-	 NS_AssertOutput(expr);		\
-	__debugbreak();				\
+	NS_AssertOutput(expr);		\
+	NS_DebugBreak();			\
 }
 
 #endif // NS_PLATFORM_WINDOWS

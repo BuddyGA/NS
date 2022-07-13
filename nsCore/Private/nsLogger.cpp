@@ -2,15 +2,15 @@
 
 
 
-nsLogCategory nsTempLog("nsTempLog", nsELogVerbosity::LV_DEBUG);
-nsLogCategory nsSystemLog("nsSystemLog", nsELogVerbosity::LV_DEBUG);
+nsLogCategory nsTempLog(TEXT("nsTempLog"), nsELogVerbosity::LV_DEBUG);
+nsLogCategory nsSystemLog(TEXT("nsSystemLog"), nsELogVerbosity::LV_INFO);
 
 
 
 nsLogger::nsLogger() noexcept
 	: bInitialized(false)
-	, GlobalVerbosity(nsELogVerbosity::LV_INFO)
 	, OutputFileHandle(nullptr)
+	, GlobalVerbosity(nsELogVerbosity::LV_INFO)
 {
 }
 
@@ -35,7 +35,7 @@ void nsLogger::Initialize(nsELogVerbosity globalVerbosity, nsString outputFile) 
 
 void nsLogger::OutputLog(const nsString& message, nsELogVerbosity verbosity) noexcept
 {
-	NS_AssertV(bInitialized, "Must call Initialize()!");
+	NS_AssertV(bInitialized, TEXT("Must call Initialize()!"));
 
 	if (verbosity < GlobalVerbosity)
 	{
@@ -53,15 +53,15 @@ void nsLogger::OutputLog(const nsString& message, nsELogVerbosity verbosity) noe
 
 	if (verbosity == nsELogVerbosity::LV_WARNING)
 	{
-		outputColorMasks = nsEPlatformConsoleTextColor::Red | nsEPlatformConsoleTextColor::Green;
+		outputColorMasks = nsEPlatformConsoleOutputColor::Red | nsEPlatformConsoleOutputColor::Green;
 	}
 	else if (verbosity == nsELogVerbosity::LV_ERROR)
 	{
-		outputColorMasks = nsEPlatformConsoleTextColor::Red;
+		outputColorMasks = nsEPlatformConsoleOutputColor::Red;
 	}
 
-	nsString outputMessage = nsString::Format("%s\n", *message);
-	nsPlatform::Output(*outputMessage, outputColorMasks);
+	const nsString outputMessage = nsString::Format(TEXT("%s\n"), *message);
+	nsPlatform::ConsoleOutput(*outputMessage, outputColorMasks);
 
 	if (OutputFileHandle)
 	{
@@ -69,30 +69,4 @@ void nsLogger::OutputLog(const nsString& message, nsELogVerbosity verbosity) noe
 		nsPlatform::File_Write(OutputFileHandle, *outputMessage, outputMessage.GetLength());
 		OutputFileCriticalSection.Leave();
 	}
-}
-
-
-nsString nsLogger::OutputLogCategory(const nsLogCategory& category, nsELogVerbosity verbosity, const nsString& message) noexcept
-{
-	NS_AssertV(bInitialized, "Must call Initialize()!");
-
-	if (verbosity < category.Verbosity || verbosity < GlobalVerbosity)
-	{
-		return "";
-	}
-
-	nsString output;
-
-	switch (verbosity)
-	{
-		case nsELogVerbosity::LV_INFO: output = nsString::Format("[INF] %s: %s", category.Name, *message); break;
-		case nsELogVerbosity::LV_DEBUG: output = nsString::Format("[DBG] %s: %s", category.Name, *message); break;
-		case nsELogVerbosity::LV_WARNING: output = nsString::Format("[WRN] %s: %s", category.Name, *message); break;
-		case nsELogVerbosity::LV_ERROR: output = nsString::Format("[ERR] %s: %s", category.Name, *message); break;
-		default: break;
-	}
-
-	OutputLog(output, verbosity);
-
-	return output;
 }

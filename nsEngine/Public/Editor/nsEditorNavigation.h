@@ -19,7 +19,7 @@ public:
 
 
 
-class NS_ENGINE_API nsNavigationEditor
+class NS_ENGINE_API nsEditorNavigationBuilder
 {
 private:
 	nsGUIWindow Window;
@@ -29,7 +29,7 @@ public:
 
 
 public:
-	nsNavigationEditor();
+	nsEditorNavigationBuilder();
 	void DrawGUI(nsGUIContext& context);
 
 private:

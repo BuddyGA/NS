@@ -9,7 +9,7 @@ nsCommandLines::nsCommandLines() noexcept
 }
 
 
-void nsCommandLines::Initialize(int argc, char* argv[]) noexcept
+void nsCommandLines::Initialize(int argc, wchar_t* argv[]) noexcept
 {
 	if (bInitialized)
 	{
@@ -27,14 +27,14 @@ void nsCommandLines::Initialize(int argc, char* argv[]) noexcept
 	for (int i = 1; i < argc; ++i)
 	{
 		argument = argv[i];
-		argument.RemoveCharInPlace('-');
+		argument.RemoveCharInPlace(TEXT('-'));
 		argument.TrimInPlace();
 		argument.ToLowerInPlace();
-		commandAndValue = argument.Splits('=');
+		commandAndValue = argument.Splits(TEXT('='));
 
 		if (commandAndValue.GetCount() == 1)
 		{
-			commandAndValue.Add("1");
+			commandAndValue.Add(TEXT("1"));
 		}
 
 		CommandTable.Add(*commandAndValue[0], *commandAndValue[1]);
@@ -46,7 +46,7 @@ void nsCommandLines::Initialize(int argc, char* argv[]) noexcept
 }
 
 
-void nsCommandLines::Initialize(const char* commandLine) noexcept
+void nsCommandLines::Initialize(const wchar_t* commandLine) noexcept
 {
 	if (bInitialized)
 	{
@@ -66,15 +66,15 @@ void nsCommandLines::Initialize(const char* commandLine) noexcept
 
 	for (int i = 0; i < strLen; ++i)
 	{
-		if (commandLine[i] == '-')
+		if (commandLine[i] == TEXT('-'))
 		{
 			int len = 1;
 
 			for (int j = i + 1; j < strLen; ++j)
 			{
-				char c = commandLine[j];
+				wchar_t c = commandLine[j];
 
-				if (c == '\0' || c == ' ')
+				if (c == TEXT('\0') || c == TEXT(' '))
 				{
 					break;
 				}
@@ -84,7 +84,7 @@ void nsCommandLines::Initialize(const char* commandLine) noexcept
 
 			nsString& arg = commandArgs.Add();
 			arg.Resize(len);
-			nsPlatform::Memory_Copy(*arg, &commandLine[i], len);
+			nsPlatform::Memory_Copy(*arg, &commandLine[i], sizeof(wchar_t) * len);
 		}
 	}
 
@@ -99,11 +99,11 @@ void nsCommandLines::Initialize(const char* commandLine) noexcept
 		arg.RemoveCharInPlace('-');
 		arg.TrimInPlace();
 		arg.ToLowerInPlace();
-		commandValuePairs = arg.Splits('=');
+		commandValuePairs = arg.Splits(TEXT('='));
 
 		if (commandValuePairs.GetCount() == 1)
 		{
-			commandValuePairs.Add("1");
+			commandValuePairs.Add(TEXT("1"));
 		}
 
 		CommandTable.Add(*commandValuePairs[0], *commandValuePairs[1]);
@@ -115,17 +115,17 @@ void nsCommandLines::Initialize(const char* commandLine) noexcept
 }
 
 
-bool nsCommandLines::HasCommand(nsName command) const noexcept
+bool nsCommandLines::HasCommand(const nsString& command) const noexcept
 {
 	return CommandTable.Exists(command);
 }
 
 
-nsName nsCommandLines::GetValue(nsName command) const noexcept
+nsString nsCommandLines::GetValue(const nsString& command) const noexcept
 {
 	if (!CommandTable.Exists(command))
 	{
-		return "";
+		return TEXT("");
 	}
 
 	return CommandTable[command];

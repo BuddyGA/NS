@@ -8,7 +8,7 @@ NS_ENGINE_DEFINE_HANDLE(nsMaterialID);
 
 
 
-static nsLogCategory MaterialLog("nsMaterialLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory MaterialLog(TEXT("nsMaterialLog"), nsELogVerbosity::LV_DEBUG);
 
 static void ns_GetVertexAttributeBindings(nsEMaterialSurfaceDomain surfaceDomain, nsTArrayInline<VkVertexInputBindingDescription, 4>& outVertexBindings, nsTArrayInline<VkVertexInputAttributeDescription, 8>& outVertexAttributes) noexcept
 {
@@ -111,10 +111,10 @@ void nsMaterialManager::Initialize() noexcept
 		return;
 	}
 
-	NS_LogInfo(MaterialLog, "Initialize material manager");
+	NS_LogInfo(MaterialLog, TEXT("Initialize material manager"));
 
 	// Initialize default materials
-	NS_LogInfo(MaterialLog, "Creating default materials...");
+	NS_LogInfo(MaterialLog, TEXT("Creating default materials..."));
 
 	const nsTextureID whiteTexture = nsTextureManager::Get().GetDefaultTexture2D_White();
 	const nsTextureID blackTexture = nsTextureManager::Get().GetDefaultTexture2D_Black();
@@ -426,7 +426,7 @@ nsMaterialID nsMaterialManager::CreateMaterial_Empty(nsName name) noexcept
 {
 	if (FindMaterial(name) != nsMaterialID::INVALID)
 	{
-		NS_LogWarning(MaterialLog, "Material with name [%s] already exists!", *name);
+		NS_LogWarning(MaterialLog, TEXT("Material with name [%s] already exists!"), *name.ToString());
 		return nsMaterialID::INVALID;
 	}
 
@@ -438,7 +438,7 @@ nsMaterialID nsMaterialManager::CreateMaterial(nsName name, nsMaterialPipelineSt
 {
 	if (FindMaterial(name) != nsMaterialID::INVALID)
 	{
-		NS_LogWarning(MaterialLog, "Material with name [%s] already exists!", *name);
+		NS_LogWarning(MaterialLog, TEXT("Material with name [%s] already exists!"), *name.ToString());
 		return nsMaterialID::INVALID;
 	}
 
@@ -540,7 +540,7 @@ nsMaterialID nsMaterialManager::CreateMaterial(nsName name, nsMaterialPipelineSt
 	}
 
 
-	NS_LogInfo(MaterialLog, "Create material default [%s]", *name);
+	NS_LogInfo(MaterialLog, TEXT("Create material default [%s]"), *name.ToString());
 
 	return nsMaterialID(id);
 }
@@ -556,7 +556,7 @@ nsMaterialID nsMaterialManager::CreateMaterialInstance(nsName name, nsMaterialID
 	MaterialResources[id] = MaterialResources[parentMaterial.Id];
 	MaterialParameterTables[id] = MaterialParameterTables[parentMaterial.Id];
 
-	NS_LogInfo(MaterialLog, "Create material instance [%s]", *name);
+	NS_LogInfo(MaterialLog, TEXT("Create material instance [%s]"), *name.ToString());
 
 	return nsMaterialID(id);
 }
@@ -564,19 +564,19 @@ nsMaterialID nsMaterialManager::CreateMaterialInstance(nsName name, nsMaterialID
 
 void nsMaterialManager::DestroyMaterial(nsMaterialID& material) noexcept
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
 void nsMaterialManager::SetMaterialParameterScalarValue(nsMaterialID material, nsName paramName, float value) noexcept
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
 void nsMaterialManager::SetMaterialParameterVectorValue(nsMaterialID material, nsName paramName, nsVector4 value) noexcept
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
@@ -593,7 +593,7 @@ void nsMaterialManager::SetMaterialParameterTextureValue(nsMaterialID material, 
 	}
 	else
 	{
-		NS_LogWarning(MaterialLog, "Fail to set material parameter texture value. Material [%s] texture parameter [%s] not found!", *MaterialNames[material.Id], *paramName);
+		NS_LogWarning(MaterialLog, TEXT("Fail to set material parameter texture value. Material [%s] texture parameter [%s] not found!"), *MaterialNames[material.Id].ToString(), *paramName.ToString());
 	}
 }
 
@@ -720,6 +720,6 @@ void nsMaterialManager::UpdateRenderResources() noexcept
 	// TODO: Cleanup pending destroy materials
 	for (int i = 0; i < frame.MaterialToDestroys.GetCount(); ++i)
 	{
-		NS_AssertV(0, "Not implemented yet!");
+		NS_AssertV(0, TEXT("Not implemented yet!"));
 	}
 }

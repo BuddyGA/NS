@@ -413,27 +413,27 @@ private:
 
 public:
 	void AddDrawShape(const nsVertexGUI* vertices, int vertexCount, const uint32* indices, int indexCount, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept;
-	void AddDrawTriangle(const nsPointFloat& center, float halfWidth, float rotationDegree, const nsColor& color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept;
+	void AddDrawTriangle(const nsPointFloat& center, float halfWidth, float rotationDegree, nsColor color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept;
 
-	NS_INLINE void AddDrawTriangleLeft(const nsPointFloat& center, float halfWidth, const nsColor& color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
+	NS_INLINE void AddDrawTriangleLeft(const nsPointFloat& center, float halfWidth, nsColor color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
 	{
 		AddDrawTriangle(center, halfWidth, -90.0f, color, texture, material, orderZ);
 	}
 
-	NS_INLINE void AddDrawTriangleRight(const nsPointFloat& center, float halfWidth, const nsColor& color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
+	NS_INLINE void AddDrawTriangleRight(const nsPointFloat& center, float halfWidth, nsColor color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
 	{
 		AddDrawTriangle(center, halfWidth, 90.0f, color, texture, material, orderZ);
 	}
 
-	NS_INLINE void AddDrawTriangleDown(const nsPointFloat& center, float halfWidth, const nsColor& color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
+	NS_INLINE void AddDrawTriangleDown(const nsPointFloat& center, float halfWidth, nsColor color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept
 	{
 		AddDrawTriangle(center, halfWidth, 180.0f, color, texture, material, orderZ);
 	}
 
 
-	void AddDrawRect(const nsGUIRect& rect, const nsColor& color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0, const nsVector2& uv0 = nsVector2(0.0f), const nsVector2& uv1 = nsVector2(1.0f)) noexcept;
-	void AddDrawText(const char* text, int charLength, const nsPointFloat& position, const nsColor& color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept;
-	nsGUIRect AddDrawTextOnRect(const char* text, int charLength, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment = nsPointFloat(), const nsColor& color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
+	void AddDrawRect(const nsGUIRect& rect, nsColor color, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0, const nsVector2& uv0 = nsVector2(0.0f), const nsVector2& uv1 = nsVector2(1.0f)) noexcept;
+	void AddDrawText(const wchar_t* text, int charLength, const nsPointFloat& position, nsColor color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID, uint8 orderZ = 0) noexcept;
+	nsGUIRect AddDrawTextOnRect(const wchar_t* text, int charLength, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment = nsPointFloat(), nsColor color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
 
 
 	void BeginRegion(const char* uniqueId, const nsGUIRect& rect, const nsPointFloat& childElementSpace, nsEGUIElementLayout childElementLayout, nsGUIScrollOptions scrollOptions, bool bIsWindow, nsName debugName = "") noexcept;
@@ -441,8 +441,8 @@ public:
 	nsGUIControl TestControlInCurrentRegion(const nsPointFloat& size) const noexcept;
 	void UpdateControlInCurrentRegion(nsGUIControl& control, bool bIsRegion) noexcept;
 
-	nsGUIControl AddControlText(const char* text, nsColor color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
-	nsGUIControl AddControlTextOnRect(const char* text, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment = nsPointFloat(), const nsColor& color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
+	nsGUIControl AddControlText(const wchar_t* text, nsColor color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
+	nsGUIControl AddControlTextOnRect(const wchar_t* text, const nsGUIRect& rect, nsEGUIAlignmentHorizontal hAlign, nsEGUIAlignmentVertical vAlign, const nsPointFloat& offsetAlignment = nsPointFloat(), const nsColor& color = nsColor::WHITE, nsFontID font = nsFontID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
 	nsGUIControl AddControlRect(float width, float height, nsColor color = nsColor::WHITE, nsTextureID texture = nsTextureID::INVALID, nsMaterialID material = nsMaterialID::INVALID) noexcept;
 
 	// Add empty control. UniqueId must be valid 

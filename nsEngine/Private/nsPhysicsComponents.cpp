@@ -36,7 +36,7 @@ void nsCollisionComponent::OnInitialize()
 
 	if (Actor->IsStatic() && bIsKinematic)
 	{
-		NS_CONSOLE_Warning(nsComponentLog, "nsCollisionComponent: Kinematic collision type requires dynamic actor! [Actor:%s]", *Actor->Name);
+		NS_CONSOLE_Warning(nsComponentLog, TEXT("nsCollisionComponent: Kinematic collision type requires dynamic actor! [Actor:%s]"), *Actor->Name);
 	}
 
 	UpdateCollisionVolume();
@@ -450,7 +450,7 @@ void nsConvexMeshCollisionComponent::UpdateCollisionShape()
 
 		PxCooking* cooking = nsPhysicsManager::Get().GetAPI_Cooking();
 		const bool bSuccess = cooking->cookConvexMesh(convexMeshDesc, buffer, &result);
-		NS_ValidateV(bSuccess, "Cooking convex mesh failed!");
+		NS_ValidateV(bSuccess, TEXT("Cooking convex mesh failed!"));
 
 		PxDefaultMemoryInputData input(buffer.getData(), buffer.getSize());
 		PxConvexMesh* convexMesh = nsPhysicsManager::Get().GetAPI_Physics()->createConvexMesh(input);

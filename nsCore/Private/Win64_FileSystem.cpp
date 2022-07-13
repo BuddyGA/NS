@@ -14,8 +14,8 @@ bool nsFileSystem::FolderExists(const nsString& folderPath) noexcept
 
 	NS_ValidatePathLength(folderPath);
 
-	WIN32_FIND_DATAA fileData;
-	HANDLE fileHandle = FindFirstFileA(*folderPath, &fileData);
+	WIN32_FIND_DATA fileData;
+	HANDLE fileHandle = FindFirstFile(*folderPath, &fileData);
 	return (fileHandle != INVALID_HANDLE_VALUE && (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY));
 }
 
@@ -34,7 +34,7 @@ bool nsFileSystem::FolderCreate(const nsString& folderPath) noexcept
 
 	NS_ValidatePathLength(folderPath);
 
-	const int error = CreateDirectoryA(*folderPath, NULL);
+	const int error = CreateDirectory(*folderPath, NULL);
 	return error != 0 || GetLastError() == ERROR_ALREADY_EXISTS;
 }
 
@@ -43,13 +43,13 @@ bool nsFileSystem::FolderDelete(const nsString& folderPath) noexcept
 {
 	if (!FolderExists(folderPath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to delete folder. Folder [%s] does not exists!", *folderPath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to delete folder. Folder [%s] does not exists!"), *folderPath);
 		return false;
 	}
 
-	const nsString search = folderPath + "/*";
-	WIN32_FIND_DATAA fileData{};
-	HANDLE fileHandle = FindFirstFileA(*search, &fileData);
+	const nsString search = folderPath + TEXT("/*");
+	WIN32_FIND_DATA fileData{};
+	HANDLE fileHandle = FindFirstFile(*search, &fileData);
 	nsString fileName;
 
 	if (fileHandle != INVALID_HANDLE_VALUE)
@@ -58,7 +58,7 @@ bool nsFileSystem::FolderDelete(const nsString& folderPath) noexcept
 		{
 			fileName = fileData.cFileName;
 
-			if (fileName == "." || fileName == "..")
+			if (fileName == TEXT(".") || fileName == TEXT(".."))
 			{
 				continue;
 			}
@@ -68,17 +68,17 @@ bool nsFileSystem::FolderDelete(const nsString& folderPath) noexcept
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
 				FolderDelete(file);
-				RemoveDirectoryA(*file);
+				RemoveDirectory(*file);
 			}
 			else
 			{
-				DeleteFileA(*file);
+				DeleteFile(*file);
 			}
 
 		}
-		while (FindNextFileA(fileHandle, &fileData));
+		while (FindNextFile(fileHandle, &fileData));
 
-		RemoveDirectoryA(*folderPath);
+		RemoveDirectory(*folderPath);
 	}
 
 	FindClose(fileHandle);
@@ -91,13 +91,13 @@ void nsFileSystem::FolderIterate(nsTArray<nsString>& outFolders, const nsString&
 {
 	if (!FolderExists(folderPath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to iterate folder. Folder [%s] does not exists!", *folderPath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to iterate folder. Folder [%s] does not exists!"), *folderPath);
 		return;
 	}
 
-	const nsString search = folderPath + "/*";
-	WIN32_FIND_DATAA fileData{};
-	HANDLE fileHandle = FindFirstFileA(*search, &fileData);
+	const nsString search = folderPath + TEXT("/*");
+	WIN32_FIND_DATA fileData{};
+	HANDLE fileHandle = FindFirstFile(*search, &fileData);
 	nsString fileName;
 
 	if (fileHandle != INVALID_HANDLE_VALUE)
@@ -106,14 +106,14 @@ void nsFileSystem::FolderIterate(nsTArray<nsString>& outFolders, const nsString&
 		{
 			fileName = fileData.cFileName;
 
-			if (fileName == "." || fileName == "..")
+			if (fileName == TEXT(".") || fileName == TEXT(".."))
 			{
 				continue;
 			}
 
 			if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			{
-				const nsString subDir = folderPath + "/" + fileName;
+				const nsString subDir = folderPath + TEXT("/") + fileName;
 				outFolders.Add(subDir);
 
 				if (bIncludeSubfolders)
@@ -123,7 +123,7 @@ void nsFileSystem::FolderIterate(nsTArray<nsString>& outFolders, const nsString&
 			}
 
 		}
-		while (FindNextFileA(fileHandle, &fileData));
+		while (FindNextFile(fileHandle, &fileData));
 	}
 
 	FindClose(fileHandle);
@@ -146,11 +146,11 @@ bool nsFileSystem::FileExists(const nsString& filePath) noexcept
 
 bool nsFileSystem::FileCreate(const nsString& filePath) noexcept
 {
-	nsFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
 
 	if (fileHandle == NULL || fileHandle == INVALID_HANDLE_VALUE)
 	{
-		NS_LogWarning(nsSystemLog, "Fail to create file [%s]!", *filePath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to create file [%s]!"), *filePath);
 		return false;
 	}
 
@@ -164,11 +164,11 @@ bool nsFileSystem::FileDelete(const nsString& filePath) noexcept
 {
 	if (!FileExists(filePath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to delete file. File [%s] does not exists!", *filePath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to delete file. File [%s] does not exists!"), *filePath);
 		return false;
 	}
 
-	return (bool)DeleteFileA(*filePath);
+	return (bool)DeleteFile(*filePath);
 }
 
 
@@ -176,19 +176,19 @@ bool nsFileSystem::FileCopy(const nsString& srcFilePath, const nsString& dstFile
 {
 	if (!FileExists(srcFilePath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to copy file. Source file [%s] does not exists!", *srcFilePath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to copy file. Source file [%s] does not exists!"), *srcFilePath);
 		return false;
 	}
 
 	if (dstFilePath.IsEmpty())
 	{
-		NS_LogWarning(nsSystemLog, "Fail to copy file. Destination file path is empty!");
+		NS_LogWarning(nsSystemLog, TEXT("Fail to copy file. Destination file path is empty!"));
 		return false;
 	}
 
 	NS_ValidatePathLength(dstFilePath);
 	
-	return (bool)CopyFileA(*srcFilePath, *dstFilePath, false);
+	return (bool)CopyFile(*srcFilePath, *dstFilePath, false);
 }
 
 
@@ -196,19 +196,19 @@ bool nsFileSystem::FileMove(const nsString& srcFilePath, const nsString& dstFile
 {
 	if (!FileExists(srcFilePath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to move file. Source file [%s] does not exists!", *srcFilePath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to move file. Source file [%s] does not exists!"), *srcFilePath);
 		return false;
 	}
 
 	if (dstFilePath.IsEmpty())
 	{
-		NS_LogWarning(nsSystemLog, "Fail to move file. Destination file path is empty!");
+		NS_LogWarning(nsSystemLog, TEXT("Fail to move file. Destination file path is empty!"));
 		return false;
 	}
 
 	NS_ValidatePathLength(dstFilePath);
 
-	return (bool)MoveFileA(*srcFilePath, *dstFilePath);
+	return (bool)MoveFile(*srcFilePath, *dstFilePath);
 }
 
 
@@ -216,13 +216,13 @@ void nsFileSystem::FileIterate(nsTArray<nsString>& outFiles, const nsString& fol
 {
 	if (!FolderExists(folderPath))
 	{
-		NS_LogWarning(nsSystemLog, "Fail to iterate file in folder. Folder [%s] does not exists!", *folderPath);
+		NS_LogWarning(nsSystemLog, TEXT("Fail to iterate file in folder. Folder [%s] does not exists!"), *folderPath);
 		return;
 	}
 
-	const nsString search = folderPath + "/*";
-	WIN32_FIND_DATAA fileData{};
-	HANDLE fileHandle = FindFirstFileA(*search, &fileData);
+	const nsString search = folderPath + TEXT("/*");
+	WIN32_FIND_DATA fileData{};
+	HANDLE fileHandle = FindFirstFile(*search, &fileData);
 	nsString fileName;
 
 	if (fileHandle != INVALID_HANDLE_VALUE)
@@ -231,7 +231,7 @@ void nsFileSystem::FileIterate(nsTArray<nsString>& outFiles, const nsString& fol
 		{
 			fileName = fileData.cFileName;
 
-			if (fileName == "." || fileName == "..")
+			if (fileName == TEXT(".") || fileName == TEXT(".."))
 			{
 				continue;
 			}
@@ -260,7 +260,7 @@ void nsFileSystem::FileIterate(nsTArray<nsString>& outFiles, const nsString& fol
 			}
 
 		}
-		while (FindNextFileA(fileHandle, &fileData));
+		while (FindNextFile(fileHandle, &fileData));
 	}
 
 	FindClose(fileHandle);

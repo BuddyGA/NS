@@ -97,6 +97,14 @@ public:
 	{
 	}
 
+	
+	template<typename U>
+	nsTPoint(nsTPoint<U> other)
+	{
+		X = static_cast<T>(other.X);
+		Y = static_cast<T>(other.Y);
+	}
+
 	nsTPoint(const nsTPoint&) = default;
 	nsTPoint& operator=(const nsTPoint&) = default;
 	nsTPoint(nsTPoint&&) = default;

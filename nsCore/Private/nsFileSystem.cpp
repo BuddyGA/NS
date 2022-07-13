@@ -1,22 +1,25 @@
 #include "nsFileSystem.h"
 
 
+static nsLogCategory FileSystemLog(TEXT("nsFileSystemLog"), nsELogVerbosity::LV_WARNING);
+
+
 
 bool nsFileSystem::FileReadBinary(const nsString& filePath, nsTArray<uint8>& outResult) noexcept
 {
 	if (!nsPlatform::File_Exists(*filePath))
 	{
-		NS_LogError(nsSystemLog, "Fail to read binary file. File [%s] does not exists!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to read binary file. File [%s] does not exists!"), *filePath);
 		return false;
 	}
 
-	nsFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::READ);
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::READ);
 	const int fileSize = nsPlatform::File_GetSize(fileHandle);
 	outResult.Resize(fileSize);
 	
 	if (!nsPlatform::File_Read(fileHandle, outResult.GetData(), fileSize))
 	{
-		NS_LogError(nsSystemLog, "Fail to read data from file [%s]!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to read data from file [%s]!"), *filePath);
 		nsPlatform::File_Close(fileHandle);
 		return false;
 	}
@@ -31,17 +34,42 @@ bool nsFileSystem::FileReadText(const nsString& filePath, nsString& outResult) n
 {
 	if (!nsPlatform::File_Exists(*filePath))
 	{
-		NS_LogError(nsSystemLog, "Fail to read text file. File [%s] does not exists!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to read text file. File [%s] does not exists!"), *filePath);
 		return false;
 	}
 
-	nsFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::READ);
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::READ);
 	const int fileSize = nsPlatform::File_GetSize(fileHandle);
 	outResult.Resize(fileSize);
 
 	if (!nsPlatform::File_Read(fileHandle, *outResult, fileSize))
 	{
-		NS_LogError(nsSystemLog, "Fail to read data from file [%s]!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to read data from file [%s]!"), *filePath);
+		nsPlatform::File_Close(fileHandle);
+		return false;
+	}
+
+	nsPlatform::File_Close(fileHandle);
+
+	return true;
+}
+
+
+bool nsFileSystem::FileReadText(const nsString& filePath, nsTArray<char>& outResult) noexcept
+{
+	if (!nsPlatform::File_Exists(*filePath))
+	{
+		NS_LogError(FileSystemLog, TEXT("Fail to read text file. File [%s] does not exists!"), *filePath);
+		return false;
+	}
+
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::READ);
+	const int fileSize = nsPlatform::File_GetSize(fileHandle);
+	outResult.Resize(fileSize);
+
+	if (!nsPlatform::File_Read(fileHandle, outResult.GetData(), fileSize))
+	{
+		NS_LogError(FileSystemLog, TEXT("Fail to read data from file [%s]!"), *filePath);
 		nsPlatform::File_Close(fileHandle);
 		return false;
 	}
@@ -56,15 +84,15 @@ bool nsFileSystem::FileWriteBinary(const nsString& filePath, const uint8* data, 
 {
 	if (data == nullptr || dataSize == 0)
 	{
-		NS_LogWarning(nsSystemLog, "Fail to write binary to file [%s]. <data> is NULL or <dataSize> is 0!", *filePath);
+		NS_LogWarning(FileSystemLog, TEXT("Fail to write binary to file [%s]. <data> is NULL or <dataSize> is 0!"), *filePath);
 		return false;
 	}
 
-	nsFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
 
 	if (!nsPlatform::File_Write(fileHandle, data, dataSize))
 	{
-		NS_LogError(nsSystemLog, "Fail to write data to file [%s]!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to write data to file [%s]!"), *filePath);
 		nsPlatform::File_Close(fileHandle);
 		return false;
 	}
@@ -81,15 +109,15 @@ bool nsFileSystem::FileWriteText(const nsString& filePath, const char* text) noe
 
 	if (length == 0)
 	{
-		NS_LogWarning(nsSystemLog, "Fail to write text to file [%s]. Char length is 0!", *filePath);
+		NS_LogWarning(FileSystemLog, TEXT("Fail to write text to file [%s]. Char length is 0!"), *filePath);
 		return false;
 	}
 
-	nsFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
+	nsPlatformFileHandle fileHandle = nsPlatform::File_Open(*filePath, nsEPlatformFileOpenMode::WRITE_OVERWRITE_EXISTING);
 
 	if (!nsPlatform::File_Write(fileHandle, text, length))
 	{
-		NS_LogError(nsSystemLog, "Fail to write data to file [%s]!", *filePath);
+		NS_LogError(FileSystemLog, TEXT("Fail to write data to file [%s]!"), *filePath);
 		nsPlatform::File_Close(fileHandle);
 		return false;
 	}
@@ -160,9 +188,9 @@ nsString nsFileSystem::FileGetName(const nsString& file) noexcept
 }
 
 
-nsName nsFileSystem::FileGetExtension(const nsString& file) noexcept
+nsString nsFileSystem::FileGetExtension(const nsString& file) noexcept
 {
-	nsName extension = "";
+	nsString extension = TEXT("");
 
 	if (!file.IsEmpty())
 	{
@@ -171,7 +199,7 @@ nsName nsFileSystem::FileGetExtension(const nsString& file) noexcept
 		if (lastDotIndex != NS_ARRAY_INDEX_INVALID)
 		{
 			const int count = file.GetLength() - lastDotIndex;
-			nsPlatform::Memory_Copy(*extension, *file + lastDotIndex, count);
+			extension = file.Substring(lastDotIndex, count);
 		}
 	}
 

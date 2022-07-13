@@ -12,12 +12,12 @@ public:
 	static const nsClass* Class;
 
 public:
-	nsName Name;
+	nsString Name;
 
 
 public:
 	nsObject() noexcept;
-	nsObject(nsName name) noexcept;
+	nsObject(nsString name) noexcept;
 	virtual const nsClass* GetClass() const;
 	const nsPropertyList GetProperties() const;
 

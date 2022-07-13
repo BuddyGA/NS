@@ -20,13 +20,13 @@ static LRESULT CALLBACK ns_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 
 
 
-nsWindow::nsWindow(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
+nsWindow::nsWindow(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
 {
 	NS_Assert(nsPlatform::String_Length(title) < 32);
 
 	nsPlatform::String_Copy(Title, title);
 
-	static const char* _windowClassName = "nsWindow";
+	static const wchar_t* _windowClassName = TEXT("nsWindow");
 
 	WNDCLASSEX windowClass{};
 	windowClass.cbSize = sizeof(WNDCLASSEX);
@@ -55,7 +55,7 @@ nsWindow::nsWindow(const char* title, int width, int height, nsEWindowFullscreen
 
 	if (!WindowHandle)
 	{
-		MessageBox(NULL, "Fail to create window!", "Error", MB_ICONERROR | MB_OK);
+		MessageBox(NULL, TEXT("Fail to create window!"), TEXT("Error"), MB_ICONERROR | MB_OK);
 		NS_Abort();
 	}
 
@@ -138,7 +138,7 @@ LRESULT nsWindow::ProcessMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					NS_ValidateV(0, "Not implemented yet!");
+					NS_ValidateV(0, TEXT("Not implemented yet!"));
 				}
 			}
 

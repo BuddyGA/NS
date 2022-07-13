@@ -481,10 +481,16 @@ public:
 		return *this;
 	}
 
-	NS_INLINE float operator[](int index) const
+	NS_INLINE float& operator[](int index)
 	{
-		NS_ValidateV(index >= 0 && index < 2, "nsVector2 index out or range!");
+		NS_ValidateV(index >= 0 && index < 2, TEXT("nsVector2 index out or range!"));
 		return *((float*)this + index);
+	}
+
+	NS_INLINE const float& operator[](int index) const
+	{
+		NS_ValidateV(index >= 0 && index < 2, TEXT("nsVector2 index out or range!"));
+		return *((const float*)this + index);
 	}
 
 	NS_NODISCARD_INLINE float GetMagnitudeSqr() const noexcept
@@ -701,10 +707,16 @@ public:
 		return *this;
 	}
 
-	NS_INLINE float& operator[](int index) const
+	NS_INLINE float& operator[](int index) 
 	{
-		NS_ValidateV(index >= 0 && index < 3, "nsVector3 index out or range!");
+		NS_ValidateV(index >= 0 && index < 3, TEXT("nsVector3 index out or range!"));
 		return *((float*)this + index);
+	}
+
+	NS_INLINE const float& operator[](int index) const
+	{
+		NS_ValidateV(index >= 0 && index < 3, TEXT("nsVector3 index out or range!"));
+		return *((const float*)this + index);
 	}
 
 	NS_NODISCARD_INLINE float GetMagnitudeSqr() const noexcept
@@ -1017,16 +1029,16 @@ public:
 		return *this;
 	}
 
-	NS_INLINE float operator[](int index)
+	NS_INLINE float& operator[](int index)
 	{
-		NS_ValidateV(index >= 0 && index < 4, "nsVector4 index out or range!");
+		NS_ValidateV(index >= 0 && index < 4, TEXT("nsVector4 index out or range!"));
 		return *((float*)this + index);
 	}
 
 	NS_INLINE const float operator[](int index) const
 	{
-		NS_ValidateV(index >= 0 && index < 4, "nsVector4 index out or range!");
-		return *((float*)this + index);
+		NS_ValidateV(index >= 0 && index < 4, TEXT("nsVector4 index out or range!"));
+		return *((const float*)this + index);
 	}
 
 	NS_NODISCARD static NS_INLINE float DotProduct(const nsVector4& a, const nsVector4& b) noexcept
@@ -1454,14 +1466,14 @@ public:
 
 	NS_INLINE float* operator[](int index) noexcept
 	{
-		NS_AssertV(index >= 0 && index < 3, "Matrix element index out of range!");
+		NS_AssertV(index >= 0 && index < 3, TEXT("nsMatrix3 element index out of range!"));
 		return M[index];
 	}
 
 
 	NS_INLINE const float* operator[](int index) const noexcept
 	{
-		NS_AssertV(index >= 0 && index < 3, "Matrix element index out of range!");
+		NS_AssertV(index >= 0 && index < 3, TEXT("nsMatrix3 element index out of range!"));
 		return M[index];
 	}
 
@@ -2251,14 +2263,14 @@ public:
 
 	NS_INLINE float* operator[](int index)
 	{
-		NS_ValidateV(index >= 0 && index < 4, "Matrix element index out of range!");
+		NS_ValidateV(index >= 0 && index < 4, TEXT("nsMatrix4 element index out of range!"));
 		return M[index];
 	}
 
 
 	NS_INLINE const float* operator[](int index) const
 	{
-		NS_ValidateV(index >= 0 && index < 4, "Matrix element index out of range!");
+		NS_ValidateV(index >= 0 && index < 4, TEXT("nsMatrix4 element index out of range!"));
 		return M[index];
 	}
 

@@ -68,7 +68,7 @@
 #define NS_ENGINE_ASSET_FILE_VERSION								(1)
 
 // Asset file extension
-#define NS_ENGINE_ASSET_FILE_EXTENSION								".nsbin"
+#define NS_ENGINE_ASSET_FILE_EXTENSION								TEXT(".nsbin")
 
 // Maximum texture count in material asset
 #define NS_ENGINE_ASSET_MATERIAL_MAX_TEXTURE						(8)
@@ -100,13 +100,24 @@
 // Vendor ID (INTEL)
 #define NS_VENDOR_ID_INTEL											(0x8086)
 
-constexpr const char* ns_VendorName(int vendorId)
-{
-	if (vendorId == NS_VENDOR_ID_AMD) return "AMD";
-	if (vendorId == NS_VENDOR_ID_NVIDIA) return "NVIDIA";
-	if (vendorId == NS_VENDOR_ID_INTEL) return "Intel";
 
-	return "Others";
+
+#include "nsMemory.h"
+#include "nsMath.h"
+#include "nsLogger.h"
+#include "nsDelegate.h"
+#include "nsThreadPool.h"
+#include "nsStream.h"
+#include "nsObject.h"
+
+
+constexpr const wchar_t* ns_VendorName(int vendorId)
+{
+	if (vendorId == NS_VENDOR_ID_AMD) return TEXT("AMD");
+	if (vendorId == NS_VENDOR_ID_NVIDIA) return TEXT("NVIDIA");
+	if (vendorId == NS_VENDOR_ID_INTEL) return TEXT("Intel");
+
+	return TEXT("Others");
 }
 
 
@@ -136,17 +147,7 @@ public:																						\
 
 
 
-#include "nsMemory.h"
-#include "nsMath.h"
-#include "nsLogger.h"
-#include "nsDelegate.h"
-#include "nsThreadPool.h"
-#include "nsStream.h"
-#include "nsObject.h"
-
-
 #ifdef NS_PLATFORM_WINDOWS
-#define NS_VK_MODULE_NAME			"vulkan-1.dll"
 #define VK_USE_PLATFORM_WIN32_KHR
 #endif // NS_PLATFORM_WINDOWS
 

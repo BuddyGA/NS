@@ -9,7 +9,7 @@
 class nsString
 {
 private:
-	nsTArray<char> CharArray;
+	nsTArray<wchar_t> CharArray;
 
 
 public:
@@ -31,18 +31,24 @@ public:
 	}
 
 
-	nsString(const char* cstr) noexcept
+	nsString(const wchar_t* wstr) noexcept
 	{
 		//nsPlatform::Output("nsString const char* constructor\n");
+		CopyWideChars(wstr);
+	}
+
+
+	nsString(const char* cstr) noexcept
+	{
 		CopyChars(cstr);
 	}
 
 
 private:
-	NS_INLINE void CopyChars(const char* cstr) noexcept
+	NS_INLINE void CopyWideChars(const wchar_t* src) noexcept
 	{
 		CharArray.Clear();
-		const int len = nsPlatform::String_Length(cstr);
+		const int len = nsPlatform::String_Length(src);
 
 		if (len == 0)
 		{
@@ -50,7 +56,22 @@ private:
 		}
 
 		Resize(len);
-		nsPlatform::String_Copy(CharArray.GetData(), cstr);
+		nsPlatform::String_Copy(CharArray.GetData(), src);
+	}
+
+
+	NS_INLINE void CopyChars(const char* src) noexcept
+	{
+		CharArray.Clear();
+		const int len = nsPlatform::String_Length(src);
+
+		if (len == 0)
+		{
+			return;
+		}
+
+		Resize(len);
+		nsPlatform::String_ConvertToWide(CharArray.GetData(), src, len);
 	}
 
 
@@ -64,30 +85,28 @@ public:
 	NS_INLINE void Resize(int newLength) noexcept
 	{
 		CharArray.Resize(newLength + 1);
-		CharArray[newLength] = '\0';
 	}
 
 
 	NS_NODISCARD_INLINE int GetLength() const noexcept
 	{
-		const int count = CharArray.GetCount();
-		return count > 0 ? count - 1 : 0;
+		return nsPlatform::String_Length(CharArray.GetData());
 	}
 
 
-	NS_NODISCARD_INLINE int Find(char c) const noexcept
+	NS_NODISCARD_INLINE int Find(wchar_t c) const noexcept
 	{
 		return CharArray.Find(c);
 	}
 
 
-	NS_NODISCARD_INLINE int FindLast(char c) const noexcept
+	NS_NODISCARD_INLINE int FindLast(wchar_t c) const noexcept
 	{
 		return CharArray.FindLast(c);
 	}
 
 
-	NS_INLINE void Add(char c) noexcept
+	NS_INLINE void Add(wchar_t c) noexcept
 	{
 		CharArray.Add(c);
 	}
@@ -118,7 +137,7 @@ public:
 	}
 
 
-	NS_INLINE int InsertAt(const char* cstr, int index = NS_STRING_MAX_LENGTH) noexcept
+	NS_INLINE int InsertAt(const wchar_t* cstr, int index = NS_STRING_MAX_LENGTH) noexcept
 	{
 		const int len = nsPlatform::String_Length(cstr);
 
@@ -140,8 +159,8 @@ public:
 		{
 			NS_Assert(currentLength > index);
 			Resize(currentLength + len);
-			nsPlatform::Memory_Move(CharArray.GetData() + (index + len), CharArray.GetData() + index, currentLength - index);
-			nsPlatform::Memory_Copy(CharArray.GetData() + index, cstr, len);
+			nsPlatform::Memory_Move(CharArray.GetData() + (index + len), CharArray.GetData() + index, sizeof(wchar_t) * (currentLength - index));
+			nsPlatform::Memory_Copy(CharArray.GetData() + index, cstr, sizeof(wchar_t) * len);
 		}
 
 		return len;
@@ -165,7 +184,7 @@ public:
 	}
 
 
-	NS_INLINE void RemoveCharInPlace(char c) noexcept
+	NS_INLINE void RemoveCharInPlace(wchar_t c) noexcept
 	{
 		if (GetLength() == 0)
 		{
@@ -189,7 +208,7 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE nsString RemoveChar(char c) const noexcept
+	NS_NODISCARD_INLINE nsString RemoveChar(wchar_t c) const noexcept
 	{
 		nsString temp;
 		temp.RemoveCharInPlace(c);
@@ -234,7 +253,7 @@ public:
 	}
 
 
-	NS_INLINE void ReplaceInPlace(char c, char with) noexcept
+	NS_INLINE void ReplaceInPlace(wchar_t c, wchar_t with) noexcept
 	{
 		const int length = GetLength();
 
@@ -248,7 +267,7 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE nsString Replace(char c, char with) const noexcept
+	NS_NODISCARD_INLINE nsString Replace(wchar_t c, wchar_t with) const noexcept
 	{
 		nsString temp = *this;
 		temp.ReplaceInPlace(c, with);
@@ -309,13 +328,13 @@ public:
 
 		nsString temp;
 		temp.Resize(length);
-		nsPlatform::Memory_Copy(*temp, &CharArray[index], length);
+		nsPlatform::Memory_Copy(*temp, &CharArray[index], sizeof(wchar_t) * length);
 
 		return temp;
 	}
 
 
-	NS_NODISCARD_INLINE nsTArray<nsString> Splits(char separator) const noexcept
+	NS_NODISCARD_INLINE nsTArray<nsString> Splits(wchar_t separator) const noexcept
 	{
 		nsTArray<nsString> result;
 		const int length = GetLength();
@@ -378,10 +397,39 @@ public:
 
 
 public:
-	NS_NODISCARD static NS_CORE_API nsString Format(const char* format, ...) noexcept;
-	NS_NODISCARD static NS_CORE_API nsString FromBool(bool bValue) noexcept;
-	NS_NODISCARD static NS_CORE_API nsString FromInt(int value) noexcept;
-	NS_NODISCARD static NS_CORE_API nsString FromFloat(float value, int precision = 3) noexcept;
+	template<typename...TVarArgs>
+	NS_NODISCARD static NS_INLINE nsString Format(const wchar_t* format, TVarArgs&&... args) noexcept
+	{
+		wchar_t buffer[2048];
+		const int n = nsPlatform::String_Format(buffer, 2048, format, args...);
+		NS_Assert(n >= 0);
+
+		return buffer;
+	}
+
+
+	NS_NODISCARD static NS_INLINE nsString FromBool(bool value) noexcept
+	{
+		wchar_t buffer[16];
+		nsPlatform::String_Format(buffer, 16, TEXT("%s"), value ? TEXT("True") : TEXT("False"));
+		return buffer;
+	}
+
+
+	NS_NODISCARD static NS_INLINE nsString FromInt(int value) noexcept
+	{
+		wchar_t buffer[32];
+		nsPlatform::String_Format(buffer, 32, TEXT("%i"), value);
+		return buffer;
+	}
+
+
+	NS_NODISCARD static NS_INLINE nsString FromFloat(float value, int precision = 3) noexcept
+	{
+		wchar_t buffer[64];
+		nsPlatform::String_Format(buffer, 64, TEXT("%.*f"), precision, value);
+		return buffer;
+	}
 
 
 public:
@@ -390,7 +438,7 @@ public:
 		if (this != &rhs)
 		{
 			//nsPlatform::Output("nsString copy assignment\n");
-			CopyChars(*rhs);
+			CopyWideChars(*rhs);
 		}
 
 		return *this;
@@ -409,37 +457,44 @@ public:
 	}
 
 
-	NS_INLINE nsString& operator=(const char* rhs) noexcept
+	NS_INLINE nsString& operator=(const wchar_t* rhs) noexcept
 	{
 		if (CharArray.GetData() != rhs)
 		{
 			//nsPlatform::Output("nsString const char* assignment\n");
-			CopyChars(rhs);
+			CopyWideChars(rhs);
 		}
 
 		return *this;
 	}
 
 
-	NS_INLINE char* operator*() noexcept
+	NS_INLINE nsString& operator=(const char* rhs) noexcept
+	{
+		CopyChars(rhs);
+		return *this;
+	}
+
+
+	NS_INLINE wchar_t* operator*() noexcept
 	{
 		return CharArray.GetData();
 	}
 
 
-	NS_INLINE const char* operator*() const noexcept
+	NS_INLINE const wchar_t* operator*() const noexcept
 	{
 		return CharArray.GetData();
 	}
 
 
-	NS_INLINE char& operator[](int index) noexcept
+	NS_INLINE wchar_t& operator[](int index) noexcept
 	{
 		return CharArray[index];
 	}
 
 
-	NS_INLINE const char& operator[](int index) const noexcept
+	NS_INLINE const wchar_t& operator[](int index) const noexcept
 	{
 		return CharArray[index];
 	}
@@ -448,26 +503,26 @@ public:
 	NS_INLINE bool operator==(const nsString& rhs) const noexcept
 	{
 		//nsPlatform::Output("nsString operator==(nsString)\n");
-		return nsPlatform::String_Compare(CharArray.GetData(), *rhs);
+		return nsPlatform::String_Compare(CharArray.GetData(), *rhs, false);
 	}
 
 
-	NS_INLINE bool operator==(const char* rhs) const noexcept
+	NS_INLINE bool operator==(const wchar_t* rhs) const noexcept
 	{
 		//nsPlatform::Output("nsString operator==(const char*)\n");
-		return nsPlatform::String_Compare(CharArray.GetData(), rhs);
+		return nsPlatform::String_Compare(CharArray.GetData(), rhs, false);
 	}
 
 
 	NS_INLINE bool operator!=(const nsString& rhs) const noexcept
 	{
-		return !nsPlatform::String_Compare(CharArray.GetData(), *rhs);
+		return !nsPlatform::String_Compare(CharArray.GetData(), *rhs, false);
 	}
 
 
-	NS_INLINE bool operator!=(const char* rhs) const noexcept
+	NS_INLINE bool operator!=(const wchar_t* rhs) const noexcept
 	{
-		return !nsPlatform::String_Compare(CharArray.GetData(), rhs);
+		return !nsPlatform::String_Compare(CharArray.GetData(), rhs, false);
 	}
 
 
@@ -519,6 +574,12 @@ public:
 	}
 
 
+	nsName(const wchar_t* wstr) noexcept
+	{
+		CopyWideChars(wstr);
+	}
+
+
 private:
 	NS_INLINE void CopyChars(const char* cstr) noexcept
 	{
@@ -539,8 +600,33 @@ private:
 	}
 
 
+	NS_INLINE void CopyWideChars(const wchar_t* wstr) noexcept
+	{
+		nsPlatform::Memory_Zero(Chars, N);
+		int len = nsPlatform::String_Length(wstr);
+
+		if (len == 0)
+		{
+			return;
+		}
+
+		if (len > N - 1)
+		{
+			len = N - 1;
+		}
+
+		nsPlatform::String_ConvertToMultiByte(Chars, wstr, len);
+	}
+
+
 public:
-	NS_NODISCARD static NS_CORE_API nsName Format(const char* format, ...) noexcept;
+	template<typename...TVarArgs>
+	NS_NODISCARD static NS_INLINE nsName Format(const char* format, TVarArgs... args) noexcept
+	{
+		nsName Name;
+		nsPlatform::String_Format(Name.Chars, N, format, args...);
+		return Name;
+	}
 
 
 	NS_NODISCARD_INLINE int GetLength() const noexcept
@@ -561,6 +647,15 @@ public:
 	}
 
 
+	NS_NODISCARD_INLINE nsString ToString() const noexcept
+	{
+		wchar_t buffer[64] = {};
+		nsPlatform::String_ConvertToWide(buffer, Chars, N);
+
+		return buffer;
+	}
+
+
 public:
 	NS_INLINE nsName& operator=(const char* cstr) noexcept
 	{
@@ -569,6 +664,13 @@ public:
 			CopyChars(cstr);
 		}
 
+		return *this;
+	}
+
+
+	NS_INLINE nsName& operator=(const wchar_t* rhs) noexcept
+	{
+		CopyWideChars(rhs);
 		return *this;
 	}
 

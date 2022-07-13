@@ -218,7 +218,7 @@
     <ClInclude Include="Public\nsNavigationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\Editor\nsEditorNavigationBuilder.h">
+    <ClInclude Include="Public\Editor\nsEditorNavigation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsNavigationTypes.h">
@@ -246,9 +246,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Public\nsNavigationComponents.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Public\nsAnimationComponents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

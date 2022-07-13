@@ -2,14 +2,14 @@
 #include "nsConsole.h"
 
 
-static nsLogCategory LevelLog("nsLevelLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory LevelLog(TEXT("nsLevelLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
 NS_CLASS_BEGIN(nsLevel, nsObject)
 NS_CLASS_END(nsLevel)
 
-nsLevel::nsLevel(nsName name)
+nsLevel::nsLevel(nsString name)
 {
 	Name = name;
 	World = nullptr;
@@ -22,7 +22,7 @@ nsLevel::nsLevel(nsName name)
 
 void nsLevel::Destroy()
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 
@@ -51,7 +51,7 @@ bool nsLevel::RemoveActor(nsActor* actor) noexcept
 		return false;
 	}
 
-	NS_CONSOLE_Debug(LevelLog, "Remove actor [%s] from level [%s]", *actor->Name, *Name);
+	NS_CONSOLE_Debug(LevelLog, TEXT("Remove actor [%s] from level [%s]"), *actor->Name, *Name);
 
 	bool bRemoved = Actors.Remove(actor);
 

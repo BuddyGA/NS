@@ -31,7 +31,7 @@
 
 	<!-- nsString -->
 	<Type Name="nsString">
-		<DisplayString>{CharArray.Data, s}</DisplayString>
+		<DisplayString>{CharArray.Data, su}</DisplayString>
 	</Type>
 
 

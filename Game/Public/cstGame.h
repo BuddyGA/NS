@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cstPlayer.h"
+#include "cstTypes.h"
 
 
 
@@ -9,15 +9,20 @@ class cstGame : public nsGameApplication
 private:
 	cstEGameState CurrentState;
 	cstEGameState PendingChangeState;
-	cstPlayerController* PlayerController;
+	cstCharacter* Character;
+
+	nsVector3 CameraMoveAxis;
+	nsTransform CameraTransform;
+	float CameraDistance;
+	float CameraMoveSpeed;
+	bool bDebugDrawBorders;
 
 
 public:
-	cstGame(const char* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
+	cstGame(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
 	virtual void Initialize() noexcept override;
 	virtual void Shutdown() noexcept override;
 	virtual void TickUpdate(float deltaTime) noexcept;
-	virtual void PhysicsTickUpdate(float fixedDeltaTime) noexcept;
 	virtual void PreRender() noexcept override;
 
 protected:

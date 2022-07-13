@@ -155,7 +155,7 @@ public:
 			}
 
 			RotationValue = transform.Rotation.GetPitchYawRoll();
-			NS_CONSOLE_Debug(EditorLog, "BeginRotate: %.3f, %.3f, %.3f", RotationValue.X, RotationValue.Y, RotationValue.Z);
+			//NS_CONSOLE_Debug(EditorLog, TEXT("BeginRotate: %.3f, %.3f, %.3f"), RotationValue.X, RotationValue.Y, RotationValue.Z);
 			StartRotation = transform.Rotation;
 			StartIntersectionDirection = GetIntersectionDirection(viewport, mousePosition, transform, scale, bIsLocal);
 			LastIntersectionDirection = StartIntersectionDirection;

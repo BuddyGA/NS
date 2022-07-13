@@ -11,7 +11,7 @@
 
 
 
-nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
+nsRenderer::nsRenderer(nsPlatformWindowHandle optWindowHandleForSwapchain) noexcept
 	: FrameDatas()
 	, FrameIndex(0)
 	, Swapchain(nullptr)
@@ -54,7 +54,7 @@ nsRenderer::nsRenderer(nsWindowHandle optWindowHandleForSwapchain) noexcept
 
 nsRenderer::~nsRenderer() noexcept
 {
-	NS_ValidateV(0, "Not implemented yet!");
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 

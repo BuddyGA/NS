@@ -7,7 +7,7 @@ NS_ENGINE_DEFINE_HANDLE(nsAnimationInstanceID);
 NS_ENGINE_DEFINE_HANDLE(nsAnimationClipID);
 
 
-static nsLogCategory AnimationLog("nsAnimationLog", nsELogVerbosity::LV_DEBUG);
+static nsLogCategory AnimationLog(TEXT("nsAnimationLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -37,7 +37,7 @@ void nsAnimationManager::Initialize()
 		return;
 	}
 
-	NS_LogInfo(AnimationLog, "Initialize animation manager");
+	NS_CONSOLE_Log(AnimationLog, TEXT("Initialize animation manager"));
 
 	for (int i = 0; i < NS_ENGINE_FRAME_BUFFERING; ++i)
 	{
@@ -184,7 +184,7 @@ nsAnimationSkeletonID nsAnimationManager::CreateSkeleton(nsName name)
 
 	if (FindSkeleton(name) != nsAnimationSkeletonID::INVALID)
 	{
-		NS_LogWarning(AnimationLog, "Skeleton with name [%s] already exists!", *name);
+		NS_LogWarning(AnimationLog, TEXT("Skeleton with name [%s] already exists!"), *name.ToString());
 	}
 
 	const int nameId = SkeletonNames.Add();
@@ -209,7 +209,7 @@ void nsAnimationManager::DestroySkeleton(nsAnimationSkeletonID& skeleton)
 
 	if (IsSkeletonValid(skeleton))
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 	skeleton = nsAnimationSkeletonID::INVALID;
@@ -236,7 +236,7 @@ nsAnimationClipID nsAnimationManager::CreateClip(nsName name)
 
 	if (FindClip(name) != nsAnimationClipID::INVALID)
 	{
-		NS_LogWarning(AnimationLog, "Animation sequence with name [%s] already exists!", *name);
+		NS_LogWarning(AnimationLog, TEXT("Animation sequence with name [%s] already exists!"), *name.ToString());
 	}
 
 	const int nameId = ClipNames.Add();
@@ -276,7 +276,7 @@ nsAnimationClipID nsAnimationManager::CreateClip(nsName name, nsName skeletonNam
 
 	if (skeleton == nsAnimationSkeletonID::INVALID)
 	{
-		NS_LogError(AnimationLog, "Fail to create clip [%s]. Skeleton name [%s] not found!", *name, *skeletonName);
+		NS_LogError(AnimationLog, TEXT("Fail to create clip [%s]. Skeleton name [%s] not found!"), *name.ToString(), *skeletonName.ToString());
 		return nsAnimationClipID::INVALID;
 	}
 
@@ -290,7 +290,7 @@ void nsAnimationManager::DestroyClip(nsAnimationClipID& clip)
 
 	if (IsClipValid(clip))
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 	clip = nsAnimationClipID::INVALID;
@@ -318,7 +318,7 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 
 	if (FindInstance(name) != nsAnimationInstanceID::INVALID)
 	{
-		NS_LogWarning(AnimationLog, "Animation skeleton with name [%s] already exists!", *name);
+		NS_LogWarning(AnimationLog, TEXT("Animation skeleton with name [%s] already exists!"), *name.ToString());
 	}
 
 	const int nameId = InstanceNames.Add();
@@ -347,7 +347,7 @@ nsAnimationInstanceID nsAnimationManager::CreateInstance(nsName name, nsAnimatio
 
 	InstanceBoneTransforms.ResizeConstructs(data.BoneTransformIndex + boneCount, nsMatrix4::IDENTITY);
 
-	NS_LogDebug(AnimationLog, "Create animation instance [%s]", *name);
+	NS_LogDebug(AnimationLog, TEXT("Create animation instance [%s]"), *name.ToString());
 
 	return nameId;
 }
@@ -359,7 +359,7 @@ void nsAnimationManager::DestroyInstance(nsAnimationInstanceID& instance)
 
 	if (IsInstanceValid(instance))
 	{
-		NS_ValidateV(0, "Not implemented yet!");
+		NS_ValidateV(0, TEXT("Not implemented yet!"));
 	}
 
 	instance = nsAnimationInstanceID::INVALID;
@@ -395,11 +395,11 @@ void nsAnimationManager::PlayAnimation(nsAnimationInstanceID instance, nsAnimati
 
 	if (skeletonName != clipData.SkeletonName)
 	{
-		NS_CONSOLE_Warning(AnimationLog, "Fail to play animation [%s] with animation instance [%s]. Skeleton is not compatible! [AnimationInstanceSkeleton: %s, AnimationClipSkeleton: %s]",
-			*ClipNames[clip.Id],
-			*InstanceNames[instance.Id],
-			*skeletonName,
-			*clipData.SkeletonName
+		NS_CONSOLE_Warning(AnimationLog, TEXT("Fail to play animation [%s] with animation instance [%s]. Skeleton is not compatible! [AnimationInstanceSkeleton: %s, AnimationClipSkeleton: %s]"),
+			*ClipNames[clip.Id].ToString(),
+			*InstanceNames[instance.Id].ToString(),
+			*skeletonName.ToString(),
+			*clipData.SkeletonName.ToString()
 		);
 
 		return;

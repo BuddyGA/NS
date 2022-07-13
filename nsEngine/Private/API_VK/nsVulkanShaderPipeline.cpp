@@ -79,13 +79,13 @@ nsVulkanShaderPipeline::nsVulkanShaderPipeline(VkPipelineCache pipelineCache, co
 	{
 		case nsEBlendMode::ADDITIVE:
 		{
-			NS_ValidateV(0, "Not implemented yet!");
+			NS_ValidateV(0, TEXT("Not implemented yet!"));
 			break;
 		}
 
 		case nsEBlendMode::MULTIPLY:
 		{
-			NS_ValidateV(0, "Not implemented yet!");
+			NS_ValidateV(0, TEXT("Not implemented yet!"));
 			break;
 		}
 
