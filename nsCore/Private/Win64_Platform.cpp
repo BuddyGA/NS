@@ -142,47 +142,44 @@ void nsPlatform::ConsoleOutput(const wchar_t* message, nsPlatformConsoleTextColo
 	}
 
 	OutputDebugString(message);
-
 	HANDLE consoleOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	WORD defaultColorAttribute = 0;
 
 	if (consoleOutputHandle && consoleOutputHandle != INVALID_HANDLE_VALUE)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO info{};
 		GetConsoleScreenBufferInfo(consoleOutputHandle, &info);
-		defaultColorAttribute = info.wAttributes;
+		const WORD defaultAttributes = info.wAttributes;
 
 		if (colorMasks != 0)
 		{
-			WORD colorWord = 0;
+			WORD attributes = 0;
 
 			if (colorMasks & nsEPlatformConsoleOutputColor::Red)
 			{
-				colorWord |= FOREGROUND_RED;
+				attributes |= FOREGROUND_RED;
 			}
 
 			if (colorMasks & nsEPlatformConsoleOutputColor::Green)
 			{
-				colorWord |= FOREGROUND_GREEN;
+				attributes |= FOREGROUND_GREEN;
 			}
 
 			if (colorMasks & nsEPlatformConsoleOutputColor::Blue)
 			{
-				colorWord |= FOREGROUND_BLUE;
+				attributes |= FOREGROUND_BLUE;
 			}
 
-			SetConsoleTextAttribute(consoleOutputHandle, colorWord);
+			SetConsoleTextAttribute(consoleOutputHandle, attributes);
 		}
 
 		DWORD writtenCount = 0;
 		WriteConsole(consoleOutputHandle, message, len, &writtenCount, NULL);
 
-		/*
+		// Revert back to default
 		if (colorMasks != 0)
 		{
-			SetConsoleTextAttribute(consoleOutputHandle, defaultColorAttribute);
+			SetConsoleTextAttribute(consoleOutputHandle, defaultAttributes);
 		}
-		*/
 	}
 }
 
@@ -423,7 +420,7 @@ int nsPlatform::String_ConvertToWide(wchar_t* dst, const char* src, int length)
 }
 
 
-int nsPlatform::String_ConvertToMultiByte(char* dst, const wchar_t* src, int length)
+int nsPlatform::String_ConvertToChar(char* dst, const wchar_t* src, int length)
 {
 	return static_cast<int>(wcstombs(dst, src, length));
 }
@@ -673,7 +670,18 @@ bool nsPlatform::File_Seek(nsPlatformFileHandle fileHandle, int byteOffset, nsEP
 		return false;
 	}
 
-	return SetFilePointer(fileHandle, byteOffset, NULL, static_cast<DWORD>(mode)) != INVALID_SET_FILE_POINTER;
+	DWORD seekWord = FILE_BEGIN;
+
+	if (mode == nsEPlatformFileSeekMode::CURRENT)
+	{
+		seekWord = FILE_CURRENT;
+	}
+	else if (mode == nsEPlatformFileSeekMode::END)
+	{
+		seekWord = FILE_END;
+	}
+
+	return SetFilePointer(fileHandle, byteOffset, NULL, seekWord) != INVALID_SET_FILE_POINTER;
 }
 
 

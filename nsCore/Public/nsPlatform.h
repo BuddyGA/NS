@@ -318,8 +318,13 @@ namespace nsPlatform
 	extern NS_CORE_API int String_Format(wchar_t* buffer, int bufferCount, const wchar_t* format, ...) noexcept;
 	NS_NODISCARD extern NS_CORE_API bool String_Compare(const char* cstrA, const char* cstrB, bool bIgnoreCase) noexcept;
 	NS_NODISCARD extern NS_CORE_API bool String_Compare(const wchar_t* wstrA, const wchar_t* wstrB, bool bIgnoreCase) noexcept;
+
+	// Convert char string to wide string. This method does not add the null terminator
 	extern NS_CORE_API int String_ConvertToWide(wchar_t* dst, const char* src, int length);
-	extern NS_CORE_API int String_ConvertToMultiByte(char* dst, const wchar_t* src, int length);
+
+	// Convert wide char string to char string. This method does not add the null terminator
+	extern NS_CORE_API int String_ConvertToChar(char* dst, const wchar_t* src, int length);
+
 	extern NS_CORE_API void String_ToLower(char* cstr) noexcept;
 	extern NS_CORE_API void String_ToLower(wchar_t* wstr) noexcept;
 	extern NS_CORE_API void String_ToUpper(char* cstr) noexcept;

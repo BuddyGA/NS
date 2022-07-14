@@ -108,7 +108,7 @@ void nsAssetImporter::ImportAssetFromImageFile(const nsAssetImportOption_Image& 
 
 	CMP_MipSet srcMipSet = {};
 	char sourceFileCstr[256];
-	nsPlatform::String_ConvertToMultiByte(sourceFileCstr, *option.SourceFile, option.SourceFile.GetLength());
+	nsPlatform::String_ConvertToChar(sourceFileCstr, *option.SourceFile, option.SourceFile.GetLength());
 
 	if (CMP_LoadTexture(sourceFileCstr, &srcMipSet) != CMP_OK)
 	{

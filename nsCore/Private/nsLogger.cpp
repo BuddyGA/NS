@@ -66,7 +66,7 @@ void nsLogger::OutputLog(const nsString& message, nsELogVerbosity verbosity) noe
 	if (OutputFileHandle)
 	{
 		OutputFileCriticalSection.Enter();
-		nsPlatform::File_Write(OutputFileHandle, *outputMessage, outputMessage.GetLength());
+		nsPlatform::File_Write(OutputFileHandle, *outputMessage, outputMessage.GetAllocatedSizeBytes());
 		OutputFileCriticalSection.Leave();
 	}
 }

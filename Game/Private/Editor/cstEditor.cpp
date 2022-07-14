@@ -282,22 +282,22 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		else if (e.Key == nsEInputKey::KEYBOARD_F4)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
-			//NS_CONSOLE_Log(EditorLog, "Debug draw wireframe [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? "ON" : "OFF");
+			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw wireframe [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F5)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
-			//NS_CONSOLE_Log(EditorLog, "Debug draw collision [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? "ON" : "OFF");
+			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw collision [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F6)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Skeleton;
-			//NS_CONSOLE_Log(EditorLog, "Debug draw skeleton [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Skeleton) ? "ON" : "OFF");
+			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw skeleton [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Skeleton) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F7)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::NavMesh;
-			//NS_CONSOLE_Log(EditorLog, "Debug draw NavMesh [%s]", (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::NavMesh) ? "ON" : "OFF");
+			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw NavMesh [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::NavMesh) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F8)
 		{
@@ -385,7 +385,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::PERSPECTIVE)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode perspective");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode perspective"));
 					ViewMode = cstEEditorViewMode::PERSPECTIVE;
 					MainViewport->SetProjectionMode(false);
 				}
@@ -394,7 +394,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_FRONT)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-front");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-front"));
 					ViewMode = cstEEditorViewMode::ORTHO_FRONT;
 					CameraTransform.Rotation = nsQuaternion::IDENTITY;
 					MainViewport->SetProjectionMode(true);
@@ -404,7 +404,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_BACK)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-back");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-back"));
 					ViewMode = cstEEditorViewMode::ORTHO_BACK;
 				}
 			}
@@ -412,7 +412,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_LEFT)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-left");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-left"));
 					ViewMode = cstEEditorViewMode::ORTHO_LEFT;
 				}
 			}
@@ -420,7 +420,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_RIGHT)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-right");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-right"));
 					ViewMode = cstEEditorViewMode::ORTHO_RIGHT;
 				}
 			}
@@ -428,7 +428,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_TOP)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-top");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-top"));
 					ViewMode = cstEEditorViewMode::ORTHO_TOP;
 				}
 			}
@@ -436,7 +436,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (ViewMode != cstEEditorViewMode::ORTHO_BOTTOM)
 				{
-					//NS_CONSOLE_Log(EditorLog, "Set camera view mode orthographic-bottom");
+					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-bottom"));
 					ViewMode = cstEEditorViewMode::ORTHO_BOTTOM;
 				}
 			}
@@ -466,7 +466,7 @@ void cstEditor::SelectFocusActor(nsActor* newActor)
 {
 	if (newActor && newActor != FocusActor)
 	{
-		//NS_CONSOLE_Debug(EditorLog, "Select actor [%s]", *newActor->Name);
+		NS_CONSOLE_Debug(EditorLog, TEXT("Select actor [%s]"), *newActor->Name);
 	}
 
 	FocusActor = newActor;
@@ -485,7 +485,7 @@ void cstEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 	bIsDraggingAsset = true;
 	bIsDraggingAssetSpawned = false;
 
-	//NS_CONSOLE_Debug(EditorLog, "Begin drag-drop asset [%s]", *assetInfo.Name);
+	NS_CONSOLE_Debug(EditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name);
 }
 
 
@@ -531,7 +531,7 @@ void cstEditor::MoveFocusActorDownToFloor()
 	nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>();
 	if (collisionComp == nullptr)
 	{
-		//NS_CONSOLE_Warning(EditorLog, "Cannot move actor [%s] down to floor. No collision component!", *FocusActor->Name);
+		NS_CONSOLE_Warning(EditorLog, TEXT("Cannot move actor [%s] down to floor. No collision component!"), *FocusActor->Name);
 		return;
 	}
 
@@ -588,7 +588,6 @@ void cstEditor::TickUpdate(float deltaTime)
 	NS_Assert(Game);
 	NS_Assert(MainViewport);
 
-
 	nsVector3 moveDirection;
 	moveDirection += CameraTransform.GetAxisRight() * CameraMoveAxis.X;
 
@@ -627,14 +626,6 @@ void cstEditor::PreRender(nsRenderContextWorld& context)
 {
 	NS_Assert(Game);
 	NS_Assert(MainViewport);
-
-	/*
-	if (FocusActor)
-	{
-		const nsTransform transform = bIsLocalCoordSpace ? FocusActor->GetLocalTransform() : FocusActor->GetWorldTransform();
-		ActorGizmo.Render(context, MainViewport, transform, bIsLocalCoordSpace, true);
-	}
-	*/
 
 	MainRenderer->Viewport = *MainViewport;
 	MainRenderer->RenderTargetDimension = Game->GetDimension();

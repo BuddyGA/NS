@@ -20,20 +20,17 @@ public:
 	nsString(const nsString& other) noexcept
 		: CharArray(other.CharArray)
 	{
-		//nsPlatform::Output("nsString copy constructor\n");
 	}
 
 
 	nsString(nsString&& other) noexcept
 		: CharArray(std::move(other.CharArray))
 	{
-		//nsPlatform::Output("nsString move constructor\n");
 	}
 
 
 	nsString(const wchar_t* wstr) noexcept
 	{
-		//nsPlatform::Output("nsString const char* constructor\n");
 		CopyWideChars(wstr);
 	}
 
@@ -90,7 +87,8 @@ public:
 
 	NS_NODISCARD_INLINE int GetLength() const noexcept
 	{
-		return nsPlatform::String_Length(CharArray.GetData());
+		const int count = CharArray.GetCount();
+		return count > 0 ? count - 1 : 0;
 	}
 
 
@@ -396,6 +394,20 @@ public:
 	}
 
 
+	// Get total memory size in bytes including the null terminator
+	NS_NODISCARD_INLINE int GetTotalSizeBytes() const noexcept
+	{
+		return sizeof(wchar_t) * CharArray.GetCount();
+	}
+
+
+	// Get allocated memory size in bytes NOT including the null terminator
+	NS_NODISCARD_INLINE int GetAllocatedSizeBytes() const noexcept
+	{
+		return sizeof(wchar_t) * GetLength();
+	}
+
+
 public:
 	template<typename...TVarArgs>
 	NS_NODISCARD static NS_INLINE nsString Format(const wchar_t* format, TVarArgs&&... args) noexcept
@@ -410,24 +422,24 @@ public:
 
 	NS_NODISCARD static NS_INLINE nsString FromBool(bool value) noexcept
 	{
-		wchar_t buffer[16];
-		nsPlatform::String_Format(buffer, 16, TEXT("%s"), value ? TEXT("True") : TEXT("False"));
+		wchar_t buffer[8];
+		nsPlatform::String_Format(buffer, 8, TEXT("%s"), value ? TEXT("True") : TEXT("False"));
 		return buffer;
 	}
 
 
 	NS_NODISCARD static NS_INLINE nsString FromInt(int value) noexcept
 	{
-		wchar_t buffer[32];
-		nsPlatform::String_Format(buffer, 32, TEXT("%i"), value);
+		wchar_t buffer[16];
+		nsPlatform::String_Format(buffer, 16, TEXT("%i"), value);
 		return buffer;
 	}
 
 
 	NS_NODISCARD static NS_INLINE nsString FromFloat(float value, int precision = 3) noexcept
 	{
-		wchar_t buffer[64];
-		nsPlatform::String_Format(buffer, 64, TEXT("%.*f"), precision, value);
+		wchar_t buffer[32];
+		nsPlatform::String_Format(buffer, 32, TEXT("%.*f"), precision, value);
 		return buffer;
 	}
 
@@ -437,7 +449,6 @@ public:
 	{
 		if (this != &rhs)
 		{
-			//nsPlatform::Output("nsString copy assignment\n");
 			CopyWideChars(*rhs);
 		}
 
@@ -449,7 +460,6 @@ public:
 	{
 		if (this != &rhs)
 		{
-			//nsPlatform::Output("nsString move assignment\n");
 			CharArray = std::move(rhs.CharArray);
 		}
 
@@ -461,7 +471,6 @@ public:
 	{
 		if (CharArray.GetData() != rhs)
 		{
-			//nsPlatform::Output("nsString const char* assignment\n");
 			CopyWideChars(rhs);
 		}
 
@@ -502,14 +511,12 @@ public:
 
 	NS_INLINE bool operator==(const nsString& rhs) const noexcept
 	{
-		//nsPlatform::Output("nsString operator==(nsString)\n");
 		return nsPlatform::String_Compare(CharArray.GetData(), *rhs, false);
 	}
 
 
 	NS_INLINE bool operator==(const wchar_t* rhs) const noexcept
 	{
-		//nsPlatform::Output("nsString operator==(const char*)\n");
 		return nsPlatform::String_Compare(CharArray.GetData(), rhs, false);
 	}
 
@@ -615,7 +622,7 @@ private:
 			len = N - 1;
 		}
 
-		nsPlatform::String_ConvertToMultiByte(Chars, wstr, len);
+		nsPlatform::String_ConvertToChar(Chars, wstr, len);
 	}
 
 

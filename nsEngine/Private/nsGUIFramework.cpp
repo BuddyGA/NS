@@ -378,7 +378,7 @@ bool nsGUITextBox::RemoveSelectedChars() noexcept
 
 bool nsGUITextBox::IsValidChar(char c) noexcept
 {
-	if (c == '\0' || 
+	if (c == '\0' /*null*/ ||
 		c == '\b' /*backspace*/ || 
 		c == '\r' /*enter*/ || 
 		c == '\n' /*newline*/ || 
@@ -446,10 +446,11 @@ bool nsGUITextBox::Draw(nsGUIContext& context) noexcept
 				IsValidChar(charInput[0]))
 			{
 				RemoveSelectedChars();
-				wchar_t wInputs[8];
-				nsPlatform::String_ConvertToWide(wInputs, charInput, nsPlatform::String_Length(charInput));
+				wchar_t wCharInputs[8] = {};
+				const int len = nsPlatform::String_ConvertToWide(wCharInputs, charInput, nsPlatform::String_Length(charInput));
+				NS_Assert(len < 8);
 
-				if (TextValue.InsertAt(wInputs, CaretCharIndex))
+				if (TextValue.InsertAt(wCharInputs, CaretCharIndex))
 				{
 					CaretCharIndex++;
 				}

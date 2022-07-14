@@ -83,7 +83,7 @@ public:
 				rhs.Resize(length);
 			}
 
-			SerializeData(*rhs, length);
+			SerializeData(*rhs, rhs.GetAllocatedSizeBytes());
 		}
 		
 		return *this;

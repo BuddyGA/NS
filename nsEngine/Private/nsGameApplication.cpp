@@ -72,14 +72,24 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 	if (command == TEXT("class") && paramCount > 0)
 	{
 		const nsTArray<const nsClass*> classes = nsReflection::FindAllClasses(*params[0]);
-		nsString stringMessage = TEXT("Class list:\n");
 
-		for (int i = 0; i < classes.GetCount(); ++i)
+		if (classes.GetCount() > 0)
 		{
-			stringMessage += nsString::Format(TEXT("%s\n"), *classes[i]->GetName());
-		}
+			nsString stringMessage = nsString::Format(TEXT("Class list [Type: %s, Count: %i]\n"), *params[0], classes.GetCount());
+			nsString classNameString;
 
-		NS_CONSOLE_Log(nsTempLog, TEXT("%s"), *stringMessage);
+			for (int i = 0; i < classes.GetCount(); ++i)
+			{
+				classNameString = *classes[i]->GetName();
+				stringMessage += nsString::Format(TEXT("%s\n"), *classNameString);
+			}
+
+			NS_CONSOLE_Log(nsTempLog, TEXT("%s"), *stringMessage);
+		}
+		else
+		{
+			NS_CONSOLE_Log(nsTempLog, TEXT("Class type [%s] not found!"), *params[0]);
+		}
 	}
 	else if (command == TEXT("gui") && paramCount > 0)
 	{

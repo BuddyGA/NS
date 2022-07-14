@@ -769,11 +769,6 @@ void nsGUIContext::SetControlInputFocus(const char* controlUniqueId) noexcept
 #endif // _DEBUG
 
 	CurrentControlInputFocus = controlUniqueId;
-
-	if (CurrentControlInputFocus)
-	{
-		NS_LogDebug(GUILog, TEXT("Set control input focus: %s"), CurrentControlInputFocus);
-	}
 }
 
 

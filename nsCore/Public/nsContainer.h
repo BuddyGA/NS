@@ -493,6 +493,18 @@ public:
 	}
 
 
+	NS_NODISCARD_INLINE int GetTotalSizeBytes() const noexcept
+	{
+		return sizeof(T) * Capacity;
+	}
+
+
+	NS_NODISCARD_INLINE int GetAllocatedSizeBytes() const noexcept
+	{
+		return sizeof(T) * Count;
+	}
+
+
 public:
 	NS_INLINE nsTArray& operator=(const nsTArray& rhs) noexcept
 	{
