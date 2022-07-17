@@ -10,7 +10,7 @@
 // ================================================================================================================================== //
 class NS_ENGINE_API nsRenderComponent : public nsTransformComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsRenderComponent)
 
 private:
 	bool bIsVisible;
@@ -41,7 +41,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsMeshComponent : public nsRenderComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsMeshComponent)
 
 protected:
 	nsSharedModelAsset ModelAsset;
@@ -84,7 +84,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsSkeletalMeshComponent : public nsMeshComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsSkeletalMeshComponent)
 
 private:
 	nsSharedSkeletonAsset SkeletonAsset;
@@ -107,6 +107,7 @@ protected:
 public:
 	void SetSkeleton(nsSharedSkeletonAsset newSkeleton);
 	void PlayAnimation(nsSharedAnimationAsset animation, float playRate, bool bLoop);
+	void StopAnimation();
 
 
 	NS_NODISCARD_INLINE nsSharedSkeletonAsset GetSkeleton() const

@@ -7,7 +7,7 @@
 
 class NS_ENGINE_API nsWorld : public nsObject
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsWorld)
 
 private:
 	float StartTimeSeconds;
@@ -35,7 +35,7 @@ public:
 	void DispatchStartPlay();
 	void DispatchStopPlay();
 	void DispatchPrePhysicsTickUpdate(float deltaTime);
-	void DispatchPhysicsTickUpdate(float fixedDeltaTime);
+	void DispatchPhysicsTickUpdate(float deltaTime);
 	void DispatchPostPhysicsTickUpdate();
 	void SyncActorTransformsWithPhysics();
 	bool PhysicsRayCast(nsPhysicsHitResult& hitResult, const nsVector3& origin, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams());

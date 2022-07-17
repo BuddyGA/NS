@@ -526,7 +526,7 @@ static void ns_GLB_ImportAnimations(const nsAssetImportOption_Model& option, con
 		}
 
 		nsAssetManager::Get().SaveAnimationAsset(glbAnimation.Name, clip, dstFolderPath, false);
-		NS_CONSOLE_Log(AssetImporterGLB, TEXT("Imported animation [%s] from source file [%s]"), *glbAnimation.Name, *option.SourceFile);
+		NS_CONSOLE_Log(AssetImporterGLB, TEXT("Imported animation [%s] from source file [%s]"), *glbAnimation.Name.ToString(), *option.SourceFile);
 	}
 }
 
@@ -694,7 +694,7 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 		}
 
 		nsTArray<char> jsonString;
-		jsonString.Resize(chunkLength);
+		jsonString.Resize(chunkLength + 1);
 		reader.SerializeData(jsonString.GetData(), chunkLength);
 
 		nsFileSystem::FileWriteText("debug_glb_import.json", jsonString.GetData());

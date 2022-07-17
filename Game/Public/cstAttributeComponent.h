@@ -6,7 +6,7 @@
 
 class cstAttributeComponent : public nsActorComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(cstAttributeComponent)
 
 private:
 	// Strength (PATK)

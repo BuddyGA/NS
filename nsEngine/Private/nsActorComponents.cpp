@@ -44,12 +44,16 @@ void nsActorComponent::OnRemovedFromLevel()
 
 void nsActorComponent::OnStartPlay()
 {
+	NS_Assert(bAddedToLevel);
+
 	bStartedPlay = true;
 }
 
 
 void nsActorComponent::OnStopPlay()
 {
+	NS_Assert(bAddedToLevel);
+
 	bStartedPlay = false;
 }
 

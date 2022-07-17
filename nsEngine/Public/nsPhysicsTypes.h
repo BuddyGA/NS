@@ -34,7 +34,6 @@ namespace nsEPhysicsCollisionChannel
 {
 	enum Type : uint32
 	{
-		NONE			= (0),
 		Default			= (1 << 0),
 		Character		= (1 << 1),
 		Camera			= (1 << 2),

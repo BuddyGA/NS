@@ -514,7 +514,6 @@ void cstEditor::AddMousePickingForActor(nsActor* actor)
 				convexMeshPicking->SetSimulatePhysics(false);
 				convexMeshPicking->SetCollisionTest(nsEPhysicsCollisionTest::QUERY_ONLY);
 				convexMeshPicking->SetObjectChannel(nsEPhysicsCollisionChannel::MousePicking);
-				convexMeshPicking->SetCollisionChannels(nsEPhysicsCollisionChannel::NONE);
 			}
 		}
 	}

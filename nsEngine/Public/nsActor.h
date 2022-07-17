@@ -9,17 +9,16 @@ namespace nsEActorFlag
 	enum
 	{
 		NONE						= (0),
-		Initialized					= (1 << 0),
-		Persistent					= (1 << 1),
-		Static						= (1 << 2),
-		AddedToLevel				= (1 << 3),
-		StartedPlay					= (1 << 4),
-		PendingDestroy				= (1 << 5),
-		EditorOnly					= (1 << 6),
-		CallStartStopPlay			= (1 << 7),
-		CallPrePhysicsTickUpdate	= (1 << 8),
-		CallPhysicsTickUpdate		= (1 << 9),
-		CallPostPhysicsTickUpdate	= (1 << 10),
+		Initialized					= (1UL << 0),
+		Static						= (1UL << 1),
+		AddedToLevel				= (1UL << 2),
+		StartedPlay					= (1UL << 3),
+		PendingDestroy				= (1UL << 4),
+		EditorOnly					= (1UL << 5),
+		CallStartStopPlay			= (1UL << 6),
+		CallPrePhysicsTickUpdate	= (1UL << 7),
+		CallPhysicsTickUpdate		= (1UL << 8),
+		CallPostPhysicsTickUpdate	= (1UL << 9),
 	};
 };
 
@@ -33,7 +32,7 @@ typedef nsTArrayInline<nsActor*, NS_ENGINE_TRANSFORM_MAX_CHILDREN> nsActorChildr
 
 class NS_ENGINE_API nsActor : public nsObject
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsActor)
 
 private:
 	static nsMemory ComponentMemory;
@@ -52,22 +51,35 @@ private:
 
 public:
 	nsActor();
-	virtual void OnInitialize();
-	virtual void OnStartPlay();
-	virtual void OnStopPlay();
-	virtual void OnTickUpdate(float deltaTime);
-	virtual void OnPhysicsTickUpdate(float fixedDeltaTime);
-	virtual void OnDestroy();
-	void OnAddedToLevel();
-	void OnRemovedFromLevel();
-
-	NS_NODISCARD nsWorld* GetWorld() const;
+	void Initialize();
+	void Destroy();
+	void StartPlay();
+	void StopPlay();
+	void TickUpdate(float deltaTime);
+	void PhysicsTickUpdate(float deltaTime);
+	void PostPhysicsTickUpdate();
+	void AddedToLevel();
+	void RemovedFromLevel();
 	void SetAsStatic(bool bIsStatic);
 	void SetRootComponent(nsTransformComponent* newRootComponent);
 	void AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode);
 	void DetachFromParent();
+	NS_NODISCARD nsWorld* GetWorld() const;
 
 
+protected:
+	virtual void OnInitialize() {}
+	virtual void OnDestroy() {}
+	virtual void OnStartPlay() {}
+	virtual void OnStopPlay() {}
+	virtual void OnTickUpdate(float deltaTime) {}
+	virtual void OnPhysicsTickUpdate(float fixedDeltaTime) {}
+	virtual void OnPostPhysicsTickUpdate() {}
+	virtual void OnAddedToLevel() {}
+	virtual void OnRemovedFromLevel() {}
+
+
+public:
 	NS_INLINE void SetLocalTransform(nsTransform transform)
 	{
 		RootComponent->SetLocalTransform(transform);

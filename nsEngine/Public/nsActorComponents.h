@@ -13,7 +13,7 @@ extern nsLogCategory nsComponentLog;
 // ================================================================================================================================== //
 class NS_ENGINE_API nsActorComponent : public nsObject
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsActorComponent)
 
 protected:
 	nsActor* Actor;
@@ -30,7 +30,8 @@ public:
 	virtual void OnStartPlay();
 	virtual void OnStopPlay();
 	virtual void OnTickUpdate(float deltaTime) {}
-	virtual void OnPhysicsTickUpdate(float fixedDeltaTime) {}
+	virtual void OnPhysicsTickUpdate(float deltaTime) {}
+	virtual void OnPostPhysicsTickUpdate() {}
 	virtual void OnStaticChanged() {}
 	virtual bool IsFullyLoaded() { return true; }
 	NS_NODISCARD nsWorld* GetWorld() const;
@@ -62,7 +63,7 @@ enum class nsETransformAttachmentMode : uint8
 
 class NS_ENGINE_API nsTransformComponent : public nsActorComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsTransformComponent)
 
 private:
 	enum class EDirtyTransform : uint8

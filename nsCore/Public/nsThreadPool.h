@@ -133,7 +133,7 @@ namespace nsThreadPool
 	extern NS_CORE_API void SubmitTasks(nsIThreadTask** tasks, int taskCount, nsThreadAffinityMasks threadAffinityMasks) noexcept;
 
 	// Get worker threads (includes main thread at index 0)
-	NS_NODISCARD nsTArrayInline<nsThreadId, 32> GetWorkerThreads() noexcept;
+	NS_NODISCARD extern NS_CORE_API nsTArrayInline<nsThreadId, 32> GetWorkerThreads() noexcept;
 
 	// Check if current thread is main thread
 	NS_NODISCARD extern NS_CORE_API bool IsMainThread() noexcept;

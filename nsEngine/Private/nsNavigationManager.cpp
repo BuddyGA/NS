@@ -481,23 +481,31 @@ void nsNavigationManager::BuildNavMesh(const nsNavigationInputGeometry& inputGeo
 }
 
 
-nsNavigationAgentID nsNavigationManager::CreateAgent(float radius, float height, float maxAcceleration, float maxSpeed)
+nsNavigationAgentID nsNavigationManager::CreateAgent(nsNavigationAgentComponent* component)
 {
-	const int paramId = AgentParams.Add();
-	const int stateId = AgentActiveStates.Add();
-	NS_Assert(paramId == stateId);
+	NS_Assert(component);
 
-	nsNavigationAgentParams& params = AgentParams[paramId];
-	params.Radius = radius;
-	params.Height = height;
-	params.MaxAcceleration = maxAcceleration;
-	params.MaxSpeed = maxSpeed;
+	const int stateId = AgentStates.Add();
 
-	AgentState& state = AgentActiveStates[stateId];
+	NavAgentState& state = AgentStates[stateId];
 	state.MoveTargetPosition = nsVector3::ZERO;
-	state.ActiveAgentIndex = -1;
 
-	return paramId;
+	dtCrowdAgentParams dtParams{};
+	dtParams.radius = component->Radius;
+	dtParams.height = component->Height;
+	dtParams.maxAcceleration = component->MaxAcceleration;
+	dtParams.maxSpeed = component->MaxSpeed;
+	dtParams.collisionQueryRange = component->Radius * 8.0f;
+	dtParams.pathOptimizationRange = component->Radius * 16.0f;
+	dtParams.updateFlags = 0;
+	dtParams.obstacleAvoidanceType = 3;
+	dtParams.separationWeight = 2.0f;
+	dtParams.userData = component;
+
+	const nsVector3 initialPosition = component->GetWorldPosition();
+	state.AgentIndex = DetourCrowd->addAgent((const float*)&initialPosition, &dtParams);
+
+	return stateId;
 }
 
 
@@ -505,84 +513,32 @@ void nsNavigationManager::DestroyAgent(nsNavigationAgentID& agent)
 {
 	if (IsAgentValid(agent))
 	{
-		AgentState& state = AgentActiveStates[agent.Id];
-
-		if (state.ActiveAgentIndex != -1)
-		{
-			DetourCrowd->removeAgent(state.ActiveAgentIndex);
-			state.ActiveAgentIndex = -1;
-		}
-
-		AgentParams.RemoveAt(agent.Id);
-		AgentActiveStates.RemoveAt(agent.Id);
+		NavAgentState& state = AgentStates[agent.Id];
+		DetourCrowd->removeAgent(state.AgentIndex);
+		AgentStates.RemoveAt(agent.Id);
 	}
 
 	agent = nsNavigationAgentID::INVALID;
 }
 
 
-void nsNavigationManager::UpdateAgentParams(nsNavigationAgentID agent, float radius, float height, float maxAcceleration, float maxSpeed)
+void nsNavigationManager::UpdateAgentParams(nsNavigationAgentID agent)
 {
 	NS_Assert(IsAgentValid(agent));
 
-	nsNavigationAgentParams& params = AgentParams[agent.Id];
-	params.Radius = radius;
-	params.Height = height;
-	params.MaxAcceleration = maxAcceleration;
-	params.MaxSpeed = maxSpeed;
+	NavAgentState& state = AgentStates[agent.Id];
 
-	AgentState& state = AgentActiveStates[agent.Id];
-
-	if (state.ActiveAgentIndex != -1)
+	if (state.AgentIndex != -1)
 	{
-		dtCrowdAgent* dtAgent = DetourCrowd->getEditableAgent(state.ActiveAgentIndex);
-		dtAgent->params.radius = radius;
-		dtAgent->params.height = height;
-		dtAgent->params.maxAcceleration = maxAcceleration;
-		dtAgent->params.maxSpeed = maxSpeed;
-	}
-}
+		dtCrowdAgent* dtAgent = DetourCrowd->getEditableAgent(state.AgentIndex);
 
+		nsNavigationAgentComponent* component = static_cast<nsNavigationAgentComponent*>(dtAgent->params.userData);
+		NS_Assert(component);
 
-void nsNavigationManager::SetAgentActive(nsNavigationAgentID agent, bool bActive, nsNavigationAgentComponent* component)
-{
-	NS_Assert(IsAgentValid(agent));
-
-	AgentState& state = AgentActiveStates[agent.Id];
-
-	if (bActive)
-	{
-		NS_Assert(state.ActiveAgentIndex == -1);
-
-		const nsNavigationAgentParams& params = AgentParams[agent.Id];
-
-		dtCrowdAgentParams dtParams{};
-		dtParams.radius = params.Radius;
-		dtParams.height = params.Height;
-		dtParams.maxAcceleration = params.MaxAcceleration;
-		dtParams.maxSpeed = params.MaxSpeed;
-		dtParams.collisionQueryRange = params.Radius * 8.0f;
-		dtParams.pathOptimizationRange = params.Radius * 16.0f;
-		dtParams.updateFlags = 0;
-		dtParams.obstacleAvoidanceType = 3;
-		dtParams.separationWeight = 2.0f;
-		dtParams.userData = component ? component : nullptr;
-
-		nsVector3 initialPosition;
-
-		if (component)
-		{
-			initialPosition = component->GetWorldPosition();
-		}
-
-		state.ActiveAgentIndex = DetourCrowd->addAgent((const float*)&initialPosition, &dtParams);
-	}
-	else
-	{
-		NS_Assert(state.ActiveAgentIndex != -1);
-
-		DetourCrowd->removeAgent(state.ActiveAgentIndex);
-		state.ActiveAgentIndex = -1;
+		dtAgent->params.radius = component->Radius;
+		dtAgent->params.height = component->Height;
+		dtAgent->params.maxAcceleration = component->MaxAcceleration;
+		dtAgent->params.maxSpeed = component->MaxSpeed;
 	}
 }
 
@@ -591,16 +547,16 @@ void nsNavigationManager::SetAgentMoveTarget(nsNavigationAgentID agent, const ns
 {
 	NS_Assert(IsAgentValid(agent));
 
-	AgentState& state = AgentActiveStates[agent.Id];
+	NavAgentState& state = AgentStates[agent.Id];
 	state.MoveTargetPosition = targetPosition;
 	
-	if (state.ActiveAgentIndex != -1)
+	if (state.AgentIndex != -1)
 	{
 		dtPolyRef nearestPoly = 0;
 		float nearestPosition[3];
 		dtStatus queryStatus = DetourNavMeshQuery->findNearestPoly((const float*)&state.MoveTargetPosition, DetourCrowd->getQueryExtents(), DetourCrowd->getFilter(0), &nearestPoly, nearestPosition);
 		NS_Assert(dtStatusSucceed(queryStatus));
-		bool bSuccess = DetourCrowd->requestMoveTarget(state.ActiveAgentIndex, nearestPoly, nearestPosition);
+		bool bSuccess = DetourCrowd->requestMoveTarget(state.AgentIndex, nearestPoly, nearestPosition);
 
 		if (!bSuccess)
 		{
@@ -614,22 +570,27 @@ void nsNavigationManager::MoveAgents(float deltaTime)
 {
 	DetourCrowd->update(deltaTime, nullptr);
 
-	for (auto it = AgentActiveStates.CreateConstIterator(); it; ++it)
+	for (auto it = AgentStates.CreateConstIterator(); it; ++it)
 	{
 		const int index = it.GetIndex();
-		const AgentState& state = it.GetValue();
+		const NavAgentState& state = it.GetValue();
 
-		if (state.ActiveAgentIndex == -1)
+		if (state.AgentIndex == -1)
 		{
 			continue;
 		}
 
-		const dtCrowdAgent* dtAgent = DetourCrowd->getAgent(state.ActiveAgentIndex);
+		const dtCrowdAgent* dtAgent = DetourCrowd->getAgent(state.AgentIndex);
 		nsNavigationAgentComponent* component = static_cast<nsNavigationAgentComponent*>(dtAgent->params.userData);
 
 		if (component)
 		{
-			component->SyncWithNavigationPosition(nsVector3(dtAgent->npos[0], dtAgent->npos[1], dtAgent->npos[2]));
+			component->Internal_SyncWithDetourCrowdAgent(
+				deltaTime,
+				nsVector3(dtAgent->npos[0], dtAgent->npos[1], dtAgent->npos[2]),
+				nsVector3(dtAgent->vel[0], dtAgent->vel[1], dtAgent->vel[2]),
+				nsVector3(dtAgent->dvel[0], dtAgent->dvel[1], dtAgent->dvel[2])
+			);
 		}
 	}
 }

@@ -12,6 +12,8 @@ NS_CLASS_END(cstCharacter)
 
 cstCharacter::cstCharacter()
 {
+	Flags |= nsEActorFlag::CallPrePhysicsTickUpdate;
+
 	NavigationAgentComponent = AddComponent<nsNavigationAgentComponent>("nav_agent");
 	NavigationAgentComponent->MaxAcceleration = 1200.0f;
 	NavigationAgentComponent->MaxSpeed = 300.0f;
@@ -33,7 +35,14 @@ void cstCharacter::OnInitialize()
 	SkelMeshComponent->SetMesh(assetManager.LoadModelAsset("mdl_LowPolyChar"));
 	SkelMeshComponent->SetSkeleton(assetManager.LoadSkeletonAsset("skl_LowPolyChar_Rig"));
 
+	AnimIdle0 = assetManager.LoadAnimationAsset("anim_idle_0");
 	AnimRunForwardLoop = assetManager.LoadAnimationAsset("anim_run_forward_loop");
+}
+
+
+void cstCharacter::OnDestroy()
+{
+	nsActor::OnDestroy();
 }
 
 
@@ -41,13 +50,23 @@ void cstCharacter::OnStartPlay()
 {
 	nsActor::OnStartPlay();
 
-	SkelMeshComponent->PlayAnimation(AnimRunForwardLoop, 1.0f, true);
 }
 
 
-void cstCharacter::OnDestroy()
+void cstCharacter::OnTickUpdate(float deltaTime)
 {
-	nsActor::OnDestroy();
+	nsActor::OnTickUpdate(deltaTime);
+	
+	const float currentSpeed = NavigationAgentComponent->GetCurrentVelocity().GetMagnitude();
+	
+	if (currentSpeed > 30.0f)
+	{
+		SkelMeshComponent->PlayAnimation(AnimRunForwardLoop, 1.0f, true);
+	}
+	else
+	{
+		SkelMeshComponent->PlayAnimation(AnimIdle0, 1.0f, true);
+	}
 }
 
 

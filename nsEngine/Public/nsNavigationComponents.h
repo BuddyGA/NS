@@ -7,10 +7,12 @@
 
 class NS_ENGINE_API nsNavigationAgentComponent : public nsCapsuleCollisionComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsNavigationAgentComponent)
 
 private:
 	nsNavigationAgentID NavAgentId;
+	nsVector3 CurrentVelocity;
+	nsVector3 DesiredVelocity;
 
 public:
 	float MaxAcceleration;
@@ -23,9 +25,9 @@ public:
 	virtual void OnDestroy() override;
 	virtual void OnStartPlay() override;
 	virtual void OnStopPlay() override;
-	virtual void OnAddedToLevel() override;
-	virtual void OnRemovedFromLevel() override;
+	virtual void OnPhysicsTickUpdate(float deltaTime) override;
 	void SetNavigationTarget(const nsVector3& worldPosition);
+	void Internal_SyncWithDetourCrowdAgent(float deltaTime, const nsVector3& navigationPosition, const nsVector3& currentVelocity, const nsVector3& desiredVelocity);
 
 private:
 	void RegisterAgent();
@@ -33,12 +35,15 @@ private:
 
 
 public:
-	NS_INLINE void SyncWithNavigationPosition(const nsVector3& navigationPosition)
+	NS_NODISCARD_INLINE const nsVector3& GetCurrentVelocity() const
 	{
-		nsTransform newTransform = GetWorldTransform();
-		newTransform.Position = navigationPosition;
-		newTransform.Position.Y += Radius + Height * 0.5f;
-		SetKinematicTarget(newTransform);
+		return CurrentVelocity;
+	}
+
+
+	NS_NODISCARD_INLINE const nsVector3& GetDesiredVelocity() const
+	{
+		return DesiredVelocity;
 	}
 
 };

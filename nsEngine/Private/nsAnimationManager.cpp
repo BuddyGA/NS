@@ -395,14 +395,12 @@ void nsAnimationManager::PlayAnimation(nsAnimationInstanceID instance, nsAnimati
 
 	if (skeletonName != clipData.SkeletonName)
 	{
-		NS_CONSOLE_Warning(AnimationLog, TEXT("Fail to play animation [%s] with animation instance [%s]. Skeleton is not compatible! [AnimationInstanceSkeleton: %s, AnimationClipSkeleton: %s]"),
+		NS_CONSOLE_Warning(AnimationLog, TEXT("Play animation [%s] with animation instance [%s]. Skeleton is not compatible! [AnimationInstanceSkeleton: %s, AnimationClipSkeleton: %s]"),
 			*ClipNames[clip.Id].ToString(),
 			*InstanceNames[instance.Id].ToString(),
 			*skeletonName.ToString(),
 			*clipData.SkeletonName.ToString()
 		);
-
-		return;
 	}
 
 	nsAnimationPlayState& state = InstancePlayStates[instance.Id];
@@ -423,6 +421,8 @@ void nsAnimationManager::StopAnimation(nsAnimationInstanceID instance)
 {
 	NS_Assert(IsInstanceValid(instance));
 
+	nsAnimationPlayState& state = InstancePlayStates[instance.Id];
+	state.Clip = nsAnimationClipID::INVALID;
 }
 
 

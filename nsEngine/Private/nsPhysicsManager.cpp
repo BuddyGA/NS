@@ -188,7 +188,7 @@ bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHi
 {
 	NS_Assert(scene);
 
-	PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
+	const PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
 
 	PxQueryFilterData queryFilterData{};
 	queryFilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;

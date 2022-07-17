@@ -1232,7 +1232,7 @@ public:
 		}
 
 		quat.Vec = nsVector3::CrossProduct(from, to);
-		quat.W = from.GetMagnitude() * to.GetMagnitude() + nsVector3::DotProduct(from, to);
+		quat.W = from.GetMagnitude() * to.GetMagnitude() + dot;
 		quat.Normalize();
 
 		return quat;

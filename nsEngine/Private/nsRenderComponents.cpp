@@ -278,7 +278,7 @@ void nsSkeletalMeshComponent::SetSkeleton(nsSharedSkeletonAsset newSkeleton)
 
 	if (SkeletonAsset.IsValid())
 	{
-		AnimationInstance = animationManager.CreateInstance(nsName::Format("%s.anim_instance", *Actor->Name), SkeletonAsset.GetSkeleton());
+		AnimationInstance = animationManager.CreateInstance("anim_instance", SkeletonAsset.GetSkeleton());
 	}
 }
 
@@ -291,4 +291,15 @@ void nsSkeletalMeshComponent::PlayAnimation(nsSharedAnimationAsset animation, fl
 	}
 
 	nsAnimationManager::Get().PlayAnimation(AnimationInstance, animation.GetClip(), playRate, bLoop);
+}
+
+
+void nsSkeletalMeshComponent::StopAnimation()
+{
+	if (!SkeletonAsset.IsValid())
+	{
+		return;
+	}
+
+	nsAnimationManager::Get().StopAnimation(AnimationInstance);
 }

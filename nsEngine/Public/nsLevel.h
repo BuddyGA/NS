@@ -6,7 +6,7 @@
 
 class NS_ENGINE_API nsLevel : public nsObject
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsLevel)
 
 private:
 	nsWorld* World;

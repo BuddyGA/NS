@@ -364,6 +364,8 @@ bool nsBoxCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsV
 // CAPSULE COLLISION COMPONENT
 // ================================================================================================================================== //
 NS_CLASS_BEGIN(nsCapsuleCollisionComponent, nsCollisionComponent)
+	NS_CLASS_AddProperty(nsCapsuleCollisionComponent, float, Radius, true)
+	NS_CLASS_AddProperty(nsCapsuleCollisionComponent, float, Height, true)
 NS_CLASS_END(nsCapsuleCollisionComponent)
 
 nsCapsuleCollisionComponent::nsCapsuleCollisionComponent()

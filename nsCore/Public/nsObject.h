@@ -19,7 +19,7 @@ public:
 	nsObject() noexcept;
 	nsObject(nsString name) noexcept;
 	virtual const nsClass* GetClass() const;
-	const nsPropertyList GetProperties() const;
+	const nsPropertyList& GetProperties() const;
 
 
 	template<typename T>

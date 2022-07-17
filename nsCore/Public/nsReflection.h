@@ -362,7 +362,7 @@ public:																								\
 	{																	
 
 #define NS_CLASS_AddProperty(classType, propertyType, propertyName, isSerializable)					\
-		Properties.Add(NS_CreateProperty(classType, propertyType, propertyName, isSerializable));	\
+		Properties.Add(NS_CreateProperty(classType, propertyType, propertyName, isSerializable));	
 
 #define NS_CLASS_END(classType)																		\
 	}																								\
@@ -370,7 +370,8 @@ public:																								\
 const nsClass* classType::Class = nsReflection::CreateClass<classType##__Class>();
 
 
-#define NS_DECLARE_OBJECT()												\
+#define NS_DECLARE_OBJECT(type)											\
+friend class type##__Class;												\
 public:																	\
 	static const nsClass* Class;										\
 	virtual const nsClass* GetClass() const override { return Class; }

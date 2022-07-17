@@ -92,7 +92,7 @@ void nsWorld::DispatchStartPlay()
 
 	for (int i = 0; i < StartStopPlayActors.GetCount(); ++i)
 	{
-		StartStopPlayActors[i]->OnStartPlay();
+		StartStopPlayActors[i]->StartPlay();
 	}
 
 	StartTimeSeconds = static_cast<float>(nsPlatform::PerformanceQuery_Counter()) / static_cast<float>(nsPlatform::PerformanceQuery_Frequency());
@@ -113,7 +113,7 @@ void nsWorld::DispatchStopPlay()
 
 	for (int i = 0; i < StartStopPlayActors.GetCount(); ++i)
 	{
-		StartStopPlayActors[i]->OnStopPlay();
+		StartStopPlayActors[i]->StopPlay();
 	}
 
 	StartTimeSeconds = 0.0f;
@@ -132,21 +132,21 @@ void nsWorld::DispatchPrePhysicsTickUpdate(float deltaTime)
 
 	for (int i = 0; i < PrePhysicsTickUpdateActors.GetCount(); ++i)
 	{
-		PrePhysicsTickUpdateActors[i]->OnTickUpdate(deltaTime);
+		PrePhysicsTickUpdateActors[i]->TickUpdate(deltaTime);
 	}
 }
 
 
-void nsWorld::DispatchPhysicsTickUpdate(float fixedDeltaTime)
+void nsWorld::DispatchPhysicsTickUpdate(float deltaTime)
 {
 	if (!bHasStartedPlay)
 	{
 		return;
 	}
 
-	for (int i = 0; i < PrePhysicsTickUpdateActors.GetCount(); ++i)
+	for (int i = 0; i < PhysicsTickUpdateActors.GetCount(); ++i)
 	{
-		PhysicsTickUpdateActors[i]->OnPhysicsTickUpdate(fixedDeltaTime);
+		PhysicsTickUpdateActors[i]->PhysicsTickUpdate(deltaTime);
 	}
 }
 
@@ -160,6 +160,7 @@ void nsWorld::DispatchPostPhysicsTickUpdate()
 
 	for (int i = 0; i < PostPhysicsTickUpdateActors.GetCount(); ++i)
 	{
+		PostPhysicsTickUpdateActors[i]->PostPhysicsTickUpdate();
 	}
 }
 
@@ -303,7 +304,7 @@ void nsWorld::InitActor(nsActor* actor, nsString name, bool bIsStatic, const nsT
 	}
 
 	actor->SetWorldTransform(optTransform);
-	actor->OnInitialize();
+	actor->Initialize();
 }
 
 
@@ -352,10 +353,11 @@ void nsWorld::AddActorToLevel(nsActor* actor, nsLevel* level)
 	NS_AssertV(actor->Level == nullptr, TEXT("Cannot add actor to level while inside another level. Call RemoveActorFromLevel() before add it to another level!"));
 	nsLevel* useLevel = level ? level : GetPersistentLevel();
 	actor->Level = useLevel;
+	const bool bAddedToLevel = useLevel->AddActor(actor);
 
-	if (useLevel->AddActor(actor) && bHasStartedPlay && (actor->Flags & nsEActorFlag::CallStartStopPlay))
+	if (bAddedToLevel && bHasStartedPlay && (actor->Flags & nsEActorFlag::CallStartStopPlay))
 	{
-		actor->OnStartPlay();
+		actor->StartPlay();
 	}
 }
 

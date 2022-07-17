@@ -16,14 +16,13 @@ private:
 	class dtNavMeshQuery* DetourNavMeshQuery;
 
 
-	struct AgentState
+	struct NavAgentState
 	{
 		nsVector3 MoveTargetPosition;
-		int ActiveAgentIndex;
+		int AgentIndex;
 	};
 
-	nsTArrayFreeList<nsNavigationAgentParams> AgentParams;
-	nsTArrayFreeList<AgentState> AgentActiveStates;
+	nsTArrayFreeList<NavAgentState> AgentStates;
 
 
 public:
@@ -31,19 +30,17 @@ public:
 	void BuildNavMesh(nsWorld* world);
 	void BuildNavMesh(const nsNavigationInputGeometry& inputGeometry, const nsNavigationBuildSettings& buildSettings);
 
-
-	nsNavigationAgentID CreateAgent(float radius, float height, float maxAcceleration, float maxSpeed);
+	NS_NODISCARD nsNavigationAgentID CreateAgent(nsNavigationAgentComponent* component);
 	void DestroyAgent(nsNavigationAgentID& agent);
-	void UpdateAgentParams(nsNavigationAgentID agent, float radius, float height, float maxAcceleration, float maxSpeed);
-	void SetAgentActive(nsNavigationAgentID agent, bool bActive, nsNavigationAgentComponent* component);
+	void UpdateAgentParams(nsNavigationAgentID agent);
 	void SetAgentMoveTarget(nsNavigationAgentID agent, const nsVector3& targetPosition);
 	void MoveAgents(float deltaTime);
 
 	NS_NODISCARD_INLINE bool IsAgentValid(nsNavigationAgentID agent) const
 	{
-		return agent.IsValid() && AgentParams.IsValid(agent.Id);
+		return agent.IsValid() && AgentStates.IsValid(agent.Id);
 	}
-	
+
 
 
 #ifdef NS_ENGINE_DEBUG_DRAW

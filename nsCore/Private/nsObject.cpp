@@ -23,7 +23,7 @@ const nsClass* nsObject::GetClass() const
 }
 
 
-const nsPropertyList nsObject::GetProperties() const
+const nsPropertyList& nsObject::GetProperties() const
 {
 	return GetClass()->GetProperties();
 }

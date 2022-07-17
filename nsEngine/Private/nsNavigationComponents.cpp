@@ -6,13 +6,15 @@
 NS_CLASS_BEGIN(nsNavigationAgentComponent, nsCapsuleCollisionComponent)
 	NS_CLASS_AddProperty(nsNavigationAgentComponent, float, MaxAcceleration, true)
 	NS_CLASS_AddProperty(nsNavigationAgentComponent, float, MaxSpeed, true)
+	NS_CLASS_AddProperty(nsNavigationAgentComponent, nsVector3, CurrentVelocity, true)
+	NS_CLASS_AddProperty(nsNavigationAgentComponent, nsVector3, DesiredVelocity, true)
 NS_CLASS_END(nsNavigationAgentComponent)
 
 nsNavigationAgentComponent::nsNavigationAgentComponent()
 {
 	bIsKinematic = true;
 	NavAgentId = nsNavigationAgentID::INVALID;
-	MaxAcceleration = 3000.0f;
+	MaxAcceleration = 2400.0f;
 	MaxSpeed = 600.0f;
 	MinDistanceToMove = 64.0f;
 }
@@ -30,31 +32,21 @@ void nsNavigationAgentComponent::OnStartPlay()
 {
 	nsCapsuleCollisionComponent::OnStartPlay();
 
-	nsNavigationManager::Get().SetAgentActive(NavAgentId, true, this);
+	RegisterAgent();
 }
 
 
 void nsNavigationAgentComponent::OnStopPlay()
 {
-	nsNavigationManager::Get().SetAgentActive(NavAgentId, false, nullptr);
+	UnregisterAgent();
 
 	nsCapsuleCollisionComponent::OnStopPlay();
 }
 
 
-void nsNavigationAgentComponent::OnAddedToLevel()
+void nsNavigationAgentComponent::OnPhysicsTickUpdate(float deltaTime)
 {
-	nsCapsuleCollisionComponent::OnAddedToLevel();
-
-	RegisterAgent();
-}
-
-
-void nsNavigationAgentComponent::OnRemovedFromLevel()
-{
-	UnregisterAgent();
-
-	nsCapsuleCollisionComponent::OnRemovedFromLevel();
+	nsCapsuleCollisionComponent::OnPhysicsTickUpdate(deltaTime);
 }
 
 
@@ -74,6 +66,28 @@ void nsNavigationAgentComponent::SetNavigationTarget(const nsVector3& worldPosit
 }
 
 
+void nsNavigationAgentComponent::Internal_SyncWithDetourCrowdAgent(float deltaTime, const nsVector3& navigationPosition, const nsVector3& currentVelocity, const nsVector3& desiredVelocity)
+{
+	nsTransform newTransform = GetWorldTransform();
+	newTransform.Position = navigationPosition;
+	newTransform.Position.Y += Radius + Height * 0.5f;
+
+	const float speed = currentVelocity.GetMagnitude();
+
+	if (speed > 10.0f)
+	{
+		const nsQuaternion actorRotation = nsQuaternion::FromVectors(nsVector3::FORWARD, newTransform.GetAxisForward());
+		const nsQuaternion newRotation = nsQuaternion::FromVectors(nsVector3::FORWARD, currentVelocity.GetNormalized());
+		newTransform.Rotation = nsQuaternion::Slerp(actorRotation, newRotation, deltaTime);
+	}
+
+	SetKinematicTarget(newTransform);
+
+	CurrentVelocity = currentVelocity;
+	DesiredVelocity = desiredVelocity;
+}
+
+
 void nsNavigationAgentComponent::RegisterAgent()
 {
 	if (!bAddedToLevel)
@@ -85,11 +99,11 @@ void nsNavigationAgentComponent::RegisterAgent()
 
 	if (NavAgentId == nsNavigationAgentID::INVALID)
 	{
-		NavAgentId = navigationManager.CreateAgent(Radius, Height, MaxAcceleration, MaxSpeed);
+		NavAgentId = navigationManager.CreateAgent(this);
 	}
 	else
 	{
-		navigationManager.UpdateAgentParams(NavAgentId, Radius, Height, MaxAcceleration, MaxSpeed);
+		navigationManager.UpdateAgentParams(NavAgentId);
 	}
 }
 

@@ -10,7 +10,7 @@
 // ================================================================================================================================== //
 class NS_ENGINE_API nsCollisionComponent : public nsTransformComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsCollisionComponent)
 
 protected:
 	physx::PxRigidActor* PhysicsActor;
@@ -153,7 +153,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsBoxCollisionComponent)
 
 public:
 	nsVector3 HalfExtents;
@@ -178,7 +178,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsCapsuleCollisionComponent : public nsCollisionComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsCapsuleCollisionComponent)
 
 public:
 	float Radius;
@@ -205,7 +205,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsConvexMeshCollisionComponent : public nsCollisionComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsConvexMeshCollisionComponent)
 
 private:
 	nsMeshID Mesh;
@@ -240,7 +240,7 @@ public:
 // ================================================================================================================================== //
 class NS_ENGINE_API nsCharacterMovementComponent : public nsCapsuleCollisionComponent
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsCharacterMovementComponent)
 
 public:
 	float ContactOffset;

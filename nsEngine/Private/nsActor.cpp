@@ -26,13 +26,14 @@ nsActor::nsActor()
 }
 
 
-void nsActor::OnInitialize()
+void nsActor::Initialize()
 {
 	if (Flags & nsEActorFlag::Initialized)
 	{
 		return;
 	}
 
+	OnInitialize();
 	Flags |= nsEActorFlag::Initialized;
 
 	for (int i = 0; i < Components.GetCount(); ++i)
@@ -42,63 +43,7 @@ void nsActor::OnInitialize()
 }
 
 
-void nsActor::OnStartPlay()
-{
-	NS_Assert(Flags & nsEActorFlag::CallStartStopPlay);
-
-	if (Flags & nsEActorFlag::StartedPlay)
-	{
-		return;
-	}
-
-	Flags |= nsEActorFlag::StartedPlay;
-
-	for (int i = 0; i < Components.GetCount(); ++i)
-	{
-		Components[i]->OnStartPlay();
-	}
-}
-
-
-void nsActor::OnStopPlay()
-{
-	NS_Assert(Flags & nsEActorFlag::CallStartStopPlay);
-
-	if (Flags & nsEActorFlag::StartedPlay)
-	{
-		for (int i = 0; i < Components.GetCount(); ++i)
-		{
-			Components[i]->OnStopPlay();
-		}
-
-		Flags &= ~nsEActorFlag::StartedPlay;
-	}
-}
-
-
-void nsActor::OnTickUpdate(float deltaTime)
-{
-	NS_Assert(Flags & nsEActorFlag::CallPrePhysicsTickUpdate);
-
-	for (int i = 0; i < Components.GetCount(); ++i)
-	{
-		Components[i]->OnTickUpdate(deltaTime);
-	}
-}
-
-
-void nsActor::OnPhysicsTickUpdate(float fixedDeltaTime)
-{
-	NS_Assert(Flags & nsEActorFlag::CallPhysicsTickUpdate);
-
-	for (int i = 0; i < Components.GetCount(); ++i)
-	{
-		Components[i]->OnPhysicsTickUpdate(fixedDeltaTime);
-	}
-}
-
-
-void nsActor::OnDestroy()
+void nsActor::Destroy()
 {
 	NS_Assert(Flags & nsEActorFlag::PendingDestroy);
 
@@ -124,16 +69,91 @@ void nsActor::OnDestroy()
 	}
 
 	Components.Clear();
+
+	OnDestroy();
 }
 
 
-void nsActor::OnAddedToLevel()
+void nsActor::StartPlay()
+{
+	NS_Assert(Flags & nsEActorFlag::CallStartStopPlay);
+
+	if (Flags & nsEActorFlag::StartedPlay)
+	{
+		return;
+	}
+
+	OnStartPlay();
+	Flags |= nsEActorFlag::StartedPlay;
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnStartPlay();
+	}
+}
+
+
+void nsActor::StopPlay()
+{
+	NS_Assert(Flags & nsEActorFlag::CallStartStopPlay);
+
+	if (Flags & nsEActorFlag::StartedPlay)
+	{
+		for (int i = 0; i < Components.GetCount(); ++i)
+		{
+			Components[i]->OnStopPlay();
+		}
+
+		OnStopPlay();
+		Flags &= ~nsEActorFlag::StartedPlay;
+	}
+}
+
+
+void nsActor::TickUpdate(float deltaTime)
+{
+	NS_Assert(Flags & nsEActorFlag::CallPrePhysicsTickUpdate);
+	OnTickUpdate(deltaTime);
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnTickUpdate(deltaTime);
+	}
+}
+
+
+void nsActor::PhysicsTickUpdate(float deltaTime)
+{
+	NS_Assert(Flags & nsEActorFlag::CallPhysicsTickUpdate);
+	OnPhysicsTickUpdate(deltaTime);
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnPhysicsTickUpdate(deltaTime);
+	}
+}
+
+
+void nsActor::PostPhysicsTickUpdate()
+{
+	NS_Assert(Flags & nsEActorFlag::CallPostPhysicsTickUpdate);
+	OnPostPhysicsTickUpdate();
+
+	for (int i = 0; i < Components.GetCount(); ++i)
+	{
+		Components[i]->OnPostPhysicsTickUpdate();
+	}
+}
+
+
+void nsActor::AddedToLevel()
 {
 	if (Flags & nsEActorFlag::AddedToLevel)
 	{
 		return;
 	}
 
+	OnAddedToLevel();
 	Flags |= nsEActorFlag::AddedToLevel;
 
 	for (int i = 0; i < Components.GetCount(); ++i)
@@ -143,7 +163,7 @@ void nsActor::OnAddedToLevel()
 }
 
 
-void nsActor::OnRemovedFromLevel()
+void nsActor::RemovedFromLevel()
 {
 	if (Flags & nsEActorFlag::AddedToLevel)
 	{
@@ -152,14 +172,9 @@ void nsActor::OnRemovedFromLevel()
 			Components[i]->OnRemovedFromLevel();
 		}
 
+		OnRemovedFromLevel();
 		Flags &= ~nsEActorFlag::AddedToLevel;
 	}
-}
-
-
-nsWorld* nsActor::GetWorld() const
-{
-	return Level ? Level->GetWorld() : nullptr;
 }
 
 
@@ -249,6 +264,12 @@ void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachm
 void nsActor::DetachFromParent()
 {
 	NS_ValidateV(0, TEXT("Not implemented yet!"));
+}
+
+
+nsWorld* nsActor::GetWorld() const
+{
+	return Level ? Level->GetWorld() : nullptr;
 }
 
 

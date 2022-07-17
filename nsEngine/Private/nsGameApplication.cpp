@@ -75,7 +75,7 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 
 		if (classes.GetCount() > 0)
 		{
-			nsString stringMessage = nsString::Format(TEXT("Class list [Type: %s, Count: %i]\n"), *params[0], classes.GetCount());
+			nsString stringMessage = nsString::Format(TEXT("Class list [Count: %i]\n"), classes.GetCount());
 			nsString classNameString;
 
 			for (int i = 0; i < classes.GetCount(); ++i)
@@ -88,7 +88,7 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 		}
 		else
 		{
-			NS_CONSOLE_Log(nsTempLog, TEXT("Class type [%s] not found!"), *params[0]);
+			NS_CONSOLE_Log(nsTempLog, TEXT("Class not found!"));
 		}
 	}
 	else if (command == TEXT("gui") && paramCount > 0)
@@ -118,7 +118,7 @@ void nsGameApplication::TickUpdate(float deltaTime) noexcept
 }
 
 
-void nsGameApplication::PhysicsTickUpdate(float fixedDeltaTime) noexcept
+void nsGameApplication::PhysicsTickUpdate(float deltaTime) noexcept
 {
 }
 

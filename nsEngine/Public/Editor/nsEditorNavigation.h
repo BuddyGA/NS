@@ -8,7 +8,7 @@
 
 class NS_ENGINE_API nsNavigationVolumeActor : public nsActor
 {
-	NS_DECLARE_OBJECT()
+	NS_DECLARE_OBJECT(nsNavigationVolumeActor)
 
 public:
 	nsNavigationVolumeActor();

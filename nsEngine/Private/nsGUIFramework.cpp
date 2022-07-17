@@ -446,9 +446,9 @@ bool nsGUITextBox::Draw(nsGUIContext& context) noexcept
 				IsValidChar(charInput[0]))
 			{
 				RemoveSelectedChars();
-				wchar_t wCharInputs[8] = {};
+				wchar_t wCharInputs[4] = {};
 				const int len = nsPlatform::String_ConvertToWide(wCharInputs, charInput, nsPlatform::String_Length(charInput));
-				NS_Assert(len < 8);
+				NS_Assert(len < 4);
 
 				if (TextValue.InsertAt(wCharInputs, CaretCharIndex))
 				{

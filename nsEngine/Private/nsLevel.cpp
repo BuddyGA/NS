@@ -37,7 +37,7 @@ bool nsLevel::AddActor(nsActor* actor) noexcept
 
 	if (bAdded)
 	{
-		actor->OnAddedToLevel();
+		actor->AddedToLevel();
 	}
 
 	return bAdded;
@@ -57,7 +57,7 @@ bool nsLevel::RemoveActor(nsActor* actor) noexcept
 
 	if (bRemoved)
 	{
-		actor->OnRemovedFromLevel();
+		actor->RemovedFromLevel();
 	}
 
 	return bRemoved;
