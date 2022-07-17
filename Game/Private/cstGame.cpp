@@ -1,6 +1,7 @@
 #include "cstGame.h"
-#include "cstCharacter.h"
 #include "nsRenderManager.h"
+#include "cstCharacter.h"
+#include "cstAbility.h"
 
 #if CST_GAME_WITH_EDITOR
 #include "Editor/cstEditor.h"
@@ -11,14 +12,16 @@
 cstGame::cstGame(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept
 	: nsGameApplication(title, width, height, fullscreenMode)
 {
-	CurrentState = cstEGameState::NONE;
 	PendingChangeState = cstEGameState::NONE;
-	Character = nullptr;
+	CurrentState = cstEGameState::NONE;
 
 	CameraMoveAxis = nsVector3::ZERO;
 	CameraDistance = 500.0f;
 	CameraMoveSpeed = 1000.0f;
 	bDebugDrawBorders = true;
+
+	PlayerCharacter = nullptr;
+	AbilityDummy = ns_CreateObject<cstAbility_Dummy>();
 }
 
 
@@ -26,8 +29,8 @@ void cstGame::Initialize() noexcept
 {
 	nsGameApplication::Initialize();
 
-	Character = MainWorld->CreateActor<cstCharacter>("character_main", false, nsVector3(0.0f, 100.0f, -300.0f));
-	MainWorld->AddActorToLevel(Character);
+	PlayerCharacter = MainWorld->CreateActor<cstPlayerCharacter>("player_character", false, nsVector3(0.0f, 100.0f, -300.0f));
+	MainWorld->AddActorToLevel(PlayerCharacter);
 
 
 #if CST_GAME_WITH_EDITOR
@@ -56,16 +59,36 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 
 	if (PendingChangeState != cstEGameState::NONE && PendingChangeState != CurrentState)
 	{
-		switch (PendingChangeState)
+		switch (CurrentState)
 		{
-			case cstEGameState::INTRO: HandleGameState_Intro(); break;
-			case cstEGameState::MAIN_MENU: HandleGameState_MainMenu(); break;
-			case cstEGameState::LOADING: HandleGameState_Loading(); break;
-			case cstEGameState::PLAYING: HandleGameState_Playing(); break;
-			case cstEGameState::CUTSCENE: HandleGameState_Cutscene(); break;
+			case cstEGameState::INTRO: EndGameState_Intro(); break;
+			case cstEGameState::MAIN_MENU: EndGameState_MainMenu(); break;
+			case cstEGameState::LOADING: EndGameState_Loading(); break;
+			case cstEGameState::PLAYING: EndGameState_Playing(); break;
+			case cstEGameState::IN_GAME_MENU: EndGameState_InGameMenu(); break;
+			case cstEGameState::CUTSCENE: EndGameState_Cutscene(); break;
+			case cstEGameState::PAUSE_MENU: EndGameState_PauseMenu(); break;
 
 		#if CST_GAME_WITH_EDITOR
-			case cstEGameState::EDITING: HandleGameState_Editing(); break;
+			case cstEGameState::EDITING: EndGameState_Editing(); break;
+		#endif // CST_GAME_WITH_EDITOR
+
+			default: break;
+		}
+
+
+		switch (PendingChangeState)
+		{
+			case cstEGameState::INTRO: BeginGameState_Intro(); break;
+			case cstEGameState::MAIN_MENU: BeginGameState_MainMenu(); break;
+			case cstEGameState::LOADING: BeginGameState_Loading(); break;
+			case cstEGameState::PLAYING: BeginGameState_Playing(); break;
+			case cstEGameState::IN_GAME_MENU: BeginGameState_InGameMenu(); break;
+			case cstEGameState::CUTSCENE: BeginGameState_Cutscene(); break;
+			case cstEGameState::PAUSE_MENU: BeginGameState_PauseMenu(); break;
+
+		#if CST_GAME_WITH_EDITOR
+			case cstEGameState::EDITING: BeginGameState_Editing(); break;
 		#endif // CST_GAME_WITH_EDITOR
 
 			default: NS_Assert(0); break;
@@ -110,6 +133,12 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 			CameraMoveAxis = nsVector3::ZERO;
 			MainViewport.SetViewTransform(CameraTransform);
 
+			break;
+		}
+
+
+		case cstEGameState::IN_GAME_MENU:
+		{
 			break;
 		}
 
@@ -175,7 +204,7 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 	{
 		if (e.ButtonState == nsEButtonState::PRESSED)
 		{
-			if (e.Key == nsEInputKey::MOUSE_RIGHT && Character)
+			if (e.Key == nsEInputKey::MOUSE_RIGHT && PlayerCharacter)
 			{
 				const nsVector2 mousePosition(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
 				nsVector3 rayStart, rayDirection;
@@ -185,7 +214,7 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 					nsPhysicsHitResult hitResult;
 					if (MainWorld->PhysicsRayCast(hitResult, rayStart, rayDirection, 10000.0f))
 					{
-						Character->SetMoveTargetPosition(hitResult.WorldPosition);
+						PlayerCharacter->SetMoveTargetPosition(hitResult.WorldPosition);
 					}
 				}
 			}
@@ -219,6 +248,27 @@ void cstGame::OnMouseWheel(const nsMouseWheelEventArgs& e) noexcept
 void cstGame::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noexcept
 {
 	nsGameApplication::OnKeyboardButton(e);
+
+	if (e.ButtonState == nsEButtonState::PRESSED)
+	{
+		if (PlayerCharacter)
+		{
+			if (e.Key == nsEInputKey::KEYBOARD_A)
+			{
+				const cstEAbilityExecutionResult result = AbilityDummy->Execute(MainWorld->GetCurrentTimeSeconds(), PlayerCharacter, PlayerCharacter, nsVector3(), nsVector3(), nsVector3());
+
+				if (result == cstEAbilityExecutionResult::SUCCESS)
+				{
+					PlayerCharacter->StartExecuteAbility(AbilityDummy);
+				}
+			}
+
+			if (e.Key == nsEInputKey::KEYBOARD_S)
+			{
+				PlayerCharacter->StopAction();
+			}
+		}
+	}
 
 	if (e.ButtonState == nsEButtonState::RELEASED && e.Key == nsEInputKey::KEYBOARD_F9)
 	{
@@ -256,6 +306,7 @@ void cstGame::OnGUI(nsGUIContext& context) noexcept
 	const nsGUIRect borderLeft(canvasRect.Left, canvasRect.Top, canvasRect.Left + 4.0f, canvasRect.Bottom);
 	const nsGUIRect borderRight(canvasRect.Right - 4.0f, canvasRect.Top, canvasRect.Right, canvasRect.Bottom);
 	const nsGUIRect borderBottom(canvasRect.Left, canvasRect.Bottom - 4.0f, canvasRect.Right, canvasRect.Bottom);
+
 	const nsPointFloat mousePosition = context.GetMousePosition();
 	
 	if (borderLeft.IsPointInside(mousePosition))
@@ -277,37 +328,72 @@ void cstGame::OnGUI(nsGUIContext& context) noexcept
 	}
 
 
-	if (CurrentState == cstEGameState::PLAYING && bDebugDrawBorders)
-	{
-		context.AddDrawRect(borderTop, nsColor::GRAY);
-		context.AddDrawRect(borderLeft, nsColor::GRAY);
-		context.AddDrawRect(borderRight, nsColor::GRAY);
-		context.AddDrawRect(borderBottom, nsColor::GRAY);
-	}
-
 #if CST_GAME_WITH_EDITOR
-	g_Editor->DrawGUI(context);
+	if (CurrentState == cstEGameState::PLAYING)
+	{
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->DebugGUI(context);
+		}
+
+		if (bDebugDrawBorders)
+		{
+			context.AddDrawRect(borderTop, nsColor::GRAY);
+			context.AddDrawRect(borderLeft, nsColor::GRAY);
+			context.AddDrawRect(borderRight, nsColor::GRAY);
+			context.AddDrawRect(borderBottom, nsColor::GRAY);
+		}
+	}
+	else if (CurrentState == cstEGameState::EDITING)
+	{
+		g_Editor->DrawGUI(context);
+	}
 #endif // CST_GAME_WITH_EDITOR
 }
 
 
-void cstGame::HandleGameState_Intro()
+void cstGame::BeginGameState_InGameMenu()
+{
+}
+
+
+void cstGame::EndGameState_InGameMenu()
+{
+}
+
+
+void cstGame::BeginGameState_Intro()
 {
 
 }
 
 
-void cstGame::HandleGameState_MainMenu()
+void cstGame::EndGameState_Intro()
 {
 }
 
 
-void cstGame::HandleGameState_Loading()
+void cstGame::BeginGameState_MainMenu()
 {
 }
 
 
-void cstGame::HandleGameState_Playing()
+void cstGame::EndGameState_MainMenu()
+{
+}
+
+
+void cstGame::BeginGameState_Loading()
+{
+}
+
+
+void cstGame::EndGameState_Loading()
+{
+}
+
+
+void cstGame::BeginGameState_Playing()
 {
 	MainWorld->DispatchStartPlay();
 	
@@ -324,9 +410,9 @@ void cstGame::HandleGameState_Playing()
 	CameraTransform.Rotation = nsQuaternion::FromRotation(60.0f, -45.0f, 0.0f);
 	CameraTransform.Position = nsVector3(500.0f, 1000.0f, -500.0f);
 
-	if (Character)
+	if (PlayerCharacter)
 	{
-		const nsVector3 characterPosition = Character->GetWorldPosition();
+		const nsVector3 characterPosition = PlayerCharacter->GetWorldPosition();
 		CameraTransform.Position.X += characterPosition.X;
 		CameraTransform.Position.Y += characterPosition.Y;
 		CameraTransform.Position.Z += characterPosition.Z;
@@ -334,7 +420,27 @@ void cstGame::HandleGameState_Playing()
 }
 
 
-void cstGame::HandleGameState_Cutscene()
+void cstGame::EndGameState_Playing()
+{
+}
+
+
+void cstGame::BeginGameState_Cutscene()
+{
+}
+
+
+void cstGame::EndGameState_Cutscene()
+{
+}
+
+
+void cstGame::BeginGameState_PauseMenu()
+{
+}
+
+
+void cstGame::EndGameState_PauseMenu()
 {
 }
 
@@ -342,12 +448,17 @@ void cstGame::HandleGameState_Cutscene()
 
 #if CST_GAME_WITH_EDITOR
 
-void cstGame::HandleGameState_Editing()
+void cstGame::BeginGameState_Editing()
 {
 	ClipMouseCursor(false);
 	g_Editor->MainViewport = &MainViewport;
 	g_Editor->MainRenderer = MainRenderer;
 	g_Editor->MainWorld = MainWorld;
+}
+
+
+void cstGame::EndGameState_Editing()
+{
 }
 
 #endif // CST_GAME_WITH_EDITOR

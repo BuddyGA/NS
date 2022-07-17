@@ -174,3 +174,7 @@ public:
 	}
 
 };
+
+
+
+class nsAnimationGraph;

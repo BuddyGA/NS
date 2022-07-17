@@ -14,20 +14,6 @@ nsGameApplication::nsGameApplication(const wchar_t* title, int width, int height
 	: nsWindow(title, width, height, fullscreenMode)
 {
 	bShowFPS = true;
-
-	/*
-	TestWindow0.Name = "window_test_0";
-	TestWindow0.Title = "Window Test 0";
-	TestWindow0.InitialRect = nsGUIRect(100.0f, 100.0f, 500.0f, 400.0f);
-
-	TestTable.AddColumn("", 0.45f);
-	TestTable.AddColumn("", 0.45f);
-	TestTable.AddColumn("", 0.1f);
-
-	TestWindow1.Name = "window_test_1";
-	TestWindow1.Title = "Window Test 1";
-	TestWindow1.InitialRect = nsGUIRect(100.0f, 100.0f, 500.0f, 400.0f);
-	*/
 }
 
 
@@ -106,12 +92,6 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 }
 
 
-void nsGameApplication::StartPlay() noexcept
-{
-	MainWorld->DispatchStartPlay();
-}
-
-
 void nsGameApplication::TickUpdate(float deltaTime) noexcept 
 {
 
@@ -178,54 +158,6 @@ void nsGameApplication::DrawGUI() noexcept
 		GUIContext.AddDrawText(*fpsText, fpsText.GetLength(), nsPointFloat(canvasRect.Right - 156.0f, canvasRect.Top + 4.0f), fpsTextColor);
 	}
 
-	/*
-	GUIContext.AddDrawTriangle(nsPointFloat(300.0f, 300.0f), 32.0f, 0.0f, nsColor::WHITE);
-	GUIContext.AddDrawTriangleLeft(nsPointFloat(400.0f, 400.0f), 32.0f, nsColor::RED);
-	GUIContext.AddDrawTriangleRight(nsPointFloat(400.0f, 500.0f), 32.0f, nsColor::GREEN);
-	GUIContext.AddDrawTriangleDown(nsPointFloat(500.0f, 500.0f), 32.0f, nsColor::BLUE);
-
-
-	TestWindow0.BeginDraw(GUIContext);
-	{
-		const nsGUIRect contentRect = TestWindow0.GetContentRect();
-		
-		GUIContext.BeginRegion(nullptr, contentRect, nsPointFloat(), nsEGUIElementLayout::NONE, nsEGUIScrollOption::None, false);
-
-		TestTable.Size = nsPointFloat(contentRect.GetWidth(), contentRect.GetHeight());
-		TestTable.BeginDraw(GUIContext);
-		{
-			TestTable.BeginColumn(GUIContext, 0, nsPointFloat(4.0f));
-			{
-				GUIContext.AddControlText("column_0", nsColor::RED);
-			}
-			TestTable.EndColumn(GUIContext);
-
-			TestTable.BeginColumn(GUIContext, 1);
-			{
-				GUIContext.AddControlText("column_1", nsColor::GREEN);
-			}
-			TestTable.EndColumn(GUIContext);
-
-
-			TestTable.BeginColumn(GUIContext, 2);
-			{
-				GUIContext.AddControlText("column_2", nsColor::BLUE);
-			}
-			TestTable.EndColumn(GUIContext);
-		}
-		TestTable.EndDraw(GUIContext);
-
-		GUIContext.EndRegion();
-	}
-	TestWindow0.EndDraw(GUIContext);
-
-
-	TestWindow1.BeginDraw(GUIContext);
-	{
-	}
-	TestWindow1.EndDraw(GUIContext);
-	*/
-
 	ConsoleWindow.Draw(GUIContext);
 
 	GUIContext.EndRender();
@@ -242,21 +174,6 @@ void nsGameApplication::OnMouseMove(const nsMouseMoveEventArgs& e) noexcept
 void nsGameApplication::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 {
 	GUIContext.MouseButton(e);
-
-	/*
-	if (e.ButtonState == nsEButtonState::PRESSED)
-	{
-		NS_LogDebug(nsTempLog, "Mouse pressed!");
-	}
-	else if (e.ButtonState == nsEButtonState::RELEASED)
-	{
-		NS_LogDebug(nsTempLog, "Mouse released!");
-	}
-	else if (e.ButtonState == nsEButtonState::REPEAT)
-	{
-		NS_LogDebug(nsTempLog, "Mouse double clicked!");
-	}
-	*/
 }
 
 
@@ -272,37 +189,6 @@ void nsGameApplication::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noe
 
 	if (e.ButtonState == nsEButtonState::PRESSED)
 	{
-		/*
-		if (e.Key == nsEInputKey::KEYBOARD_SHIFT_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_SHIFT_LEFT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_SHIFT_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_SHIFT_RIGHT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_CTRL_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_CTRL_LEFT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_CTRL_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_CTRL_RIGHT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_ALT_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_ALT_LEFT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_ALT_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_ALT_RIGHT pressed!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_F10)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_F10 pressed!");
-		}
-		*/
-
 		if (e.Key == nsEInputKey::KEYBOARD_TILDE)
 		{
 			ConsoleWindow.Toggle();
@@ -310,36 +196,7 @@ void nsGameApplication::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noe
 	}
 	else if (e.ButtonState == nsEButtonState::RELEASED)
 	{
-		/*
-		if (e.Key == nsEInputKey::KEYBOARD_SHIFT_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_SHIFT_LEFT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_SHIFT_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_SHIFT_RIGHT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_CTRL_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_CTRL_LEFT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_CTRL_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_CTRL_RIGHT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_ALT_LEFT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_ALT_LEFT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_ALT_RIGHT)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_ALT_RIGHT released!");
-		}
-		else if (e.Key == nsEInputKey::KEYBOARD_F10)
-		{
-			NS_LogDebug(nsTempLog, "KEYBOARD_F10 released!");
-		}
-		*/
+
 	}
 }
 

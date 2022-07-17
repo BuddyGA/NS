@@ -55,4 +55,7 @@ namespace nsFileSystem
 	// Get file extension with dot
 	NS_NODISCARD extern NS_CORE_API nsString FileGetExtension(const nsString& file) noexcept;
 	
+	// Open file dialog
+	NS_NODISCARD extern NS_CORE_API nsString OpenFileDialog_ImportAsset() noexcept;
+
 };

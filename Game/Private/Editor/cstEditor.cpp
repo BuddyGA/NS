@@ -485,7 +485,7 @@ void cstEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 	bIsDraggingAsset = true;
 	bIsDraggingAssetSpawned = false;
 
-	NS_CONSOLE_Debug(EditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name);
+	NS_CONSOLE_Debug(EditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name.ToString());
 }
 
 

@@ -66,6 +66,17 @@ void nsNavigationAgentComponent::SetNavigationTarget(const nsVector3& worldPosit
 }
 
 
+void nsNavigationAgentComponent::StopMovement()
+{
+	if (!NavAgentId.IsValid())
+	{
+		return;
+	}
+
+	nsNavigationManager::Get().StopAgentMovement(NavAgentId);
+}
+
+
 void nsNavigationAgentComponent::Internal_SyncWithDetourCrowdAgent(float deltaTime, const nsVector3& navigationPosition, const nsVector3& currentVelocity, const nsVector3& desiredVelocity)
 {
 	nsTransform newTransform = GetWorldTransform();
@@ -97,20 +108,20 @@ void nsNavigationAgentComponent::RegisterAgent()
 
 	nsNavigationManager& navigationManager = nsNavigationManager::Get();
 
-	if (NavAgentId == nsNavigationAgentID::INVALID)
+	if (NavAgentId.IsValid())
 	{
-		NavAgentId = navigationManager.CreateAgent(this);
+		navigationManager.UpdateAgentParams(NavAgentId);
 	}
 	else
 	{
-		navigationManager.UpdateAgentParams(NavAgentId);
+		NavAgentId = navigationManager.CreateAgent(this);
 	}
 }
 
 
 void nsNavigationAgentComponent::UnregisterAgent()
 {
-	if (NavAgentId == nsNavigationAgentID::INVALID)
+	if (!NavAgentId.IsValid())
 	{
 		return;
 	}

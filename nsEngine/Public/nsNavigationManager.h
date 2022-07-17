@@ -34,6 +34,7 @@ public:
 	void DestroyAgent(nsNavigationAgentID& agent);
 	void UpdateAgentParams(nsNavigationAgentID agent);
 	void SetAgentMoveTarget(nsNavigationAgentID agent, const nsVector3& targetPosition);
+	void StopAgentMovement(nsNavigationAgentID agent);
 	void MoveAgents(float deltaTime);
 
 	NS_NODISCARD_INLINE bool IsAgentValid(nsNavigationAgentID agent) const

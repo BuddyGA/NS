@@ -11,6 +11,7 @@ private:
 	cstEditorAssetFolder GameAssetFolder;
 	const cstEditorAssetFolder* SelectedAssetFolder;
 	const nsAssetInfo* SelectedAsset;
+	nsString ImportAssetSourceFile;
 
 
 public:

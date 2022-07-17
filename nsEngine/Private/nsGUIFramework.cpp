@@ -1075,7 +1075,7 @@ void nsGUIConsoleWindow::Draw(nsGUIContext& context) noexcept
 		Window.BorderColorActive = Window.BorderColorDefault;
 
 		const nsGUIRect& canvasRect = context.GetCanvasRect();
-		Window.SetRect(nsGUIRect(4.0f, 4.0f, canvasRect.GetWidth() * 0.5f, canvasRect.GetHeight() * 0.5f));
+		Window.SetRect(nsGUIRect(4.0f, 4.0f, canvasRect.GetWidth() * 0.75f, canvasRect.GetHeight() * 0.5f));
 
 		Window.BeginDraw(context);
 		{

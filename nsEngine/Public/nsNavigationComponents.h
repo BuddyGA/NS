@@ -27,6 +27,7 @@ public:
 	virtual void OnStopPlay() override;
 	virtual void OnPhysicsTickUpdate(float deltaTime) override;
 	void SetNavigationTarget(const nsVector3& worldPosition);
+	void StopMovement();
 	void Internal_SyncWithDetourCrowdAgent(float deltaTime, const nsVector3& navigationPosition, const nsVector3& currentVelocity, const nsVector3& desiredVelocity);
 
 private:

@@ -566,6 +566,14 @@ void nsNavigationManager::SetAgentMoveTarget(nsNavigationAgentID agent, const ns
 }
 
 
+void nsNavigationManager::StopAgentMovement(nsNavigationAgentID agent)
+{
+	NS_Assert(IsAgentValid(agent));
+
+	DetourCrowd->resetMoveTarget(AgentStates[agent.Id].AgentIndex);
+}
+
+
 void nsNavigationManager::MoveAgents(float deltaTime)
 {
 	DetourCrowd->update(deltaTime, nullptr);

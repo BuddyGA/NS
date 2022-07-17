@@ -160,10 +160,23 @@ void cstEditorAssetExplorer::DrawGUI(nsGUIContext& context)
 			importButton.HoveredColor = nsColor(80, 200, 80);
 			importButton.PressedColor = importButton.DefaultColor;
 			importButton.Text = "Import Asset";
-			bOpenImportAssetFileDialog = importButton.Draw(context);
+			
+			if (importButton.Draw(context))
+			{
+				// Can only open file dialog if we're not importing asset
+				if (ImportAssetSourceFile.IsEmpty())
+				{
+					ImportAssetSourceFile = nsFileSystem::OpenFileDialog_ImportAsset();
+				}
+
+				if (!ImportAssetSourceFile.IsEmpty())
+				{
+					NS_CONSOLE_Log(EditorLog, TEXT("Importing asset from source file [%s]"), *ImportAssetSourceFile);
+				}
+			}
 
 			// Separator
-			context.AddControlRect(0.0f, 1.0f, nsColor::GRAY);
+			context.AddControlRect(0.0f, 2.0f, nsColor::GRAY);
 
 			// Region assets
 			Table.Size = nsPointFloat(0.0f);
@@ -193,10 +206,4 @@ void cstEditorAssetExplorer::DrawGUI(nsGUIContext& context)
 		context.EndRegion();
 	}
 	Window.EndDraw(context);
-
-
-	if (bOpenImportAssetFileDialog)
-	{
-		NS_CONSOLE_Log(EditorLog, TEXT("Open import asset file dialog"));
-	}
 }

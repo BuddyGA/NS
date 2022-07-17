@@ -693,13 +693,13 @@ void nsAssetImporter::ImportAssetFromModelFile_GLB(const nsAssetImportOption_Mod
 			return;
 		}
 
-		nsTArray<char> jsonString;
-		jsonString.Resize(chunkLength + 1);
-		reader.SerializeData(jsonString.GetData(), chunkLength);
+		nsTArray<char> jsonCharString;
+		jsonCharString.Resize(chunkLength + 1);
+		reader.SerializeData(jsonCharString.GetData(), chunkLength);
 
-		nsFileSystem::FileWriteText("debug_glb_import.json", jsonString.GetData());
+		nsFileSystem::FileWriteText("debug_glb_import.json", jsonCharString.GetData());
 
-		jsonData = nlohmann::json::parse(jsonString.GetData());
+		jsonData = nlohmann::json::parse(jsonCharString.GetData());
 	}
 
 

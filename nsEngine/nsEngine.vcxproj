@@ -168,10 +168,12 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
   <ItemGroup>
     <ClCompile Include="nsEngine.Runtime.cpp" />
     <ClCompile Include="nsEngine.Editor.cpp" />
+    <ClCompile Include="Private\nsAnimationGraph.cpp" />
     <ClCompile Include="Private\nsAnimationManager.cpp" />
     <ClCompile Include="Private\nsAssetImporter.cpp" />
     <ClCompile Include="Private\nsAssetManager.cpp" />
     <ClCompile Include="Private\nsAssetTypes.cpp" />
+    <ClCompile Include="Private\nsAudioManager.cpp" />
     <ClCompile Include="Private\nsConsole.cpp" />
     <ClCompile Include="Private\nsEngine.cpp" />
     <ClCompile Include="Private\nsFont.cpp" />
@@ -202,8 +204,11 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClInclude Include="Public\Editor\nsEditorAssetExplorer.h" />
     <ClInclude Include="Public\Editor\nsEditorTransformGizmo.h" />
     <ClInclude Include="Public\Editor\nsEditorWorldOutliner.h" />
+    <ClInclude Include="Public\nsAnimationGraph.h" />
     <ClInclude Include="Public\nsAnimationTypes.h" />
     <ClInclude Include="Public\Editor\nsEditorNavigation.h" />
+    <ClInclude Include="Public\nsAudioManager.h" />
+    <ClInclude Include="Public\nsAudioTypes.h" />
     <ClInclude Include="Public\nsNavigationComponents.h" />
     <ClInclude Include="Public\nsNavigationTypes.h" />
     <ClInclude Include="Private\nsPhysics_PhysX.h" />

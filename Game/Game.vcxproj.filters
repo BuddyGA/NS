@@ -42,7 +42,10 @@
     <ClInclude Include="Public\cstCharacter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\cstAttributeComponent.h">
+    <ClInclude Include="Public\cstAbility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstEquipment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,10 +77,13 @@
     <ClCompile Include="Private\cstTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\cstAttributeComponent.cpp">
+    <ClCompile Include="nsGame.Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="nsGame.Editor.cpp">
+    <ClCompile Include="Private\cstAbility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstEquipment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

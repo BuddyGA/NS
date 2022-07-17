@@ -1,4 +1,5 @@
 #include "nsFileSystem.h"
+#include <commdlg.h>
 
 
 #define NS_ValidatePathLength(path) const int len = path.GetLength(); NS_Validate(len <= NS_PLATFORM_MAX_PATH)
@@ -264,4 +265,24 @@ void nsFileSystem::FileIterate(nsTArray<nsString>& outFiles, const nsString& fol
 	}
 
 	FindClose(fileHandle);
+}
+
+
+nsString nsFileSystem::OpenFileDialog_ImportAsset() noexcept
+{
+	wchar_t filePath[1024];
+	nsPlatform::Memory_Zero(filePath, sizeof(filePath));
+
+	OPENFILENAME ofn{};
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+	ofn.lpstrInitialDir = nsPlatform::GetDirectoryPath();
+	ofn.lpstrFilter = TEXT("Model Files (GLB FBX)\0*.glb;*.fbx\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFile = filePath;
+	ofn.nMaxFile = sizeof(filePath);
+
+	GetOpenFileName(&ofn);
+
+	return filePath;
 }

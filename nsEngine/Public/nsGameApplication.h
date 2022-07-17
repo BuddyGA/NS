@@ -18,12 +18,6 @@ protected:
 	nsGUIContext GUIContext;
 	nsGUIConsoleWindow ConsoleWindow;
 
-	/*
-	nsGUIWindow TestWindow0;
-	nsGUITable TestTable;
-	nsGUIWindow TestWindow1;
-	*/
-
 public:
 	bool bShowFPS;
 
@@ -33,7 +27,6 @@ public:
 	virtual void Initialize() noexcept;
 	virtual void Shutdown() noexcept;
 	virtual void HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount) noexcept;
-	virtual void StartPlay() noexcept;
 	virtual void TickUpdate(float deltaTime) noexcept;
 	virtual void PhysicsTickUpdate(float deltaTime) noexcept;
 	virtual void PostPhysicsTickUpdate() noexcept;

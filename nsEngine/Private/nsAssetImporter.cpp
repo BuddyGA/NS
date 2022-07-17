@@ -190,7 +190,7 @@ void nsAssetImporter::ImportAssetFromModelFile(const nsAssetImportOption_Model& 
 		return;
 	}
 
-	const nsString fileName = *nsFileSystem::FileGetName(option.SourceFile);
+	const nsString fileName = nsFileSystem::FileGetName(option.SourceFile);
 	const nsString fileExt = nsFileSystem::FileGetExtension(option.SourceFile);
 
 	if (!(fileExt == TEXT(".glb") || fileExt == TEXT(".fbx")) )

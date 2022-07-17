@@ -7,15 +7,17 @@
 class cstGame : public nsGameApplication
 {
 private:
-	cstEGameState CurrentState;
 	cstEGameState PendingChangeState;
-	cstCharacter* Character;
+	cstEGameState CurrentState;
 
 	nsVector3 CameraMoveAxis;
 	nsTransform CameraTransform;
 	float CameraDistance;
 	float CameraMoveSpeed;
 	bool bDebugDrawBorders;
+
+	cstPlayerCharacter* PlayerCharacter;
+	cstAbility* AbilityDummy;
 
 
 public:
@@ -33,11 +35,26 @@ protected:
 	virtual void OnGUI(nsGUIContext& context) noexcept override;
 
 private:
-	void HandleGameState_Intro();
-	void HandleGameState_MainMenu();
-	void HandleGameState_Loading();
-	void HandleGameState_Playing();
-	void HandleGameState_Cutscene();
+	void BeginGameState_Intro();
+	void EndGameState_Intro();
+
+	void BeginGameState_MainMenu();
+	void EndGameState_MainMenu();
+
+	void BeginGameState_Loading();
+	void EndGameState_Loading();
+
+	void BeginGameState_Playing();
+	void EndGameState_Playing();
+
+	void BeginGameState_InGameMenu();
+	void EndGameState_InGameMenu();
+
+	void BeginGameState_Cutscene();
+	void EndGameState_Cutscene();
+
+	void BeginGameState_PauseMenu();
+	void EndGameState_PauseMenu();
 
 
 public:
@@ -54,8 +71,8 @@ public:
 
 #if CST_GAME_WITH_EDITOR
 private:
-	void HandleGameState_Editing();
-
+	void BeginGameState_Editing();
+	void EndGameState_Editing();
 #endif // CST_GAME_WITH_EDITOR
 
 };
