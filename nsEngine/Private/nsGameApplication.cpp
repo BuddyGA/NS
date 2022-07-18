@@ -1,5 +1,4 @@
 #include "nsGameApplication.h"
-#include "nsConsole.h"
 #include "nsRenderManager.h"
 #include "nsWorld.h"
 #include "nsAssetManager.h"
@@ -7,6 +6,7 @@
 #include "nsPhysicsComponents.h"
 #include "nsRenderComponents.h"
 #include "nsNavigationManager.h"
+#include "nsConsole.h"
 
 
 
@@ -174,12 +174,14 @@ void nsGameApplication::OnMouseMove(const nsMouseMoveEventArgs& e) noexcept
 void nsGameApplication::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 {
 	GUIContext.MouseButton(e);
+
 }
 
 
 void nsGameApplication::OnMouseWheel(const nsMouseWheelEventArgs& e) noexcept
 {
 	GUIContext.MouseWheel(e);
+
 }
 
 
@@ -187,17 +189,11 @@ void nsGameApplication::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noe
 {
 	GUIContext.KeyboardButton(e);
 
-	if (e.ButtonState == nsEButtonState::PRESSED)
+	if (e.ButtonState == nsEButtonState::PRESSED && e.Key == nsEInputKey::KEYBOARD_TILDE)
 	{
-		if (e.Key == nsEInputKey::KEYBOARD_TILDE)
-		{
-			ConsoleWindow.Toggle();
-		}
+		ConsoleWindow.Toggle();
 	}
-	else if (e.ButtonState == nsEButtonState::RELEASED)
-	{
 
-	}
 }
 
 

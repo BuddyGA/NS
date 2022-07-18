@@ -45,7 +45,13 @@
     <ClInclude Include="Public\cstAbility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\cstEquipment.h">
+    <ClInclude Include="Public\cstItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -83,7 +89,13 @@
     <ClCompile Include="Private\cstAbility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\cstEquipment.cpp">
+    <ClCompile Include="Private\cstItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

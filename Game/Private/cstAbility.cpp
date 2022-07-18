@@ -8,138 +8,137 @@ NS_CLASS_END(cstAbility)
 
 cstAbility::cstAbility()
 {
-	ExecutionType = cstEAbilityExecutionType::POINT_AND_CLICK_TARGET;
+	ExecuteActionType = cstExecute::ACTION_CLICK_SHORTCUT_ONLY;
 	TargetType = cstEAbilityTargetType::SELF_ONLY;
 	RequiredWeaponClass = nullptr;
-	ManaCost = 0;
-	ExecuteDistance = 0.0f;
-	ExecuteDuration = 0.0f;
-	ChannelingDuration = 0.0f;
-	CooldownDuration = 0.0f;
 	LastExecutionTime = 0.0f;
-	ExecuteTimer = 0.0f;
+	ExecutionRemainingTime = 0.0f;
+	Attributes.Resize(CST_ABILITY_MAX_LEVEL);
+	CurrentLevel = 1;
 }
 
 
-cstEAbilityExecutionResult cstAbility::CanExecute(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation) const
+cstExecute::EResult cstAbility::CanExecute(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams) const
 {
-	if (ExecuteTimer > 0.0f)
+	const int levelIndex = CurrentLevel - 1;
+	NS_Assert(levelIndex >= 0 && levelIndex < CST_ABILITY_MAX_LEVEL);
+
+	if (ExecutionRemainingTime > 0.0f)
 	{
-		return cstEAbilityExecutionResult::EXECUTING;
+		return cstExecute::RESULT_EXECUTING;
 	}
 
-	if (LastExecutionTime > 0.0f && currentTime < (LastExecutionTime + CooldownDuration))
+	if (LastExecutionTime > 0.0f && currentTime < (LastExecutionTime + Attributes[levelIndex].CooldownDuration))
 	{
-		return cstEAbilityExecutionResult::COOLDOWN;
+		return cstExecute::RESULT_COOLDOWN;
 	}
 
-	if (characterExecutor == nullptr)
+	if (executorCharacter == nullptr)
 	{
-		return cstEAbilityExecutionResult::INVALID_EXECUTOR;
+		return cstExecute::RESULT_INVALID_EXECUTOR;
 	}
-
-
-	if (ExecutionType == cstEAbilityExecutionType::POINT_AND_CLICK_TARGET)
-	{
-		if (characterTarget == nullptr)
-		{
-			return cstEAbilityExecutionResult::INVALID_TARGET_ANY;
-		}
-
-		switch (TargetType)
-		{
-			case cstEAbilityTargetType::SELF_ONLY:
-			{
-				if (characterExecutor != characterTarget)
-				{
-					return cstEAbilityExecutionResult::INVALID_TARGET_SELF;
-				}
-
-				break;
-			}
-
-			case cstEAbilityTargetType::ALLY_ONLY:
-			{
-				if (characterExecutor->GetTeam() != characterTarget->GetTeam())
-				{
-					return cstEAbilityExecutionResult::INVALID_TARGET_ALLY;
-				}
-
-				break;
-			}
-
-			case cstEAbilityTargetType::ENEMY_ONLY:
-			{
-				if (characterExecutor->GetTeam() == characterTarget->GetTeam())
-				{
-					return cstEAbilityExecutionResult::INVALID_TARGET_ENEMY;
-				}
-
-				break;
-			}
-
-			default: break;
-		}
-	}
-	else if (ExecutionType == cstEAbilityExecutionType::POINT_AND_CLICK_GROUND)
-	{
-
-	}
-	else if (ExecutionType == cstEAbilityExecutionType::POINT_AND_CLICK_DRAG)
-	{
-
-	}
-	
 
 	// TODO: Check required weapon
 
-	const cstAttributes& executorAttr = characterExecutor->GetAttributes();
-	const cstCharacterStatusFlags executorStatusFlags = characterExecutor->GetStatusFlags();
+	const cstAttributes& executorAttr = executorCharacter->GetAttributes();
+	const cstStatusEffects executorStatusEffects = executorCharacter->GetStatusEffects();
 
-	if (executorAttr.Mana < ManaCost)
+	if (executorAttr.Mana < Attributes[levelIndex].ManaCost)
 	{
-		return cstEAbilityExecutionResult::NOT_ENOUGH_MANA;
+		return cstExecute::RESULT_NOT_ENOUGH_MANA;
 	}
 
 	if (executorAttr.Health <= 0.0f)
 	{
-		NS_Assert(executorStatusFlags & cstECharacterStatus::KO);
-		return cstEAbilityExecutionResult::EXECUTOR_KOed;
+		NS_Assert(executorStatusEffects & cstEStatusEffect::KO);
+		return cstExecute::RESULT_EXECUTOR_KOed;
 	}
 
-	if (executorStatusFlags & cstECharacterStatus::Silence)
+	if (executorStatusEffects & cstEStatusEffect::Silence)
 	{
-		return cstEAbilityExecutionResult::EXECUTOR_SILENCED;
+		return cstExecute::RESULT_EXECUTOR_SILENCED;
 	}
 
-	if (executorStatusFlags & cstECharacterStatus::Stun)
+	if (executorStatusEffects & cstEStatusEffect::Stun)
 	{
-		return cstEAbilityExecutionResult::EXECUTOR_STUNNED;
+		return cstExecute::RESULT_EXECUTOR_STUNNED;
 	}
 
 
-	return cstEAbilityExecutionResult::SUCCESS;
+	switch (TargetType)
+	{
+		case cstEAbilityTargetType::SELF_ONLY:
+		{
+			if (targetParams.TargetCharacter != executorCharacter)
+			{
+				return cstExecute::RESULT_INVALID_TARGET_SELF;
+			}
+
+			break;
+		}
+
+		case cstEAbilityTargetType::ALLY_ONLY:
+		{
+			if (targetParams.TargetCharacter == nullptr || targetParams.TargetCharacter->GetTeam() != executorCharacter->GetTeam())
+			{
+				return cstExecute::RESULT_INVALID_TARGET_ALLY;
+			}
+
+			break;
+		}
+
+		case cstEAbilityTargetType::ENEMY_ONLY:
+		{
+			if (targetParams.TargetCharacter == nullptr || targetParams.TargetCharacter->GetTeam() == executorCharacter->GetTeam())
+			{
+				return cstExecute::RESULT_INVALID_TARGET_ENEMY;
+			}
+
+			break;
+		}
+
+		case cstEAbilityTargetType::ANY:
+		{
+			if (targetParams.TargetCharacter == nullptr)
+			{
+				return cstExecute::RESULT_INVALID_TARGET_ANY;
+			}
+
+			break;
+		}
+
+		default: break;
+	}
+	
+
+	return cstExecute::RESULT_SUCCESS;
 }
 
 
 void cstAbility::UpdateExecution(float deltaTime)
 {
-	if (ExecuteTimer > 0.0f)
+	if (ExecutionRemainingTime > 0.0f)
 	{
-		ExecuteTimer = nsMath::Clamp(ExecuteTimer - deltaTime, 0.0f, ExecuteDuration);
+		const int levelIndex = CurrentLevel - 1;
+		NS_Assert(levelIndex >= 0 && levelIndex < CST_ABILITY_MAX_LEVEL);
+
+		ExecutionRemainingTime = nsMath::Clamp(ExecutionRemainingTime - deltaTime, 0.0f, Attributes[levelIndex].CastingDuration);
 	}
 }
 
 
-cstEAbilityExecutionResult cstAbility::Execute(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation)
+cstExecute::EResult cstAbility::Execute(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams)
 {
-	const cstEAbilityExecutionResult result = CanExecute(currentTime, characterExecutor, characterTarget, groundLocation, dragStartLocation, dragEndLocation);
+	const cstExecute::EResult result = CanExecute(currentTime, executorCharacter, targetParams);
 
-	if (result == cstEAbilityExecutionResult::SUCCESS)
+	if (result == cstExecute::RESULT_SUCCESS)
 	{
+		const int levelIndex = CurrentLevel - 1;
+		NS_Assert(levelIndex >= 0 && levelIndex < CST_ABILITY_MAX_LEVEL);
+
 		LastExecutionTime = currentTime;
-		ExecuteTimer = ExecuteDuration;
-		Execute_Implementation(currentTime, characterExecutor, characterTarget, groundLocation, dragStartLocation, dragEndLocation);
+		ExecutionRemainingTime = Attributes[levelIndex].CastingDuration;
+		Execute_Implementation(currentTime, executorCharacter, targetParams);
 	}
 
 	return result;
@@ -154,12 +153,27 @@ NS_CLASS_END(cstAbility_Dummy)
 cstAbility_Dummy::cstAbility_Dummy()
 {
 	Name = TEXT("Ability_Dummy");
-	ExecuteDuration = 3.0f;
-	CooldownDuration = 1.5f;
 }
 
 
-void cstAbility_Dummy::Execute_Implementation(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation)
+void cstAbility_Dummy::Execute_Implementation(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams)
 {
 
+}
+
+
+
+
+NS_CLASS_BEGIN(cstAbility_StopAction, cstAbility)
+NS_CLASS_END(cstAbility_StopAction)
+
+cstAbility_StopAction::cstAbility_StopAction()
+{
+	Name = TEXT("Ability_StopAction");
+}
+
+
+void cstAbility_StopAction::Execute_Implementation(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams)
+{
+	targetParams.TargetCharacter->StopAction();
 }

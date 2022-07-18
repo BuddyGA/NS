@@ -78,10 +78,6 @@ public:
 template<typename... TParams>
 class nsTDelegate
 {
-private:
-	nsTDelegate(const nsTDelegate&) = delete;
-	nsTDelegate& operator=(const nsTDelegate&) = delete;
-
 protected:
 	nsTArray<nsTDelegateFunction<TParams...>*> InvokeList;
 
@@ -93,26 +89,9 @@ public:
 	}
 
 
-	nsTDelegate(nsTDelegate&& other) noexcept
-		: InvokeList(std::move(other.InvokeList))
-	{
-	}
-
-
 	virtual ~nsTDelegate() noexcept
 	{
 		UnbindAll();
-	}
-
-
-	NS_INLINE nsTDelegate& operator=(nsTDelegate&& rhs) noexcept
-	{
-		if (this != &rhs)
-		{
-			InvokeList = std::move(rhs.InvokeList);
-		}
-
-		return *this;
 	}
 
 

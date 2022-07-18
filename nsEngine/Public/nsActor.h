@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nsActorComponents.h"
+#include "nsPhysicsTypes.h"
 
 
 
@@ -47,6 +48,7 @@ private:
 	nsActor* Parent;
 	nsActorComponentArrayInline Components;
 	nsActorChildrenArrayInline Children;
+	physx::PxAggregate* PhysicsAggregate;
 
 
 public:

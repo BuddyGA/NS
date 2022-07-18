@@ -161,17 +161,21 @@
     <ClInclude Include="Private\Editor\cstEditorWorldOutliner.h" />
     <ClInclude Include="Public\cstAbility.h" />
     <ClInclude Include="Public\cstCharacter.h" />
+    <ClInclude Include="Public\cstEffect.h" />
     <ClInclude Include="Public\cstGame.h" />
+    <ClInclude Include="Public\cstInput.h" />
     <ClInclude Include="Public\cstTypes.h" />
-    <ClInclude Include="Public\cstEquipment.h" />
+    <ClInclude Include="Public\cstItem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="nsGame.Editor.cpp" />
     <ClCompile Include="nsGame.Runtime.cpp" />
     <ClCompile Include="Private\cstAbility.cpp" />
     <ClCompile Include="Private\cstCharacter.cpp" />
+    <ClCompile Include="Private\cstEffect.cpp" />
+    <ClCompile Include="Private\cstInput.cpp" />
     <ClCompile Include="Private\cstTypes.cpp" />
-    <ClCompile Include="Private\cstEquipment.cpp" />
+    <ClCompile Include="Private\cstItem.cpp" />
     <ClCompile Include="Private\Editor\cstEditor.cpp" />
     <ClCompile Include="Private\cstGame.cpp" />
     <ClCompile Include="Private\Editor\cstEditorActorInspector.cpp" />

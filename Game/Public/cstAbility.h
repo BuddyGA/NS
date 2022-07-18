@@ -3,13 +3,7 @@
 #include "cstTypes.h"
 
 
-
-enum class cstEAbilityExecutionType : uint8
-{
-	POINT_AND_CLICK_TARGET = 0,
-	POINT_AND_CLICK_GROUND,
-	POINT_AND_CLICK_DRAG
-};
+#define CST_ABILITY_MAX_LEVEL		(3)
 
 
 
@@ -30,21 +24,41 @@ enum class cstEAbilityTargetType : uint8
 
 
 
-enum class cstEAbilityExecutionResult : uint8
+struct cstAbilityAttributes
 {
-	SUCCESS = 0,
-	EXECUTING,
-	COOLDOWN,
-	INVALID_EXECUTOR,
-	INVALID_TARGET_ANY,
-	INVALID_TARGET_SELF,
-	INVALID_TARGET_ALLY,
-	INVALID_TARGET_ENEMY,
-	WEAPON_REQUIRED,
-	NOT_ENOUGH_MANA,
-	EXECUTOR_KOed,
-	EXECUTOR_SILENCED,
-	EXECUTOR_STUNNED,
+	// Amount of mana required to execute this ability
+	float ManaCost;
+
+	// Distance to target to execute this ability. Used to approaching target before actually execute it
+	float CastingDistance;
+
+	// How long to perform/execute this ability (seconds)
+	float CastingDuration;
+
+	// Channeling duration while executing this ability (seconds)
+	float ChannelingDuration;
+
+	// Cooldown duration (seconds)
+	float CooldownDuration;
+
+	// AoE radius
+	float AreaEffectRadius;
+
+	// Effect
+	cstAttributes Effect;
+
+
+public:
+	cstAbilityAttributes()
+	{
+		ManaCost = 0.0f;
+		CastingDistance = 0.0f;
+		CastingDuration = 0.0f;
+		ChannelingDuration = 0.0f;
+		CooldownDuration = 0.0f;
+		AreaEffectRadius = 0.0f;
+	}
+
 };
 
 
@@ -54,8 +68,8 @@ class cstAbility : public nsObject
 	NS_DECLARE_OBJECT(cstAbility)
 
 public:
-	// Execution type
-	cstEAbilityExecutionType ExecutionType;
+	// Execute action type
+	cstExecute::EActionType ExecuteActionType;
 
 	// Target type 
 	cstEAbilityTargetType TargetType;
@@ -63,46 +77,45 @@ public:
 	// Required weapon class to execute this ability
 	const nsClass* RequiredWeaponClass;
 
-	// Mana cost to execute this ability
-	float ManaCost;
+	// Attributes
+	nsTArrayInline<cstAbilityAttributes, CST_ABILITY_MAX_LEVEL> Attributes;
 
-	// Distance to target to execute this ability. Used to approaching target before actually execute it
-	float ExecuteDistance;
+	// Current level
+	int CurrentLevel;
 
-	// How long to perform/execute this ability (seconds)
-	float ExecuteDuration;
-
-	// Channeling duration while executing this ability (seconds)
-	float ChannelingDuration;
-
-	// Cooldown duration (seconds)
-	float CooldownDuration;
-
+	// UI: Ability icon
+	nsSharedTextureAsset DisplayIcon;
 
 private:
 	float LastExecutionTime;
-	float ExecuteTimer;
+	float ExecutionRemainingTime;
 
 
 public:
 	cstAbility();
-	cstEAbilityExecutionResult CanExecute(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation) const;
-	cstEAbilityExecutionResult Execute(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation);
+	cstExecute::EResult CanExecute(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams) const;
+	cstExecute::EResult Execute(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams);
 	void UpdateExecution(float deltaTime);
 
 protected:
-	virtual void Execute_Implementation(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation) = 0;
+	virtual void Execute_Implementation(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams) = 0;
 
 public:
-	NS_NODISCARD_INLINE float GetExecuteTimer() const
+	NS_NODISCARD_INLINE float GetExecutionRemainingTime() const
 	{
-		return ExecuteTimer;
+		return ExecutionRemainingTime;
 	}
 
 
 	NS_NODISCARD_INLINE bool IsExecuting() const
 	{
-		return ExecuteTimer > 0.0f;
+		return ExecutionRemainingTime > 0.0f;
+	}
+
+
+	NS_NODISCARD_INLINE float GetCastingDistance() const
+	{
+		return Attributes[CurrentLevel - 1].CastingDistance;
 	}
 
 };
@@ -115,6 +128,18 @@ class cstAbility_Dummy : public cstAbility
 
 public:
 	cstAbility_Dummy();
-	virtual void Execute_Implementation(float currentTime, cstCharacter* characterExecutor, cstCharacter* characterTarget, nsVector3 groundLocation, nsVector3 dragStartLocation, nsVector3 dragEndLocation) override;
+	virtual void Execute_Implementation(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams) override;
+
+};
+
+
+
+class cstAbility_StopAction : public cstAbility
+{
+	NS_DECLARE_OBJECT(cstAbility_StopAction)
+
+public:
+	cstAbility_StopAction();
+	virtual void Execute_Implementation(float currentTime, const cstCharacter* executorCharacter, const cstExecute::TargetParams& targetParams) override;
 
 };

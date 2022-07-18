@@ -10,6 +10,7 @@ namespace physx
 	class PxMaterial;
 	class PxCooking;
 	class PxScene;
+	class PxAggregate;
 	class PxRigidActor;
 	class PxShape;
 };

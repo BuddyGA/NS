@@ -478,6 +478,7 @@ void nsNavigationManager::BuildNavMesh(nsWorld* world)
 
 void nsNavigationManager::BuildNavMesh(const nsNavigationInputGeometry& inputGeometry, const nsNavigationBuildSettings& buildSettings)
 {
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 

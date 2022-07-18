@@ -19,8 +19,9 @@ NS_CLASS_END(nsActor)
 nsActor::nsActor()
 	: Level(nullptr)
 	, Flags(nsEActorFlag::CallStartStopPlay)
-	, Parent(nullptr)
 	, RootComponent(nullptr)
+	, Parent(nullptr)
+	, PhysicsAggregate(nullptr)
 {
 	RootComponent = AddComponent<nsTransformComponent>(NS_ACTOR_DEFAULT_ROOT_COMPONENT_NAME);
 }

@@ -74,6 +74,8 @@ void nsEngine::Initialize()
 
 void nsEngine::HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount)
 {
+
+#ifndef __NS_ENGINE_SHIPPING__
 	if (command == "navigation" && paramCount > 0)
 	{
 		const nsString& param0 = params[0];
@@ -83,6 +85,8 @@ void nsEngine::HandleConsoleCommand(const nsString& command, const nsString* par
 			nsNavigationManager::Get().BuildNavMesh(Worlds[0]);
 		}
 	}
+#endif // !__NS_ENGINE_SHIPPING__
+
 }
 
 

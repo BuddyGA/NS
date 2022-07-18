@@ -1,24 +1,63 @@
 #pragma once
 
-#include "cstTypes.h"
+#include "cstInput.h"
+
+
+
+enum class cstEGameState : uint8
+{
+	NONE = 0,
+
+	INTRO,
+	MAIN_MENU,
+	LOADING,
+	PLAYING,
+	IN_GAME_MENU,
+	CUTSCENE,
+	PAUSE_MENU,
+
+#if CST_GAME_WITH_EDITOR
+	EDITING,
+#endif // NS_GAME_WITH_EDITOR
+};
+
+
+
+class cstGameplaySettings
+{
+public:
+	float CameraDistance;
+	float CameraMoveSpeed;
+
+
+public:
+	cstGameplaySettings();
+	void Reset();
+	void Save();
+	void Load();
+
+};
+
 
 
 
 class cstGame : public nsGameApplication
 {
 private:
+	cstGameplaySettings GameplaySettings;
+	cstInputSettings InputSettings;
+
 	cstEGameState PendingChangeState;
 	cstEGameState CurrentState;
 
-	nsVector3 CameraMoveAxis;
 	nsTransform CameraTransform;
-	float CameraDistance;
-	float CameraMoveSpeed;
-	bool bDebugDrawBorders;
+	nsVector2 CameraMoveAxis;
+	bool bCameraPanning;
 
-	cstPlayerCharacter* PlayerCharacter;
-	cstAbility* AbilityDummy;
-
+	nsTArrayInline<cstPlayerCharacter*, 3> PlayerCharacters;
+	nsTArrayInline<cstPlayerCharacter*, 3> SelectedCharacters;
+	int FocusedCharacterIndex;
+	
 
 public:
 	cstGame(const wchar_t* title, int width, int height, nsEWindowFullscreenMode fullscreenMode) noexcept;
@@ -35,26 +74,29 @@ protected:
 	virtual void OnGUI(nsGUIContext& context) noexcept override;
 
 private:
-	void BeginGameState_Intro();
-	void EndGameState_Intro();
+	void OnInputActionBindingPressed(cstInputAction::EType inputActionType, bool bIsPressed, bool bIsDoubleClick);
+	void OnInputActionBindingConflicted(cstInputAction::EType firstInputActionTpe, cstInputAction::EType secondInputActionType);
 
-	void BeginGameState_MainMenu();
-	void EndGameState_MainMenu();
+	void BeginState_Intro();
+	void EndState_Intro();
 
-	void BeginGameState_Loading();
-	void EndGameState_Loading();
+	void BeginState_MainMenu();
+	void EndState_MainMenu();
 
-	void BeginGameState_Playing();
-	void EndGameState_Playing();
+	void BeginState_Loading();
+	void EndState_Loading();
 
-	void BeginGameState_InGameMenu();
-	void EndGameState_InGameMenu();
+	void BeginState_Playing();
+	void EndState_Playing();
 
-	void BeginGameState_Cutscene();
-	void EndGameState_Cutscene();
+	void BeginState_InGameMenu();
+	void EndState_InGameMenu();
 
-	void BeginGameState_PauseMenu();
-	void EndGameState_PauseMenu();
+	void BeginState_Cutscene();
+	void EndState_Cutscene();
+
+	void BeginState_PauseMenu();
+	void EndState_PauseMenu();
 
 
 public:
@@ -71,8 +113,12 @@ public:
 
 #if CST_GAME_WITH_EDITOR
 private:
-	void BeginGameState_Editing();
-	void EndGameState_Editing();
+	bool bShowDebugFocusedCharacter;
+	bool bDebugDrawBorders;
+
+private:
+	void BeginState_Editing();
+	void EndState_Editing();
 #endif // CST_GAME_WITH_EDITOR
 
 };

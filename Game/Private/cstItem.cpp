@@ -1,4 +1,16 @@
-#include "cstEquipment.h"
+#include "cstItem.h"
+
+
+
+NS_CLASS_BEGIN(cstItem, nsObject)
+NS_CLASS_END(cstItem)
+
+cstItem::cstItem()
+{
+	SpawnActorClass = nullptr;
+	Category = cstEItemCategory::CONSUMABLE;
+}
+
 
 
 

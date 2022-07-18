@@ -25,48 +25,13 @@ cstCharacter::cstCharacter()
 
 	PendingChangeState = cstECharacterState::NONE;
 	CurrentState = cstECharacterState::IDLE;
-
-	Attributes.STR = 5.0f;
-	Attributes.VIT = 5.0f;
-	Attributes.INT = 5.0f;
-	Attributes.MEN = 5.0f;
-	Attributes.DEX = 5.0f;
-	Attributes.AGI = 5.0f;
-	Attributes.LUK = 5.0f;
-	Attributes.MaxHealth = 100.0f;
-	Attributes.MaxMana = 100.0f;
-	Attributes.PATK = 10.0f;
-	Attributes.PDEF = 5.0f;
-	Attributes.MATK = 10.0f;
-	Attributes.MDEF = 5.0f;
-	Attributes.ASPD = 100.0f;
-	Attributes.CSPD = 100.0f;
-	Attributes.MSPD = 300.0f;
-	Attributes.CritRate = 5.0f;
-	Attributes.FireResistance = 5.0f;
-	Attributes.WaterResistance = 5.0f;
-	Attributes.WindResistance = 5.0f;
-	Attributes.EarthResistance = 5.0f;
-	Attributes.LightResistance = 5.0f;
-	Attributes.DarkResistance = 5.0f;
-	Attributes.PoisonResistance = 50.0f;
-	Attributes.BurnResistance = 50.0f;
-	Attributes.StunResistance = 50.0f;
-	Attributes.SlowResistance = 50.0f;
-	Attributes.Health = Attributes.MaxHealth;
-	Attributes.HealthRegenPerSecond = 0.0f;
-	Attributes.Mana = Attributes.MaxMana;
-	Attributes.ManaRegenPerSecond = 1.0f;
-	Attributes.AbilityManaCostReduction = 0.0f;
-	Attributes.AbilityCooldownReduction = 0.0f;
-
-	StatusFlags = 0;
-	Team = cstECharacterTeam::NONE;
-
 	AttackTargetCharacter = nullptr;
 	MoveDistanceToTarget = 0.0f;
-
 	ExecutingAbility = nullptr;
+
+	Attributes = cstAttributes::GetCharacterBaseAttributes();
+	StatusEffects = cstEStatusEffect::Normal;
+	Team = cstECharacterTeam::NEUTRAL;
 }
 
 
@@ -119,9 +84,9 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 
 				MoveDistanceToTarget = nsVector3::Distance(GetWorldPosition(), AttackTargetCharacter->GetWorldPosition());
 
-				if (MoveDistanceToTarget <= ExecutingAbility->ExecuteDistance)
+				if (MoveDistanceToTarget <= ExecutingAbility->GetCastingDistance())
 				{
-					PendingChangeState = cstECharacterState::EXECUTING_ABILITY;
+					PendingChangeState = cstECharacterState::EXECUTING;
 				}
 			}
 
@@ -139,13 +104,13 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 			break;
 		}
 
-		case cstECharacterState::EXECUTING_ABILITY:
+		case cstECharacterState::EXECUTING:
 		{
 			NS_Assert(ExecutingAbility);
 
 			ExecutingAbility->UpdateExecution(deltaTime);
 
-			if (ExecutingAbility->GetExecuteTimer() <= 0.1f)
+			if (ExecutingAbility->GetExecutionRemainingTime() <= 0.1f)
 			{
 				if (PendingChangeState == cstECharacterState::NONE)
 				{
@@ -184,11 +149,11 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 				break;
 			}
 
-			case cstECharacterState::EXECUTING_ABILITY:
+			case cstECharacterState::EXECUTING:
 			{
 				NS_Assert(ExecutingAbility);
 
-				if (ExecutingAbility->GetExecuteTimer() <= 0.0f)
+				if (ExecutingAbility->GetExecutionRemainingTime() <= 0.0f)
 				{
 					ExecutingAbility = nullptr;
 					bCanTransitionState = true;
@@ -205,18 +170,28 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 			default: break;
 		}
 
-		if (bCanTransitionState && PendingChangeState == cstECharacterState::MOVING)
+		if (bCanTransitionState)
 		{
-			if (CanMove())
+			if (PendingChangeState == cstECharacterState::MOVING)
 			{
-				NavigationAgentComponent->SetNavigationTarget(MoveTargetPosition);
+				if (CanMove())
+				{
+					NavigationAgentComponent->SetNavigationTarget(MoveTargetPosition);
+				}
+				else
+				{
+					// Cancel transition state but don't reset PendingChangeState for next frame checking
+					bCanTransitionState = false;
+				}
 			}
-			else
+			else if (PendingChangeState == cstECharacterState::KO)
 			{
-				bCanTransitionState = false;
+				// TODO: Play dead animation (non-loop)
 			}
 		}
 
+
+		// If transition state is not canceled, change CurrentState and reset PendingChangeState
 		if (bCanTransitionState)
 		{
 			CurrentState = PendingChangeState;
@@ -252,12 +227,43 @@ void cstCharacter::SetMoveTargetPosition(const nsVector3& worldPosition)
 }
 
 
-void cstCharacter::StartExecuteAbility(cstAbility* ability)
+void cstCharacter::ExecuteAbility(cstAbility* ability, const cstExecute::TargetParams& targetParams)
 {
+	if (ability == nullptr)
+	{
+		NS_CONSOLE_Warning(cstPlayerLog, TEXT("Fail to execute ability. <ability> is NULL!"));
+		return;
+	}
+
 	ExecutingAbility = ability;
-	PendingChangeState = cstECharacterState::EXECUTING_ABILITY;
+	PendingChangeState = cstECharacterState::EXECUTING;
 }
 
+
+void cstCharacter::UseItem(cstItem* item, const cstExecute::TargetParams& targetParams)
+{
+	if (item == nullptr)
+	{
+		NS_CONSOLE_Warning(cstPlayerLog, TEXT("Fail to use item. <item> is NULL!"));
+		return;
+	}
+
+
+}
+
+
+void cstCharacter::StopAction()
+{
+	AttackTargetCharacter = nullptr;
+	PendingChangeState = cstECharacterState::IDLE;
+}
+
+
+void cstCharacter::ApplyKO()
+{
+	Attributes.Health = 0.0f;
+	PendingChangeState = cstECharacterState::KO;
+}
 
 
 
@@ -268,16 +274,9 @@ static const nsString CharacterStateNames[5] =
 	TEXT("None"),
 	TEXT("Idle"),
 	TEXT("Moving"),
-	TEXT("Executing_Ability"),
+	TEXT("Executing"),
 	TEXT("KO")
 };
-
-
-void cstCharacter::StopAction()
-{
-	AttackTargetCharacter = nullptr;
-	PendingChangeState = cstECharacterState::IDLE;
-}
 
 
 void cstCharacter::DebugGUI(nsGUIContext& context)
@@ -313,7 +312,7 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 				break;
 			}
 
-			case cstECharacterState::EXECUTING_ABILITY:
+			case cstECharacterState::EXECUTING:
 			{
 				if (ExecutingAbility)
 				{
@@ -322,7 +321,7 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 					context.AddControlText(*abilityNameText);
 
 					static nsString abilityExecuteTimerText;
-					abilityExecuteTimerText = nsString::Format(TEXT("ExecuteTimer: %.3f"), ExecutingAbility->GetExecuteTimer());
+					abilityExecuteTimerText = nsString::Format(TEXT("ExecutionRemainingTime: %.3f"), ExecutingAbility->GetExecutionRemainingTime());
 					context.AddControlText(*abilityExecuteTimerText);
 				}
 
@@ -356,5 +355,26 @@ NS_CLASS_END(cstPlayerCharacter)
 
 cstPlayerCharacter::cstPlayerCharacter()
 {
+	Attributes.FireResistance = 5.0f;
+	Attributes.WaterResistance = 5.0f;
+	Attributes.WindResistance = 5.0f;
+	Attributes.EarthResistance = 5.0f;
+
 	Team = cstECharacterTeam::PLAYER;
+
+	AbilitySlots.Resize(cstInputAction::ABILITY_SLOT_MAX_COUNT);
+	AbilitySlots[ MapToAbilitySlotIndex(cstInputAction::ABILITY_SLOT_STOP) ] = ns_CreateObject<cstAbility_StopAction>();
+
+	ItemSlots.Resize(cstInputAction::ITEM_SLOT_MAX_COUNT);
+}
+
+
+
+
+NS_CLASS_BEGIN(cstEnemyCharacter, cstCharacter)
+NS_CLASS_END(cstEnemyCharacter)
+
+cstEnemyCharacter::cstEnemyCharacter()
+{
+	Team = cstECharacterTeam::ENEMY;
 }

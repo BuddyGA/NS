@@ -1,14 +1,15 @@
 #pragma once
 
-#include "cstTypes.h"
+#include "cstAbility.h"
+#include "cstInput.h"
 
 
 
 enum class cstECharacterTeam : uint8
 {
-	NONE = 0,
+	NEUTRAL = 0,
 	PLAYER,
-	NPC
+	ENEMY
 };
 
 
@@ -16,10 +17,9 @@ enum class cstECharacterTeam : uint8
 enum class cstECharacterState : uint8
 {
 	NONE = 0,
-
 	IDLE,
 	MOVING,
-	EXECUTING_ABILITY,
+	EXECUTING,
 	KO,
 };
 
@@ -29,16 +29,12 @@ class cstCharacter : public nsActor
 {
 	NS_DECLARE_OBJECT(cstCharacter)
 
-protected:
+private:
 	class nsNavigationAgentComponent* NavigationAgentComponent;
 	class nsSkeletalMeshComponent* SkelMeshComponent;
 
 	cstECharacterState PendingChangeState;
 	cstECharacterState CurrentState;
-
-	cstAttributes Attributes;
-	cstCharacterStatusFlags StatusFlags;
-	cstECharacterTeam Team;
 
 	nsSharedAnimationAsset AnimIdle0;
 	nsSharedAnimationAsset AnimRunForwardLoop;
@@ -48,6 +44,11 @@ protected:
 	float MoveDistanceToTarget;
 
 	cstAbility* ExecutingAbility;
+
+protected:
+	cstAttributes Attributes;
+	cstStatusEffects StatusEffects;
+	cstECharacterTeam Team;
 
 
 public:
@@ -68,8 +69,10 @@ protected:
 
 public:
 	void SetMoveTargetPosition(const nsVector3& worldPosition);
-	void StartExecuteAbility(cstAbility* ability);
+	void ExecuteAbility(cstAbility* ability, const cstExecute::TargetParams& targetParams);
+	void UseItem(cstItem* item, const cstExecute::TargetParams& targetParams);
 	void StopAction();
+	void ApplyKO();
 
 
 	NS_NODISCARD_INLINE cstAttributes& GetAttributes()
@@ -84,9 +87,9 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE cstCharacterStatusFlags GetStatusFlags() const
+	NS_NODISCARD_INLINE cstStatusEffects GetStatusEffects() const
 	{
-		return StatusFlags;
+		return StatusEffects;
 	}
 
 
@@ -104,7 +107,7 @@ public:
 
 	NS_NODISCARD_INLINE bool CanMove() const
 	{
-		return IsAlive() && (ExecutingAbility == nullptr) && !(StatusFlags & cstECharacterStatus::Stun);
+		return IsAlive() && (ExecutingAbility == nullptr) && !(StatusEffects & cstEStatusEffect::Stun);
 	}
 
 
@@ -123,7 +126,55 @@ class cstPlayerCharacter : public cstCharacter
 {
 	NS_DECLARE_OBJECT(cstPlayerCharacter)
 
+private:
+	nsTArrayInline<cstAbility*, cstInputAction::ABILITY_SLOT_MAX_COUNT> AbilitySlots;
+	nsTArrayInline<cstItem*, cstInputAction::ITEM_SLOT_MAX_COUNT> ItemSlots;
+
+
 public:
 	cstPlayerCharacter();
+
+private:
+	NS_NODISCARD_INLINE int MapToAbilitySlotIndex(cstInputAction::EType inputType) const
+	{
+		NS_Assert(inputType >= cstInputAction::ABILITY_SLOT_ATTACK && inputType <= cstInputAction::ABILITY_SLOT_7);
+		return cstInputAction::ABILITY_SLOT_MAX_COUNT - (cstInputAction::ABILITY_SLOT_7 - inputType);
+	}
+
+
+	NS_NODISCARD_INLINE int MapToItemSlotIndex(cstInputAction::EType inputType) const
+	{
+		NS_Assert(inputType >= cstInputAction::ITEM_SLOT_0 && inputType <= cstInputAction::ITEM_SLOT_7);
+		return cstInputAction::ITEM_SLOT_MAX_COUNT - (cstInputAction::ITEM_SLOT_7 - inputType);
+	}
+
+
+public:
+	NS_INLINE void ExecuteAbilityAtSlot(cstInputAction::EType abilitySlot, const cstExecute::TargetParams& targetParams)
+	{
+		NS_CONSOLE_Debug(cstPlayerLog, TEXT("Execute ability at slot [%s]"), cstInputAction::NAMES[abilitySlot]);
+		const int index = MapToAbilitySlotIndex(abilitySlot);
+		ExecuteAbility(AbilitySlots[index], targetParams);
+	}
+
+
+	NS_INLINE void UseItemAtSlot(cstInputAction::EType itemSlot, const cstExecute::TargetParams& targetParams)
+	{
+		NS_CONSOLE_Debug(cstPlayerLog, TEXT("Use item at slot [%s]"), cstInputAction::NAMES[itemSlot]);
+		const int index = MapToItemSlotIndex(itemSlot);
+		UseItem(ItemSlots[index], targetParams);
+	}
+
+};
+
+
+
+
+class cstEnemyCharacter : public cstCharacter
+{
+	NS_DECLARE_OBJECT(cstEnemyCharacter)
+
+public:
+	cstEnemyCharacter();
 
 };
