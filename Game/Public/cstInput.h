@@ -91,6 +91,20 @@ namespace cstInputAction
 	constexpr int ABILITY_SLOT_MAX_COUNT = (ABILITY_SLOT_7 - ABILITY_SLOT_ATTACK + 1);
 	constexpr int ITEM_SLOT_MAX_COUNT = (ITEM_SLOT_7 - ITEM_SLOT_0 + 1);
 
+
+	NS_NODISCARD_INLINE int GetAbilitySlotIndex(EType inputType)
+	{
+		NS_Assert(inputType >= cstInputAction::ABILITY_SLOT_ATTACK && inputType <= cstInputAction::ABILITY_SLOT_7);
+		return cstInputAction::ABILITY_SLOT_MAX_COUNT - (cstInputAction::ABILITY_SLOT_7 - inputType);
+	}
+
+
+	NS_NODISCARD_INLINE int GetItemSlotIndex(EType inputType)
+	{
+		NS_Assert(inputType >= cstInputAction::ITEM_SLOT_0 && inputType <= cstInputAction::ITEM_SLOT_7);
+		return cstInputAction::ITEM_SLOT_MAX_COUNT - (cstInputAction::ITEM_SLOT_7 - inputType);
+	}
+
 };
 
 

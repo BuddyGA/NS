@@ -20,7 +20,7 @@ enum class nsEAssetType : uint8
 	AUDIO,
 	LEVEL,
 	FONT,
-	ACTOR_TEMPLATE,
+	ACTOR,
 };
 
 

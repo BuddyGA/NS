@@ -42,3 +42,18 @@ NS_NODISCARD_INLINE T* ns_Cast(nsObject* obj) noexcept
 
 	return obj->IsClass<T>() ? static_cast<T*>(obj) : nullptr;
 }
+
+
+
+NS_NODISCARD_INLINE nsObject* ns_GetDefaultObject(const nsClass* objClass) noexcept
+{
+	nsClass* mutableClass = const_cast<nsClass*>(objClass);
+	return mutableClass->GetDefaultObject();
+}
+
+
+template<typename T>
+NS_NODISCARD_INLINE T* ns_GetDefaultObjectAs(const nsClass* objClass) noexcept
+{
+	return static_cast<T*>(ns_GetDefaultObject(objClass));
+}

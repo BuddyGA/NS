@@ -17,7 +17,7 @@ private:
 
 
 public:
-	nsLevel(nsString name);
+	nsLevel();
 	void Destroy();
 	
 	// Add actor into level

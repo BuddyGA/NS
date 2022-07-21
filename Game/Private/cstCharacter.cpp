@@ -3,7 +3,7 @@
 #include "nsPhysicsComponents.h"
 #include "nsRenderComponents.h"
 #include "nsNavigationComponents.h"
-#include "cstAbility.h"
+#include "nsWorld.h"
 
 
 
@@ -25,13 +25,14 @@ cstCharacter::cstCharacter()
 
 	PendingChangeState = cstECharacterState::NONE;
 	CurrentState = cstECharacterState::IDLE;
-	AttackTargetCharacter = nullptr;
+
+	OwningTags = cstTag::NONE;
+	BaseAttributes = cstAttributes::InitializeCharacterBaseAttributes();
+	Abilities.Resize(1);
+	EquippedWeapon = nullptr;
+
 	MoveDistanceToTarget = 0.0f;
 	ExecutingAbility = nullptr;
-
-	Attributes = cstAttributes::GetCharacterBaseAttributes();
-	StatusEffects = cstEStatusEffect::Normal;
-	Team = cstECharacterTeam::NEUTRAL;
 }
 
 
@@ -72,47 +73,87 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 {
 	nsActor::OnTickUpdate(deltaTime);
 
+	UpdateActiveAbilities(deltaTime);
+	UpdateActiveEffects(deltaTime);
+	UpdateState(deltaTime);
+	UpdateAnimation(deltaTime);
+}
 
+
+void cstCharacter::UpdateActiveAbilities(float deltaTime)
+{
+	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
+
+	for (int i = 0; i < Abilities.GetCount(); ++i)
+	{
+		Abilities[i]->TickUpdate(deltaTime, currentTime);
+	}
+}
+
+
+void cstCharacter::UpdateActiveEffects(float deltaTime)
+{
+	if (ActiveEffects.IsEmpty())
+	{
+		return;
+	}
+
+	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
+
+	for (int i = 0; i < ActiveEffects.GetCount();)
+	{
+		if (ActiveEffects[i]->IsActive())
+		{
+			ActiveEffects[i]->UpdateEffect(deltaTime);
+			++i;
+		}
+		else
+		{
+			ActiveEffects.RemoveAt(i);
+		}
+	}
+}
+
+
+void cstCharacter::UpdateState(float deltaTime)
+{
 	switch (CurrentState)
 	{
-		case cstECharacterState::MOVING:
+		case cstECharacterState::MOVE:
 		{
-			// Approaching target
-			if (AttackTargetCharacter)
+			MoveDistanceToTarget = nsVector3::Distance(GetWorldPosition(), MoveTargetPosition);
+
+			if (MoveDistanceToTarget < 120.0f)
 			{
-				NS_Assert(ExecutingAbility);
-
-				MoveDistanceToTarget = nsVector3::Distance(GetWorldPosition(), AttackTargetCharacter->GetWorldPosition());
-
-				if (MoveDistanceToTarget <= ExecutingAbility->GetCastingDistance())
-				{
-					PendingChangeState = cstECharacterState::EXECUTING;
-				}
-			}
-
-			// Default movement 
-			else
-			{
-				MoveDistanceToTarget = nsVector3::Distance(GetWorldPosition(), MoveTargetPosition);
-
-				if (MoveDistanceToTarget < 120.0f)
-				{
-					PendingChangeState = cstECharacterState::IDLE;
-				}
+				PendingChangeState = cstECharacterState::IDLE;
 			}
 
 			break;
 		}
 
-		case cstECharacterState::EXECUTING:
+
+		case cstECharacterState::CHASE_TARGET:
 		{
 			NS_Assert(ExecutingAbility);
 
-			ExecutingAbility->UpdateExecution(deltaTime);
+			const nsVector3 targetPosition = ExecutionTarget.Character->GetWorldPosition();
+			const float distanceToTarget = nsVector3::Distance(GetWorldPosition(), targetPosition);
 
-			if (ExecutingAbility->GetExecutionRemainingTime() <= 0.1f)
+			if (distanceToTarget > ExecutingAbility->GetCastingDistance())
 			{
-				if (PendingChangeState == cstECharacterState::NONE)
+				if (CanMove())
+				{
+					NavigationAgentComponent->SetNavigationTarget(targetPosition);
+				}
+			}
+			else
+			{
+				if (ExecutingAbility->Execute(GetWorld()->GetCurrentTimeSeconds(), this, ExecutionTarget) == cstEAbilityExecutionResult::SUCCESS)
+				{
+					Abilities.Add(ExecutingAbility);
+					PendingChangeState = cstECharacterState::EXECUTE_ABILITY;
+				}
+				else
 				{
 					PendingChangeState = cstECharacterState::IDLE;
 				}
@@ -120,6 +161,15 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 
 			break;
 		}
+
+
+		case cstECharacterState::EXECUTE_ABILITY:
+		{
+			NS_Assert(ExecutingAbility);
+
+			break;
+		}
+
 
 		case cstECharacterState::KO:
 		{
@@ -142,25 +192,23 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 				break;
 			}
 
-			case cstECharacterState::MOVING:
+
+			case cstECharacterState::MOVE:
+			case cstECharacterState::CHASE_TARGET:
 			{
 				NavigationAgentComponent->StopMovement();
 				bCanTransitionState = true;
 				break;
 			}
 
-			case cstECharacterState::EXECUTING:
+
+			case cstECharacterState::EXECUTE_ABILITY:
 			{
 				NS_Assert(ExecutingAbility);
 
-				if (ExecutingAbility->GetExecutionRemainingTime() <= 0.0f)
-				{
-					ExecutingAbility = nullptr;
-					bCanTransitionState = true;
-				}
-
 				break;
 			}
+
 
 			case cstECharacterState::KO:
 			{
@@ -170,9 +218,10 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 			default: break;
 		}
 
+
 		if (bCanTransitionState)
 		{
-			if (PendingChangeState == cstECharacterState::MOVING)
+			if (PendingChangeState == cstECharacterState::MOVE || PendingChangeState == cstECharacterState::CHASE_TARGET)
 			{
 				if (CanMove())
 				{
@@ -186,6 +235,7 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 			}
 			else if (PendingChangeState == cstECharacterState::KO)
 			{
+				NS_CONSOLE_Log(cstCharacterLog, TEXT("Character [%s] KO!"), *Name);
 				// TODO: Play dead animation (non-loop)
 			}
 		}
@@ -198,13 +248,10 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 			PendingChangeState = cstECharacterState::NONE;
 		}
 	}
-
-
-	UpdateAnimation();
 }
 
 
-void cstCharacter::UpdateAnimation()
+void cstCharacter::UpdateAnimation(float deltaTime)
 {
 	const float currentSpeed = NavigationAgentComponent->GetCurrentVelocity().GetMagnitude();
 
@@ -219,32 +266,61 @@ void cstCharacter::UpdateAnimation()
 }
 
 
-void cstCharacter::SetMoveTargetPosition(const nsVector3& worldPosition)
+void cstCharacter::EquipWeapon(cstWeapon* weapon)
 {
-	AttackTargetCharacter = nullptr;
-	MoveTargetPosition = worldPosition;
-	PendingChangeState = cstECharacterState::MOVING;
+	if (EquippedWeapon == weapon)
+	{
+		return;
+	}
+
+	EquippedWeapon = weapon;
+
+	if (Abilities[0])
+	{
+		ns_DestroyObjectByClass(Abilities[0]);
+		Abilities[0] = nullptr;
+	}
+
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttachToComponent(SkelMeshComponent, nsETransformAttachmentMode::RESET_TRANSFORM, EquippedWeapon->AttachSocketName);
+
+		if (EquippedWeapon->AttackAbilityClass)
+		{
+			Abilities[0] = ns_CreateObjectByClass<cstAbility>(EquippedWeapon->AttackAbilityClass);
+		}
+		else
+		{
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to create attack ability object from weapon [%s]. AttackAbilityClass is NULL!"), *EquippedWeapon->Name);
+		}
+	}
 }
 
 
-void cstCharacter::ExecuteAbility(cstAbility* ability, const cstExecute::TargetParams& targetParams)
+void cstCharacter::EquipArmor(cstArmor* armor)
+{
+}
+
+
+void cstCharacter::ExecuteAbility(cstAbility* ability, const cstAbilityExecutionTarget& targetParams)
 {
 	if (ability == nullptr)
 	{
-		NS_CONSOLE_Warning(cstPlayerLog, TEXT("Fail to execute ability. <ability> is NULL!"));
+		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to execute ability. <ability> is NULL!"));
 		return;
 	}
 
+	ExecutionTarget = targetParams;
 	ExecutingAbility = ability;
-	PendingChangeState = cstECharacterState::EXECUTING;
+	PendingChangeState = cstECharacterState::CHASE_TARGET;
 }
 
 
-void cstCharacter::UseItem(cstItem* item, const cstExecute::TargetParams& targetParams)
+void cstCharacter::UseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams)
 {
 	if (item == nullptr)
 	{
-		NS_CONSOLE_Warning(cstPlayerLog, TEXT("Fail to use item. <item> is NULL!"));
+		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to use item. <item> is NULL!"));
 		return;
 	}
 
@@ -252,29 +328,55 @@ void cstCharacter::UseItem(cstItem* item, const cstExecute::TargetParams& target
 }
 
 
-void cstCharacter::StopAction()
+void cstCharacter::Move(const nsVector3& worldPosition)
 {
-	AttackTargetCharacter = nullptr;
-	PendingChangeState = cstECharacterState::IDLE;
+	MoveTargetPosition = worldPosition;
+	PendingChangeState = cstECharacterState::MOVE;
 }
 
 
-void cstCharacter::ApplyKO()
+void cstCharacter::Attack(cstCharacter* targetCharacter)
 {
-	Attributes.Health = 0.0f;
-	PendingChangeState = cstECharacterState::KO;
+	if (targetCharacter == nullptr)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Ignore attack command. targetCharacter is NULL!"));
+		return;
+	}
+
+	if (EquippedWeapon == nullptr)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Cannot attack. No weapon equipped!"));
+		return;
+	}
+
+	if (Abilities[0] == nullptr)
+	{
+		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to attack by using weapon [%s]. Abilities[0] (Attack ability) is NULL!"), *EquippedWeapon->Name);
+		return;
+	}
+
+	NS_CONSOLE_Log(cstCharacterLog, TEXT("Character [%s] attacking [%s]"), *Name, *targetCharacter->Name);
+
+	ExecuteAbility(Abilities[0], cstAbilityExecutionTarget(targetCharacter));
+}
+
+
+void cstCharacter::Stop()
+{
+	PendingChangeState = cstECharacterState::IDLE;
 }
 
 
 
 #ifdef CST_GAME_WITH_EDITOR
 
-static const nsString CharacterStateNames[5] =
+constexpr const wchar_t* CharacterStateNames[6] =
 {
 	TEXT("None"),
 	TEXT("Idle"),
-	TEXT("Moving"),
-	TEXT("Executing"),
+	TEXT("Move"),
+	TEXT("Chase_Target"),
+	TEXT("Execute_Ability"),
 	TEXT("KO")
 };
 
@@ -286,54 +388,69 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 	nsGUIRect regionRect;
 	regionRect.Left = 8.0f;
 	regionRect.Top = canvasRect.GetHeight() * 0.5f;
-	regionRect.Right = regionRect.Left + 256.0f;
-	regionRect.Bottom = regionRect.Top + 256.0f;
+	regionRect.Right = regionRect.Left + 512.0f;
+	regionRect.Bottom = regionRect.Top + 512.0f;
 
 	context.BeginRegion(nullptr, regionRect, nsPointFloat(), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::None, false, "char_debug_region");
 	{
 		context.AddControlText(*Name);
 
-		static nsString pendingChangeStateText;
-		pendingChangeStateText = nsString::Format(TEXT("PendingChangeState: %s"), *CharacterStateNames[static_cast<uint8>(PendingChangeState)]);
-		context.AddControlText(*pendingChangeStateText);
+		static nsString debugText;
 
-		static nsString currentStateText;
-		currentStateText = nsString::Format(TEXT("CurrentState: %s"), *CharacterStateNames[static_cast<uint8>(CurrentState)]);
-		context.AddControlText(*currentStateText);
+		debugText = nsString::Format(TEXT("Health: %.3f/%.3f"), BaseAttributes[cstAttribute::CURRENT_HEALTH], BaseAttributes[cstAttribute::MAX_HEALTH]);
+		context.AddControlText(*debugText);
+		debugText = nsString::Format(TEXT("DamageHealth: %.3f"), BaseAttributes[cstAttribute::DAMAGE_HEALTH]);
+		context.AddControlText(*debugText);
+		debugText = nsString::Format(TEXT("Status: %s"), IsAlive() ? TEXT("-") : TEXT("[KO]"));
+		context.AddControlText(*debugText);
+		debugText = nsString::Format(TEXT("PendingChangeState: %s"), CharacterStateNames[static_cast<uint8>(PendingChangeState)]);
+		context.AddControlText(*debugText);
+		debugText = nsString::Format(TEXT("CurrentState: %s"), CharacterStateNames[static_cast<uint8>(CurrentState)]);
+		context.AddControlText(*debugText);
 
 		switch (CurrentState)
 		{
-			case cstECharacterState::MOVING:
+			case cstECharacterState::MOVE:
+			case cstECharacterState::CHASE_TARGET:
 			{
-				static nsString distanceText;
-				distanceText = nsString::Format(TEXT("Distance: %.3f"), MoveDistanceToTarget);
-				context.AddControlText(*distanceText);
+				if (CurrentState == cstECharacterState::CHASE_TARGET)
+				{
+					debugText = nsString::Format(TEXT("Chase: %s"), *ExecutionTarget.Character->Name);
+					context.AddControlText(*debugText);
+				}
+
+				debugText = nsString::Format(TEXT("Distance: %.3f"), MoveDistanceToTarget);
+				context.AddControlText(*debugText);
 
 				break;
 			}
 
-			case cstECharacterState::EXECUTING:
+			case cstECharacterState::EXECUTE_ABILITY:
 			{
 				if (ExecutingAbility)
 				{
-					static nsString abilityNameText;
-					abilityNameText = nsString::Format(TEXT("Ability: %s"), *ExecutingAbility->Name);
-					context.AddControlText(*abilityNameText);
-
-					static nsString abilityExecuteTimerText;
-					abilityExecuteTimerText = nsString::Format(TEXT("ExecutionRemainingTime: %.3f"), ExecutingAbility->GetExecutionRemainingTime());
-					context.AddControlText(*abilityExecuteTimerText);
+					debugText = nsString::Format(TEXT("Ability: %s"), *ExecutingAbility->Name);
+					context.AddControlText(*debugText);
+					debugText = nsString::Format(TEXT("CastingRemainingTime: %.3f"), ExecutingAbility->GetCastingRemainingTime());
+					context.AddControlText(*debugText);
+					debugText = nsString::Format(TEXT("CooldownRemainingTime: %.3f"), ExecutingAbility->GetCooldownRemainingTime());
+					context.AddControlText(*debugText);
 				}
 
 				break;
 			}
 
-			case cstECharacterState::KO:
-			{
-				break;
-			}
-
 			default: break;
+		}
+
+		debugText = TEXT("\nActive Abilities:");
+		context.AddControlText(*debugText);
+
+		for (int i = 0; i < Abilities.GetCount(); ++i)
+		{
+			cstAbility* ability = Abilities[i];
+			debugText = nsString::Format(TEXT("Ability: %s, CooldownRemainingTime: %.3f"), *ability->Name, ability->GetCooldownRemainingTime());
+			context.AddControlText(*debugText);
 		}
 	}
 	context.EndRegion();
@@ -346,35 +463,3 @@ void cstCharacter::DebugDraw(nsRenderer* renderer)
 }
 
 #endif // CST_GAME_WITH_EDITOR
-
-
-
-
-NS_CLASS_BEGIN(cstPlayerCharacter, cstCharacter)
-NS_CLASS_END(cstPlayerCharacter)
-
-cstPlayerCharacter::cstPlayerCharacter()
-{
-	Attributes.FireResistance = 5.0f;
-	Attributes.WaterResistance = 5.0f;
-	Attributes.WindResistance = 5.0f;
-	Attributes.EarthResistance = 5.0f;
-
-	Team = cstECharacterTeam::PLAYER;
-
-	AbilitySlots.Resize(cstInputAction::ABILITY_SLOT_MAX_COUNT);
-	AbilitySlots[ MapToAbilitySlotIndex(cstInputAction::ABILITY_SLOT_STOP) ] = ns_CreateObject<cstAbility_StopAction>();
-
-	ItemSlots.Resize(cstInputAction::ITEM_SLOT_MAX_COUNT);
-}
-
-
-
-
-NS_CLASS_BEGIN(cstEnemyCharacter, cstCharacter)
-NS_CLASS_END(cstEnemyCharacter)
-
-cstEnemyCharacter::cstEnemyCharacter()
-{
-	Team = cstECharacterTeam::ENEMY;
-}

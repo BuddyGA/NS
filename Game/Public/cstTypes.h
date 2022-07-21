@@ -7,7 +7,10 @@
 #endif // __CST_GAME_BUILD__
 
 
-#define CST_GAME_WITH_EDITOR			(1)
+#ifndef __CST_GAME_SHIPPING__
+#define CST_GAME_WITH_EDITOR	
+#endif // !__CST_GAME_SHIPPING__
+
 
 
 #include "nsGameApplication.h"
@@ -28,8 +31,6 @@ extern nsLogCategory cstAbilityLog;
 
 
 class cstCharacter;
-class cstPlayerCharacter;
-class cstEffect;
 class cstAbility;
 class cstItem;
 class cstConsumable;
@@ -39,359 +40,180 @@ class cstArmor;
 
 
 
-
-
-
-namespace cstExecute
+namespace cstTag
 {
-	enum EActionType : uint8
+	enum Flags : uint64
 	{
-		// Only click the shortcut to execute
-		ACTION_CLICK_SHORTCUT_ONLY = 0,
+		NONE					= (0),
 
-		// Click shortcut and click on target to execute
-		ACTION_CLICK_SHORTCUT_AND_CLICK_TARGET,
+		Character_Player		= (1 << 0),
+		Character_Enemy			= (1 << 1),
+		Character_Neutral		= (1 << 2),
 
-		// Click shortcut and click on ground to execute
-		ACTION_CLICK_SHORTCUT_AND_CLICK_GROUND,
+		Physical				= (1 << 3),
+		Magical					= (1 << 4),
 
-		// Click shortcut, drag mouse on ground, and release to execute
-		ACTION_CLICK_SHORTCUT_AND_DRAG_RELEASE
-	};
+		Status_Poison			= (1 << 5),
+		Status_Burn				= (1 << 6),
+		Status_Freeze			= (1 << 7),
+		Status_Stun				= (1 << 8),
+		Status_Slow				= (1 << 9),
+		Status_Silence			= (1 << 10),
+		Status_Hate				= (1 << 11),
+		Status_Injured			= (1 << 12),
+		Status_KO				= (1 << 13),
 
+		Immune_Physical			= (1 << 14),
+		Immune_Magical			= (1 << 15),
 
-	enum EResult : uint8
-	{
-		RESULT_SUCCESS = 0,
-		RESULT_EXECUTING,
-		RESULT_COOLDOWN,
-		RESULT_WEAPON_REQUIRED,
-		RESULT_NOT_ENOUGH_MANA,
-		RESULT_EXECUTOR_KOed,
-		RESULT_EXECUTOR_SILENCED,
-		RESULT_EXECUTOR_STUNNED,
-		RESULT_INVALID_EXECUTOR,
-		RESULT_INVALID_TARGET_ANY,
-		RESULT_INVALID_TARGET_SELF,
-		RESULT_INVALID_TARGET_ALLY,
-		RESULT_INVALID_TARGET_ENEMY,
-	};
+		Weapon_Dual_Dagger		= (1 << 16),
+		Weapon_Sword_Shield		= (1 << 17),
+		Weapon_Greatsword		= (1 << 18),
+		Weapon_Staff			= (1 << 19),
 
-
-
-	struct TargetParams
-	{
-		cstCharacter* TargetCharacter;
-		nsVector3 TargetGroundLocation;
-		nsVector3 DragStartLocation;
-		nsVector3 DragEndLocation;
-
-
-	public:
-		TargetParams()
-			: TargetCharacter(nullptr)
-		{
-		}
-
-	};
-
-
-};
-
-
-
-enum class cstEElementType : uint8
-{
-	NONE = 0,
-	FIRE,
-	WATER,
-	WIND,
-	EARTH,
-	LIGHT,
-	DARK
-};
-
-
-
-namespace cstEStatusEffect
-{
-	enum Flag : uint16
-	{
-		Normal		= (0),
-		Poison		= (1UL << 0),
-		Burn		= (1UL << 1),
-		Freeze		= (1UL << 2),
-		Stun		= (1UL << 3),
-		Slow		= (1UL << 4),
-		Silence		= (1UL << 5),
-		Hate		= (1UL << 6),
-		Injured		= (1UL << 7),
-		KO			= (1UL << 8),
+		DISABLE_ACTION		= Status_Freeze | Status_Stun | Status_Hate | Status_KO
 	};
 };
 
-typedef uint16 cstStatusEffects;
+typedef uint64 cstTags;
 
 
 
-
-struct cstAttributes
+namespace cstAttribute
 {
-	// Strength (PATK)
-	float STR;
+	enum EType : uint8
+	{
+		STR = 0,									// Strength (PATK)
+		VIT,										// Vitality (MaxHealth, PDEF)
+		INT,										// Intelligence (MaxMana, MATK)
+		MEN,										// Mentality (MDEF, CSPD)
+		DEX,										// Dexterity (ASPD)
+		AGI,										// Agility (MSPD)
+		CRT,										// Physical/Magical critical rate (%)
+		PATK,										// Physical attack
+		PDEF,										// Physical defense
+		MATK,										// Magical attack
+		MDEF,										// Magical defense
+		ASPD,										// Attack speed
+		CSPD,										// Casting speed
+		MSPD,										// Movement speed
+		MAX_HEALTH,									// Maximum health
+		MAX_MANA,									// Maximum mana
+		RESIST_ELEMENT_FIRE,						// Fire element resistance
+		RESIST_ELEMENT_WATER,						// Water element resistance
+		RESIST_ELEMENT_WIND,						// Wind element resistance
+		RESIST_ELEMENT_EARTH,						// Earth element resistance
+		RESIST_ELEMENT_LIGHT,						// Light element resistance
+		RESIST_ELEMENT_DARK,						// Dark element resistance
+		RESIST_STATUS_POISON,						// Poison status resistance
+		RESIST_STATUS_BURN,							// Burn status resistance
+		RESIST_STATUS_FREEZE,						// Freeze status resistance
+		RESIST_STATUS_STUN,							// Stun status resistance
+		RESIST_STATUS_SLOW,							// Slow status resistance
+		RESIST_STATUS_SILENCE,						// Silence status resistance
+		RESIST_STATUS_BLIND,						// Blind status resistance
+		RESIST_STATUS_HATE,							// Hate status resistance
 
-	// Vitality (MaxHealth, PDEF)
-	float VIT;
+		CURRENT_HEALTH,								// Current health
+		CURRENT_HEALTH_REGEN,						// Current health regeneration per second
+		CURRENT_MANA,								// Current mana
+		CURRENT_MANA_REGEN,							// Current mana regeneration per second
+		CURRENT_ABILITY_MANA_COST_REDUCTION,		// Current ability mana cost reduction (%)
+		CURRENT_ABILITY_COOLDOWN_REDUCTION,			// Current ability cooldown reduction (%)
+		CURRENT_STATUS_POISON,						// Current status meter: Poison 
+		CURRENT_STATUS_BURN,						// Current status meter: Burn 
+		CURRENT_STATUS_FREEZE,						// Current status meter: Freeze
+		CURRENT_STATUS_STUN,						// Current status meter: Stun
+		CURRENT_STATUS_SLOW,						// Current status meter: Slow
+		CURRENT_STATUS_SILENCE,						// Current status meter: Silence
+		CURRENT_STATUS_BLIND,						// Current status meter: Blind
+		CURRENT_STATUS_HATE,						// Current status meter: Hate
 
-	// Intelligence (MaxMana, MATK)
-	float INT;
+		DAMAGE_HEALTH,								// Damage/recovery: Health
+		DAMAGE_MANA,								// Damage/recovery: Mana
+		DAMAGE_ELEMENT_FIRE,						// Damage/buff: Fire element contribution
+		DAMAGE_ELEMENT_WATER,						// Damage/buff: Water element contribution
+		DAMAGE_ELEMENT_WIND,						// Damage/buff: Wind element contribution
+		DAMAGE_ELEMENT_EARTH,						// Damage/buff: Earth element contribution
+		DAMAGE_ELEMENT_LIGHT,						// Damage/buff: Light element contribution
+		DAMAGE_ELEMENT_DARK,						// Damage/buff: Dark element contribution
+		DAMAGE_STATUS_POISON,						// Damage/buff: Poison status effect contribution
+		DAMAGE_STATUS_BURN,							// Damage/buff: Burn status effect contribution
+		DAMAGE_STATUS_FREEZE,						// Damage/buff: Freeze status effect contribution
+		DAMAGE_STATUS_STUN,							// Damage/buff: Stun status effect contribution
+		DAMAGE_STATUS_SLOW,							// Damage/buff: Slow status effect contribution
+		DAMAGE_STATUS_SILENCE,						// Damage/buff: Silence status effect contribution
+		DAMAGE_STATUS_BLIND,						// Damage/buff: Blind status effect contribution
+		DAMAGE_STATUS_HATE,							// Damage/buff: Hate status effect contribution
 
-	// Mentality (MDEF, CSPD)
-	float MEN;
+		MAX_COUNT
+	};
+};
 
-	// Dexterity (ASPD)
-	float DEX;
 
-	// Agility (MSPD)
-	float AGI;
-
-	// Luck (Critical%)
-	float LUK;
-
-	// Maximum health
-	float MaxHealth;
-
-	// Maximum mana
-	float MaxMana;
-
-	// Physical attack 
-	float PATK;
-
-	// Physical defense
-	float PDEF;
-
-	// Magical attack
-	float MATK;
-
-	// Magical defense
-	float MDEF;
-
-	// Attack speed
-	float ASPD;
-
-	// Casting speed
-	float CSPD;
-
-	// Movement speed
-	float MSPD;
-
-	// Critical rate (%)
-	float CRIT;
-
-	// Fire element resistance
-	float FireResistance;
-
-	// Water element resistance
-	float WaterResistance;
-
-	// Wind element resistance
-	float WindResistance;
-
-	// Earth element resistance
-	float EarthResistance;
-
-	// Light element resistance
-	float LightResistance;
-
-	// Dark element resistance
-	float DarkResistance;
-
-	// Poison resistance
-	float PoisonResistance;
-
-	// Burn resistance
-	float BurnResistance;
-
-	// Freeze resistance
-	float FreezeResistance;
-
-	// Stun resistance
-	float StunResistance;
-
-	// Slow resistance
-	float SlowResistance;
-
-	// Silence resistance
-	float SilenceResistance;
-
-	// Hate resistance
-	float HateResistance;
-
-	// Current health
-	float Health;
-
-	// Amount of health regenerate per second
-	float HealthRegenPerSecond;
-
-	// Current mana
-	float Mana;
-
-	// Amount of mana regenerate per second
-	float ManaRegenPerSecond;
-
-	// Ability mana cost reduction (%)
-	float AbilityManaCostReduction;
-
-	// Ability cooldown reduction (%)
-	float AbilityCooldownReduction;
-
-	// Damage/recovery: Health
-	float DamageHealth;
-
-	// Damage/recovery: Mana
-	float DamageMana;
-
-	// Damage/buff: Fire element contribution
-	float ElementFire;
-
-	// Damage/buff: Water element contribution
-	float ElementWater;
-
-	// Damage/buff: Wind element contribution
-	float ElementWind;
-
-	// Damage/buff: Earth element contribution
-	float ElementEarth;
-
-	// Damage/buff: Light element contribution
-	float ElementLight;
-
-	// Damage/buff: Dark element contribution
-	float ElementDark;
-
-	// Damage/buff: Poison status effect contribution
-	float StatusPoison;
-
-	// Damage/buff: Burn status effect contribution
-	float StatusBurn;
-
-	// Damage/buff: Stun status effect contribution
-	float StatusStun;
-
-	// Damage/buff: Slow status effect contribution
-	float StatusSlow;
-
-	// Damage/buff: Silence status effect contribution
-	float StatusSilence;
-
-	// Damage/buff: Hate status effect contribution
-	float StatusHate;
-
-	// Is physical type
-	bool bIsPhysical;
-
-	// Is magical type
-	bool bIsMagical;
+class cstAttributes
+{
+private:
+	float Values[cstAttribute::MAX_COUNT];
 
 
 public:
 	cstAttributes()
+		: Values()
 	{
-		STR = 0.0f;
-		VIT = 0.0f;
-		INT = 0.0f;
-		MEN = 0.0f;
-		DEX = 0.0f;
-		AGI = 0.0f;
-		LUK = 0.0f;
-
-		MaxHealth = 0.0f;
-		MaxMana = 0.0f;
-		PATK = 0.0f;
-		PDEF = 0.0f;
-		MATK = 0.0f;
-		MDEF = 0.0f;
-		ASPD = 0.0f;
-		CSPD = 0.0f;
-		MSPD = 0.0f;
-		CRIT = 0.0f;
-
-		FireResistance = 0.0f;
-		WaterResistance = 0.0f;
-		WindResistance = 0.0f;
-		EarthResistance = 0.0f;
-		LightResistance = 0.0f;
-		DarkResistance = 0.0f;
-		PoisonResistance = 0.0f;
-		BurnResistance = 0.0f;
-		FreezeResistance = 0.0f;
-		StunResistance = 0.0f;
-		SlowResistance = 0.0f;
-		SilenceResistance = 0.0f;
-		HateResistance = 0.0f;
-
-		Health = 0.0f;
-		HealthRegenPerSecond = 0.0f;
-		Mana = 0.0f;
-		ManaRegenPerSecond = 0.0f;
-		AbilityManaCostReduction = 0.0f;
-		AbilityCooldownReduction = 0.0f;
-		DamageHealth = 0.0f;
-		DamageMana = 0.0f;
-		ElementFire = 0.0f;
-		ElementWater = 0.0f;
-		ElementWind = 0.0f;
-		ElementEarth = 0.0f;
-		ElementLight = 0.0f;
-		ElementDark = 0.0f;
-		StatusPoison = 0.0f;
-		StatusBurn = 0.0f;
-		StatusStun = 0.0f;
-		StatusSlow = 0.0f;
-		StatusSilence = 0.0f;
-		StatusHate = 0.0f;
-		bIsPhysical = false;
-		bIsMagical = false;
 	}
 
 
-	static NS_INLINE cstAttributes GetCharacterBaseAttributes()
+	NS_INLINE float& operator[](uint8 type)
+	{
+		NS_Validate(type >= 0 && type < cstAttribute::MAX_COUNT);
+		return Values[type];
+	}
+
+
+	NS_INLINE const float& operator[](uint8 type) const
+	{
+		NS_Validate(type >= 0 && type < cstAttribute::MAX_COUNT);
+		return Values[type];
+	}
+
+
+	static NS_INLINE cstAttributes InitializeCharacterBaseAttributes()
 	{
 		cstAttributes attributes;
 
-		attributes.STR = 5.0f;
-		attributes.VIT = 5.0f;
-		attributes.INT = 5.0f;
-		attributes.MEN = 5.0f;
-		attributes.DEX = 5.0f;
-		attributes.AGI = 5.0f;
-		attributes.LUK = 5.0f;
-		attributes.MaxHealth = 100.0f;
-		attributes.MaxMana = 100.0f;
-		attributes.PATK = 10.0f;
-		attributes.PDEF = 5.0f;
-		attributes.MATK = 10.0f;
-		attributes.MDEF = 5.0f;
-		attributes.ASPD = 100.0f;
-		attributes.CSPD = 100.0f;
-		attributes.MSPD = 300.0f;
-		attributes.CRIT = 5.0f;
-		attributes.FireResistance = 0.0f;
-		attributes.WaterResistance = 0.0f;
-		attributes.WindResistance = 0.0f;
-		attributes.EarthResistance = 0.0f;
-		attributes.LightResistance = 0.0f;
-		attributes.DarkResistance = 0.0f;
-		attributes.PoisonResistance = 50.0f;
-		attributes.BurnResistance = 50.0f;
-		attributes.FreezeResistance = 50.0f;
-		attributes.StunResistance = 50.0f;
-		attributes.SlowResistance = 50.0f;
-		attributes.SilenceResistance = 50.0f;
-		attributes.Health = attributes.MaxHealth;
-		attributes.HealthRegenPerSecond = 0.0f;
-		attributes.Mana = attributes.MaxMana;
-		attributes.ManaRegenPerSecond = 1.0f;
+		attributes[cstAttribute::STR]						= 5.0f;
+		attributes[cstAttribute::VIT]						= 5.0f;
+		attributes[cstAttribute::INT]						= 5.0f;
+		attributes[cstAttribute::MEN]						= 5.0f;
+		attributes[cstAttribute::DEX]						= 5.0f;
+		attributes[cstAttribute::AGI]						= 5.0f;
+		attributes[cstAttribute::CRT]						= 5.0f;
+		attributes[cstAttribute::MAX_HEALTH]				= 100.0f;
+		attributes[cstAttribute::MAX_MANA]					= 100.0f;
+		attributes[cstAttribute::PATK]						= 10.0f;
+		attributes[cstAttribute::PDEF]						= 5.0f;
+		attributes[cstAttribute::MATK]						= 10.0f;
+		attributes[cstAttribute::MDEF]						= 5.0f;
+		attributes[cstAttribute::ASPD]						= 100.0f;
+		attributes[cstAttribute::CSPD]						= 100.0f;
+		attributes[cstAttribute::MSPD]						= 300.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_FIRE]		= 0.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_WATER]		= 0.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_WIND]		= 0.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_EARTH]		= 0.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_LIGHT]		= 0.0f;
+		attributes[cstAttribute::RESIST_ELEMENT_DARK]		= 0.0f;
+		attributes[cstAttribute::RESIST_STATUS_POISON]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_BURN]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_FREEZE]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_STUN]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_SLOW]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_SILENCE]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_BLIND]		= 50.0f;
+		attributes[cstAttribute::RESIST_STATUS_HATE]		= 50.0f;
+		attributes[cstAttribute::CURRENT_HEALTH]			= attributes[cstAttribute::MAX_HEALTH];
+		attributes[cstAttribute::CURRENT_MANA]				= attributes[cstAttribute::MAX_MANA];
 
 		return attributes;
 	}

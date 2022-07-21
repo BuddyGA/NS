@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cstTypes.h"
+#include "cstEffect.h"
 
 
 
@@ -23,7 +23,7 @@ public:
 
 	cstEItemCategory Category;
 
-	cstAttributes Effect;
+	cstEffectContext Effect;
 
 	nsString DisplayName;
 
@@ -42,7 +42,8 @@ class cstEquipment : public nsActor
 	NS_DECLARE_OBJECT(nsActor)
 
 public:
-	cstAttributes Effect;
+	cstEffectContext Effect;
+	nsName AttachSocketName;
 
 
 public:
@@ -55,6 +56,10 @@ public:
 class cstWeapon : public cstEquipment
 {
 	NS_DECLARE_OBJECT(cstWeapon)
+
+public:
+	const nsClass* AttackAbilityClass;
+
 
 public:
 	cstWeapon();

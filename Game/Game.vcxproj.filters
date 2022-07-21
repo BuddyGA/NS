@@ -21,24 +21,6 @@
     <ClInclude Include="Public\cstGame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditorGizmo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditorTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditorAssetExplorer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditorActorInspector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Private\Editor\cstEditorWorldOutliner.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Public\cstCharacter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -48,33 +30,27 @@
     <ClInclude Include="Public\cstItem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\cstEffect.h">
+    <ClInclude Include="Public\cstInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\cstInput.h">
+    <ClInclude Include="Private\Editor\cstEditorAbility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Private\Editor\cstEditorEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Private\Editor\cstEditorItem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstEffect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="nsGame.Runtime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Editor\cstEditor.cpp">
+    <ClCompile Include="cstGame.Runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\cstGame.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Editor\cstEditorGizmo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Editor\cstEditorAssetExplorer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Editor\cstEditorActorInspector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Private\Editor\cstEditorWorldOutliner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\cstCharacter.cpp">
@@ -83,19 +59,19 @@
     <ClCompile Include="Private\cstTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="nsGame.Editor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Private\cstAbility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Private\cstItem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\cstEffect.cpp">
+    <ClCompile Include="Private\cstInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\cstInput.cpp">
+    <ClCompile Include="cstGame.Editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstEffect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

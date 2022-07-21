@@ -11,14 +11,12 @@ static nsLogCategory WorldLog(TEXT("nsWorldLog"), nsELogVerbosity::LV_DEBUG);
 NS_CLASS_BEGIN(nsWorld, nsObject)
 NS_CLASS_END(nsWorld)
 
-nsWorld::nsWorld(nsString name, bool bInitPhysics)
+nsWorld::nsWorld()
 {
-	NS_Assert(name.GetLength() > 0);
-
-	Name = name;
 	StartTimeSeconds = 0;
 	DeltaTimeSeconds = 0.0f;
-	bHasPhysics = bInitPhysics;
+	bInitialized = false;
+	bHasPhysics = false;
 	bHasStartedPlay = false;
 
 	PhysicsScene = nullptr;
@@ -34,14 +32,23 @@ nsWorld::nsWorld(nsString name, bool bInitPhysics)
 }
 
 
-void nsWorld::Initialize()
+void nsWorld::Initialize(bool bInitPhysics)
 {
+	if (bInitialized)
+	{
+		return;
+	}
+
+	bHasPhysics = bInitPhysics;
+
 	if (bHasPhysics)
 	{
 		PhysicsScene = nsPhysicsManager::Get().CreateScene(nsName::Format("%s.physics_ctx", *Name));
 	}
 
 	CreateLevel("Persistent");
+
+	bInitialized = true;
 }
 
 
@@ -67,7 +74,8 @@ void nsWorld::CleanupPendingDestroyLevelsAndActors()
 		NS_CONSOLE_Debug(WorldLog, TEXT("Destroy actor [%s]"), *actor->Name);
 		actor->OnDestroy();
 
-		ActorMemory.DeallocateDestruct(actor);
+		const nsClass* actorClass = actor->GetClass();
+		actorClass->DestroyInstance(ActorMemory, actor);
 	}
 
 	PendingDestroyActors.Clear();
@@ -254,7 +262,8 @@ nsLevel* nsWorld::CreateLevel(nsString levelName)
 
 	NS_CONSOLE_Log(WorldLog, TEXT("Create new level [%s]"), *levelName);
 
-	nsLevel* newLevel = ns_CreateObject<nsLevel>(levelName);
+	nsLevel* newLevel = ns_CreateObject<nsLevel>();
+	newLevel->Name = levelName;
 	newLevel->World = this;
 	Levels.Add(newLevel);
 

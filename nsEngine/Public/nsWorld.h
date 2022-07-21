@@ -12,6 +12,7 @@ class NS_ENGINE_API nsWorld : public nsObject
 private:
 	float StartTimeSeconds;
 	float DeltaTimeSeconds;
+	bool bInitialized;
 	bool bHasPhysics;
 	bool bHasStartedPlay;
 
@@ -28,8 +29,8 @@ private:
 
 
 public:
-	nsWorld(nsString name, bool bInitPhysics);
-	void Initialize();
+	nsWorld();
+	void Initialize(bool bInitPhysics);
 	void Destroy();
 	void CleanupPendingDestroyLevelsAndActors();
 	void DispatchStartPlay();
@@ -77,7 +78,7 @@ public:
 	{
 		static_assert(std::is_base_of<nsActor, TActor>::value, "CreateActor type of <TActor> must be derived from type <nsActor>!");
 
-		TActor* newActor = ActorMemory.AllocateConstruct<TActor>();
+		TActor* newActor = TActor::Class->CreateInstanceAs<TActor>(ActorMemory);
 		InitActor(newActor, name, bIsStatic, optTransform, optParent);
 
 		return newActor;

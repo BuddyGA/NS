@@ -323,7 +323,8 @@ void nsGameApplication::LoadTestLevel_Boxes()
 	}
 
 	// ================================================================================================================= //
-	// Random boxes
+	// Boxes
+	/*
 	const int boxCountX = 4;
 	const int boxCountY = 4; 
 	const int boxCountZ = 4;
@@ -359,4 +360,6 @@ void nsGameApplication::LoadTestLevel_Boxes()
 		spawnPosition.X += 300.0f;
 		spawnPosition.Y = baseSpawnPosition.Y;
 	}
+	*/
+
 }

@@ -66,7 +66,9 @@ void nsActor::Destroy()
 		nsActorComponent* comp = Components[i];
 		NS_Assert(comp);
 		comp->OnDestroy();
-		ComponentMemory.DeallocateDestruct(comp);
+
+		const nsClass* componentClass = comp->GetClass();
+		componentClass->DestroyInstance(ComponentMemory, comp);
 	}
 
 	Components.Clear();
@@ -253,18 +255,6 @@ void nsActor::SetRootComponent(nsTransformComponent* newRootComponent)
 
 		detachedFromRootComponent[i]->AttachToParent(RootComponent, nsETransformAttachmentMode::KEEP_WORLD_TRANSFORM);
 	}
-}
-
-
-void nsActor::AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode)
-{
-	NS_ValidateV(0, TEXT("Not implemented yet!"));
-}
-
-
-void nsActor::DetachFromParent()
-{
-	NS_ValidateV(0, TEXT("Not implemented yet!"));
 }
 
 

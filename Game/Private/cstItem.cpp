@@ -1,4 +1,5 @@
 #include "cstItem.h"
+#include "cstAbility.h"
 
 
 
@@ -29,7 +30,7 @@ NS_CLASS_END(cstWeapon)
 
 cstWeapon::cstWeapon()
 {
-
+	AttackAbilityClass = cstAbility_Attack::Class;
 }
 
 

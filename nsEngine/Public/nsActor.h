@@ -64,8 +64,6 @@ public:
 	void RemovedFromLevel();
 	void SetAsStatic(bool bIsStatic);
 	void SetRootComponent(nsTransformComponent* newRootComponent);
-	void AttachToParent(nsActor* parent, nsETransformAttachmentMode attachmentMode);
-	void DetachFromParent();
 	NS_NODISCARD nsWorld* GetWorld() const;
 
 
@@ -82,6 +80,18 @@ protected:
 
 
 public:
+	NS_INLINE void AttachToComponent(nsTransformComponent* component, nsETransformAttachmentMode attachmentMode, nsName socketName = nsName::NONE)
+	{
+		RootComponent->AttachToParent(component, attachmentMode, socketName);
+	}
+
+
+	NS_INLINE void DetachFromParent()
+	{
+		RootComponent->DetachFromParent();
+	}
+
+
 	NS_INLINE void SetLocalTransform(nsTransform transform)
 	{
 		RootComponent->SetLocalTransform(transform);
@@ -242,12 +252,10 @@ public:
 	{
 		static_assert(std::is_base_of<nsActorComponent, TComponent>::value, "AddComponent() type of <TComponent> must be derived from type <nsActorComponent>!");
 
-		NS_Validate_IsMainThread();
-
 		nsActorComponent* checkComponent = FindComponent(name);
 		NS_ValidateV(checkComponent == nullptr, TEXT("Actor [%s] already had component with name [%s]!"), *Name, *name);
 
-		TComponent* newComponent = ComponentMemory.AllocateConstruct<TComponent>();
+		TComponent* newComponent = TComponent::Class->CreateInstanceAs<TComponent>(ComponentMemory);
 		newComponent->Name = name;
 		newComponent->Actor = this;
 

@@ -502,6 +502,7 @@ nsNavigationAgentID nsNavigationManager::CreateAgent(nsNavigationAgentComponent*
 	dtParams.obstacleAvoidanceType = 3;
 	dtParams.separationWeight = 2.0f;
 	dtParams.userData = component;
+	dtParams.updateFlags = DT_CROWD_OBSTACLE_AVOIDANCE;
 
 	const nsVector3 initialPosition = component->GetWorldPosition();
 	state.AgentIndex = DetourCrowd->addAgent((const float*)&initialPosition, &dtParams);
@@ -555,13 +556,16 @@ void nsNavigationManager::SetAgentMoveTarget(nsNavigationAgentID agent, const ns
 	{
 		dtPolyRef nearestPoly = 0;
 		float nearestPosition[3];
-		dtStatus queryStatus = DetourNavMeshQuery->findNearestPoly((const float*)&state.MoveTargetPosition, DetourCrowd->getQueryExtents(), DetourCrowd->getFilter(0), &nearestPoly, nearestPosition);
-		NS_Assert(dtStatusSucceed(queryStatus));
-		bool bSuccess = DetourCrowd->requestMoveTarget(state.AgentIndex, nearestPoly, nearestPosition);
+		bool bSuccess = dtStatusSucceed(DetourNavMeshQuery->findNearestPoly((const float*)&state.MoveTargetPosition, DetourCrowd->getQueryExtents(), DetourCrowd->getFilter(0), &nearestPoly, nearestPosition));
+
+		if (bSuccess)
+		{
+			bSuccess = DetourCrowd->requestMoveTarget(state.AgentIndex, nearestPoly, nearestPosition);
+		}
 
 		if (!bSuccess)
 		{
-			NS_CONSOLE_Warning(NavigationLog, TEXT("Request move target failed!"));
+			NS_CONSOLE_Warning(NavigationLog, TEXT("Request move failed!"));
 		}
 	}
 }

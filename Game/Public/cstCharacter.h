@@ -1,16 +1,7 @@
 #pragma once
 
 #include "cstAbility.h"
-#include "cstInput.h"
-
-
-
-enum class cstECharacterTeam : uint8
-{
-	NEUTRAL = 0,
-	PLAYER,
-	ENEMY
-};
+#include "cstItem.h"
 
 
 
@@ -18,8 +9,9 @@ enum class cstECharacterState : uint8
 {
 	NONE = 0,
 	IDLE,
-	MOVING,
-	EXECUTING,
+	MOVE,
+	CHASE_TARGET,
+	EXECUTE_ABILITY,
 	KO,
 };
 
@@ -39,16 +31,18 @@ private:
 	nsSharedAnimationAsset AnimIdle0;
 	nsSharedAnimationAsset AnimRunForwardLoop;
 
+	cstAttributes BaseAttributes;
+	cstAttributes CurrentAttributes;
+	nsTArrayInline<cstAbility*, 16> Abilities;
+	nsTArrayInline<cstEffectExecution*, 8> ActiveEffects;
+	cstTags OwningTags;
+	cstWeapon* EquippedWeapon;
+
 	nsVector3 MoveTargetPosition;
-	cstCharacter* AttackTargetCharacter;
 	float MoveDistanceToTarget;
 
+	cstAbilityExecutionTarget ExecutionTarget;
 	cstAbility* ExecutingAbility;
-
-protected:
-	cstAttributes Attributes;
-	cstStatusEffects StatusEffects;
-	cstECharacterTeam Team;
 
 
 public:
@@ -64,50 +58,131 @@ protected:
 	virtual void OnTickUpdate(float deltaTime) override;
 // End actor interfaces //
 
-	virtual void UpdateAnimation();
+
+private:
+	void UpdateActiveAbilities(float deltaTime);
+	void UpdateActiveEffects(float deltaTime);
+	void UpdateState(float deltaTime);
+	void UpdateAnimation(float deltaTime);
+
+public:
+	void EquipWeapon(cstWeapon* weapon);
+	void EquipArmor(cstArmor* armor);
+	void ExecuteAbility(cstAbility* ability, const cstAbilityExecutionTarget& targetParams);
+	void UseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams);
+	void Move(const nsVector3& worldPosition);
+	void Attack(cstCharacter* targetCharacter);
+	void Stop();
+
+
+private:
+	NS_INLINE void ValidateCharacterTags()
+	{
+		if ((OwningTags & (cstTag::Character_Player | cstTag::Character_Enemy | cstTag::Character_Neutral)) == 0)
+		{
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Character [%s] must have at least one character tag [Character_Player/Character_Enemy/Character_Neutral]!"), *Name);
+		}
+
+		if ((OwningTags & cstTag::Character_Player) && (OwningTags & cstTag::Character_Enemy))
+		{
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Character [%s] contains character tag [Character_Player] and [Character_Enemy] at the same time!"), *Name);
+		}
+
+		if ((OwningTags & cstTag::Character_Player) && (OwningTags & cstTag::Character_Neutral))
+		{
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Character [%s] contains character tag [Character_Player] and [Character_Neutral] at the same time!"), *Name);
+		}
+
+		if ((OwningTags & cstTag::Character_Enemy) && (OwningTags & cstTag::Character_Neutral))
+		{
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Character [%s] contains character tag [Character_Enemy] and [Character_Neutral] at the same time!"), *Name);
+		}
+	}
 
 
 public:
-	void SetMoveTargetPosition(const nsVector3& worldPosition);
-	void ExecuteAbility(cstAbility* ability, const cstExecute::TargetParams& targetParams);
-	void UseItem(cstItem* item, const cstExecute::TargetParams& targetParams);
-	void StopAction();
-	void ApplyKO();
-
-
-	NS_NODISCARD_INLINE cstAttributes& GetAttributes()
+	NS_INLINE void AddOwningTags(cstTags tags)
 	{
-		return Attributes;
+		OwningTags |= tags;
+		ValidateCharacterTags();
 	}
 
 
-	NS_NODISCARD_INLINE const cstAttributes& GetAttributes() const
+	NS_INLINE void RemoveOwningTags(cstTags tags)
 	{
-		return Attributes;
+		OwningTags &= ~tags;
+		ValidateCharacterTags();
 	}
 
 
-	NS_NODISCARD_INLINE cstStatusEffects GetStatusEffects() const
+	NS_NODISCARD_INLINE cstTags GetOwningTags() const
 	{
-		return StatusEffects;
+		return OwningTags;
 	}
 
 
-	NS_NODISCARD_INLINE cstECharacterTeam GetTeam() const
+	NS_NODISCARD_INLINE cstAttributes& GetBaseAttributes()
 	{
-		return Team;
+		return BaseAttributes;
+	}
+
+
+	NS_NODISCARD_INLINE const cstAttributes& GetBaseAttributes() const
+	{
+		return BaseAttributes;
+	}
+
+
+	NS_NODISCARD_INLINE cstAttributes& GetCurrentAttributes()
+	{
+		return CurrentAttributes;
+	}
+
+
+	NS_NODISCARD_INLINE const cstAttributes& GetCurrentAttributes() const
+	{
+		return CurrentAttributes;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsAlly(const cstCharacter* other) const
+	{
+		const cstTags otherOwningTags = other->OwningTags;
+
+		if ( (OwningTags & cstTag::Character_Player) && (otherOwningTags & cstTag::Character_Player) )
+		{
+			return true;
+		}
+
+		if ( (OwningTags & cstTag::Character_Enemy) && (otherOwningTags & cstTag::Character_Enemy) )
+		{
+			return true;
+		}
+
+		if ( (OwningTags & cstTag::Character_Neutral) && (otherOwningTags & cstTag::Character_Neutral) )
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsEnemy(const cstCharacter* other) const
+	{
+		return !IsAlly(other);
 	}
 
 
 	NS_NODISCARD_INLINE bool IsAlive() const
 	{
-		return Attributes.Health > 0.0f;
+		return BaseAttributes[cstAttribute::CURRENT_HEALTH] > 0.0f;
 	}
 
 
 	NS_NODISCARD_INLINE bool CanMove() const
 	{
-		return IsAlive() && (ExecutingAbility == nullptr) && !(StatusEffects & cstEStatusEffect::Stun);
+		return IsAlive() && !(OwningTags & cstTag::DISABLE_ACTION);
 	}
 
 
@@ -116,65 +191,5 @@ public:
 	void DebugGUI(nsGUIContext& context);
 	void DebugDraw(nsRenderer* renderer);
 #endif // CST_GAME_WITH_EDITOR
-
-};
-
-
-
-
-class cstPlayerCharacter : public cstCharacter
-{
-	NS_DECLARE_OBJECT(cstPlayerCharacter)
-
-private:
-	nsTArrayInline<cstAbility*, cstInputAction::ABILITY_SLOT_MAX_COUNT> AbilitySlots;
-	nsTArrayInline<cstItem*, cstInputAction::ITEM_SLOT_MAX_COUNT> ItemSlots;
-
-
-public:
-	cstPlayerCharacter();
-
-private:
-	NS_NODISCARD_INLINE int MapToAbilitySlotIndex(cstInputAction::EType inputType) const
-	{
-		NS_Assert(inputType >= cstInputAction::ABILITY_SLOT_ATTACK && inputType <= cstInputAction::ABILITY_SLOT_7);
-		return cstInputAction::ABILITY_SLOT_MAX_COUNT - (cstInputAction::ABILITY_SLOT_7 - inputType);
-	}
-
-
-	NS_NODISCARD_INLINE int MapToItemSlotIndex(cstInputAction::EType inputType) const
-	{
-		NS_Assert(inputType >= cstInputAction::ITEM_SLOT_0 && inputType <= cstInputAction::ITEM_SLOT_7);
-		return cstInputAction::ITEM_SLOT_MAX_COUNT - (cstInputAction::ITEM_SLOT_7 - inputType);
-	}
-
-
-public:
-	NS_INLINE void ExecuteAbilityAtSlot(cstInputAction::EType abilitySlot, const cstExecute::TargetParams& targetParams)
-	{
-		NS_CONSOLE_Debug(cstPlayerLog, TEXT("Execute ability at slot [%s]"), cstInputAction::NAMES[abilitySlot]);
-		const int index = MapToAbilitySlotIndex(abilitySlot);
-		ExecuteAbility(AbilitySlots[index], targetParams);
-	}
-
-
-	NS_INLINE void UseItemAtSlot(cstInputAction::EType itemSlot, const cstExecute::TargetParams& targetParams)
-	{
-		NS_CONSOLE_Debug(cstPlayerLog, TEXT("Use item at slot [%s]"), cstInputAction::NAMES[itemSlot]);
-		const int index = MapToItemSlotIndex(itemSlot);
-		UseItem(ItemSlots[index], targetParams);
-	}
-
-};
-
-
-
-
-class cstEnemyCharacter : public cstCharacter
-{
-	NS_DECLARE_OBJECT(cstEnemyCharacter)
-
-public:
-	cstEnemyCharacter();
 
 };

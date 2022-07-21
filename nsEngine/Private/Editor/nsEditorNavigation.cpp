@@ -1,5 +1,4 @@
 #include "Editor/nsEditorNavigation.h"
-#include "nsConsole.h"
 
 
 

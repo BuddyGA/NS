@@ -9,7 +9,7 @@
 nsGUIWindow::nsGUIWindow() noexcept
 {
 	Name = "";
-	InitialRect = nsGUIRect(0.0f, 0.0f, 256.0f, 128.0f);
+	InitialRect = nsGUIRect(0.0f, 0.0f, 256.0f, 256.0f);
 	BackgroundColor = NS_GUI_DEFAULT_COLOR_BACKGROUND;
 	BorderColorDefault = NS_GUI_DEFAULT_COLOR_BORDER;
 	BorderColorActive = NS_GUI_DEFAULT_COLOR_BORDER_ACTIVE;

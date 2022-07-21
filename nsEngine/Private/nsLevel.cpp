@@ -9,9 +9,8 @@ static nsLogCategory LevelLog(TEXT("nsLevelLog"), nsELogVerbosity::LV_DEBUG);
 NS_CLASS_BEGIN(nsLevel, nsObject)
 NS_CLASS_END(nsLevel)
 
-nsLevel::nsLevel(nsString name)
+nsLevel::nsLevel()
 {
-	Name = name;
 	World = nullptr;
 	Actors.Reserve(64);
 	bPersistent = 0;

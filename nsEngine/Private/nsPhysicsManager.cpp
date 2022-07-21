@@ -75,13 +75,11 @@ class nsPhysX_QueryFilterCallback : public PxQueryFilterCallback
 {
 public:
 	nsPhysicsQueryIgnoredActors IgnoredActors;
-	bool bIsMousePicking;
 
 
 public:
 	nsPhysX_QueryFilterCallback()
 	{
-		bIsMousePicking = false;
 	}
 
 
@@ -104,7 +102,7 @@ public:
 			return PxQueryHitType::eNONE;
 		}
 
-		return bIsMousePicking ? PxQueryHitType::eBLOCK : PxQueryHitType::eTOUCH;
+		return PxQueryHitType::eBLOCK;
 	}
 
 
@@ -199,6 +197,7 @@ bool nsPhysX::SceneQueryRayCast(physx::PxScene* scene, nsPhysicsHitResult& outHi
 
 	PxRaycastBufferN<1> rayCastBuffer;
 	bool bFoundHit = scene->raycast(origin, direction, distance, rayCastBuffer, hitFlags, queryFilterData, &queryFilterCallback);
+	//bool bFoundHit = scene->raycast(origin, direction, distance, rayCastBuffer, hitFlags);
 
 	if (bFoundHit)
 	{
@@ -443,6 +442,8 @@ bool nsPhysicsManager::SceneQueryMousePicking(physx::PxScene* scene, nsPhysicsHi
 {
 	NS_Assert(viewport);
 
+	const PxHitFlags hitFlags = PxHitFlag::ePOSITION | PxHitFlag::eNORMAL;
+
 	bool bFoundHit = false;
 	nsVector3 origin, direction;
 
@@ -452,7 +453,7 @@ bool nsPhysicsManager::SceneQueryMousePicking(physx::PxScene* scene, nsPhysicsHi
 		viewport->GetClip(nearClip, farClip);
 
 		PxRaycastBuffer rayCastBuffer;
-		bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), farClip, rayCastBuffer, PxHitFlags(0));
+		bFoundHit = scene->raycast(NS_ToPxVec3(origin), NS_ToPxVec3(direction), farClip, rayCastBuffer, hitFlags);
 
 		if (bFoundHit)
 		{

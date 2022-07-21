@@ -1,10 +1,12 @@
 #include "cstGame.h"
-#include "nsRenderManager.h"
 #include "cstCharacter.h"
 #include "cstAbility.h"
+#include "nsPhysicsManager.h"
+#include "nsRenderManager.h"
+#include "nsWorld.h"
 
-#if CST_GAME_WITH_EDITOR
-#include "Editor/cstEditor.h"
+#ifdef CST_GAME_WITH_EDITOR
+#include "Editor/nsEditor.h"
 #endif // CST_GAME_WITH_EDITOR
 
 
@@ -50,7 +52,7 @@ cstGame::cstGame(const wchar_t* title, int width, int height, nsEWindowFullscree
 
 	FocusedCharacterIndex = 0;
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	bShowDebugFocusedCharacter = true;
 	bDebugDrawBorders = true;
 #endif // CST_GAME_WITH_EDITOR
@@ -68,19 +70,60 @@ void cstGame::Initialize() noexcept
 	InputSettings.ActionBindingPressedDelegate.Bind(this, &cstGame::OnInputActionBindingPressed);
 	InputSettings.ActionBindingConflictedDelegate.Bind(this, &cstGame::OnInputActionBindingConflicted);
 
+	cstCharacter* playerChar0 = MainWorld->CreateActor<cstCharacter>("player_char_0", false, nsVector3(0.0f, 100.0f, -300.0f));
+	{
+		playerChar0->AddOwningTags(cstTag::Character_Player);
+		MainWorld->AddActorToLevel(playerChar0);
+		PlayerCharacters.Add(playerChar0);
 
-	cstPlayerCharacter* playerChar0 = MainWorld->CreateActor<cstPlayerCharacter>("player_character_0", false, nsVector3(0.0f, 100.0f, -300.0f));
-	MainWorld->AddActorToLevel(playerChar0);
-	PlayerCharacters.Add(playerChar0);
+		cstWeapon* weapon = MainWorld->CreateActor<cstWeapon>("player_char_0_weapon", false);
+		MainWorld->AddActorToLevel(weapon);
+
+		playerChar0->EquipWeapon(weapon);
+	}
+	
+
+	cstPlayerAbilitySlots& player0_AbilitySlots = PlayerAbilitySlots[0];
+	player0_AbilitySlots.Resize(cstInputAction::ABILITY_SLOT_MAX_COUNT);
+	player0_AbilitySlots[ cstInputAction::GetAbilitySlotIndex(cstInputAction::ABILITY_SLOT_STOP) ] = ns_GetDefaultObjectAs<cstAbility_Stop>(cstAbility_Stop::Class);
+
+	cstPlayerItemSlots& player0_ItemSlots = PlayerItemSlots[0];
+	player0_ItemSlots.Resize(cstInputAction::ITEM_SLOT_MAX_COUNT);
 
 
-#if CST_GAME_WITH_EDITOR
-	g_Editor = ns_CreateObject<cstEditor>(this);
+
+	// ========= DUMMY ENEMIES ========= //
+	{
+		cstCharacter* enemyChar0 = MainWorld->CreateActor<cstCharacter>("enemy_char_0", false, nsVector3(0.0f, 100.0f, -800.0f));
+		enemyChar0->AddOwningTags(cstTag::Character_Enemy);
+		MainWorld->AddActorToLevel(enemyChar0);
+		PlayerCharacters.Add(enemyChar0);
+
+		cstWeapon* weapon = MainWorld->CreateActor<cstWeapon>("enemy_char_0_weapon", false);
+		MainWorld->AddActorToLevel(weapon);
+
+		enemyChar0->EquipWeapon(weapon);
+	}
+
+	{
+		cstCharacter* enemyChar1 = MainWorld->CreateActor<cstCharacter>("enemy_char_1", false, nsVector3(330.0f, 100.0f, -800.0f));
+		enemyChar1->AddOwningTags(cstTag::Character_Enemy);
+		MainWorld->AddActorToLevel(enemyChar1);
+		PlayerCharacters.Add(enemyChar1);
+
+		cstWeapon* weapon = MainWorld->CreateActor<cstWeapon>("enemy_char_1_weapon", false);
+		MainWorld->AddActorToLevel(weapon);
+
+		enemyChar1->EquipWeapon(weapon);
+	}
+	// ================================= //
+
+
+#ifdef CST_GAME_WITH_EDITOR
+	g_Editor = ns_CreateObject<nsEditor>(this);
 	ChangeState(cstEGameState::EDITING);
-
 #else
 	ChangeState(cstEGameState::INTRO);
-
 #endif // CST_GAME_WITH_EDITOR
 }
 
@@ -96,48 +139,6 @@ void cstGame::Shutdown() noexcept
 void cstGame::TickUpdate(float deltaTime) noexcept
 {
 	nsGameApplication::TickUpdate(deltaTime);
-
-
-	if (PendingChangeState != cstEGameState::NONE && PendingChangeState != CurrentState)
-	{
-		switch (CurrentState)
-		{
-			case cstEGameState::INTRO: EndState_Intro(); break;
-			case cstEGameState::MAIN_MENU: EndState_MainMenu(); break;
-			case cstEGameState::LOADING: EndState_Loading(); break;
-			case cstEGameState::PLAYING: EndState_Playing(); break;
-			case cstEGameState::IN_GAME_MENU: EndState_InGameMenu(); break;
-			case cstEGameState::CUTSCENE: EndState_Cutscene(); break;
-			case cstEGameState::PAUSE_MENU: EndState_PauseMenu(); break;
-
-		#if CST_GAME_WITH_EDITOR
-			case cstEGameState::EDITING: EndState_Editing(); break;
-		#endif // CST_GAME_WITH_EDITOR
-
-			default: break;
-		}
-
-
-		switch (PendingChangeState)
-		{
-			case cstEGameState::INTRO: BeginState_Intro(); break;
-			case cstEGameState::MAIN_MENU: BeginState_MainMenu(); break;
-			case cstEGameState::LOADING: BeginState_Loading(); break;
-			case cstEGameState::PLAYING: BeginState_Playing(); break;
-			case cstEGameState::IN_GAME_MENU: BeginState_InGameMenu(); break;
-			case cstEGameState::CUTSCENE: BeginState_Cutscene(); break;
-			case cstEGameState::PAUSE_MENU: BeginState_PauseMenu(); break;
-
-		#if CST_GAME_WITH_EDITOR
-			case cstEGameState::EDITING: BeginState_Editing(); break;
-		#endif // CST_GAME_WITH_EDITOR
-
-			default: NS_Assert(0); break;
-		}
-
-		CurrentState = PendingChangeState;
-		PendingChangeState = cstEGameState::NONE;
-	}
 
 
 	switch (CurrentState)
@@ -188,13 +189,6 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 		}
 
 
-		case cstEGameState::CUTSCENE:
-		{
-			NS_ValidateV(0, TEXT("Not implemented yet!"));
-			break;
-		}
-
-
 		case cstEGameState::PAUSE_MENU:
 		{
 			NS_ValidateV(0, TEXT("Not implemented yet!"));
@@ -202,7 +196,7 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 		}
 
 
-	#if CST_GAME_WITH_EDITOR
+	#ifdef CST_GAME_WITH_EDITOR
 		case cstEGameState::EDITING:
 		{
 			g_Editor->TickUpdate(deltaTime);
@@ -212,9 +206,47 @@ void cstGame::TickUpdate(float deltaTime) noexcept
 	#endif // CST_GAME_WITH_EDITOR
 
 
-		default:
-			NS_Assert(0);
-			break;
+		default: break;
+	}
+
+
+	if (PendingChangeState != cstEGameState::NONE && PendingChangeState != CurrentState)
+	{
+		switch (CurrentState)
+		{
+			case cstEGameState::INTRO: EndState_Intro(); break;
+			case cstEGameState::MAIN_MENU: EndState_MainMenu(); break;
+			case cstEGameState::LOADING: EndState_Loading(); break;
+			case cstEGameState::PLAYING: EndState_Playing(); break;
+			case cstEGameState::IN_GAME_MENU: EndState_InGameMenu(); break;
+			case cstEGameState::PAUSE_MENU: EndState_PauseMenu(); break;
+
+		#ifdef CST_GAME_WITH_EDITOR
+			case cstEGameState::EDITING: EndState_Editing(); break;
+		#endif // CST_GAME_WITH_EDITOR
+
+			default: break;
+		}
+
+
+		switch (PendingChangeState)
+		{
+			case cstEGameState::INTRO: BeginState_Intro(); break;
+			case cstEGameState::MAIN_MENU: BeginState_MainMenu(); break;
+			case cstEGameState::LOADING: BeginState_Loading(); break;
+			case cstEGameState::PLAYING: BeginState_Playing(); break;
+			case cstEGameState::IN_GAME_MENU: BeginState_InGameMenu(); break;
+			case cstEGameState::PAUSE_MENU: BeginState_PauseMenu(); break;
+
+		#ifdef CST_GAME_WITH_EDITOR
+			case cstEGameState::EDITING: BeginState_Editing(); break;
+		#endif // CST_GAME_WITH_EDITOR
+
+			default: break;
+		}
+
+		CurrentState = PendingChangeState;
+		PendingChangeState = cstEGameState::NONE;
 	}
 }
 
@@ -223,7 +255,7 @@ void cstGame::PreRender() noexcept
 {
 	nsRenderContextWorld& renderContext = nsRenderManager::Get().GetWorldRenderContext(MainWorld);
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	if (CurrentState == cstEGameState::EDITING)
 	{
 		g_Editor->PreRender(renderContext);
@@ -240,7 +272,13 @@ void cstGame::OnMouseMove(const nsMouseMoveEventArgs& e) noexcept
 {
 	nsGameApplication::OnMouseMove(e);
 
-#if CST_GAME_WITH_EDITOR
+	if (CurrentState == cstEGameState::PLAYING)
+	{
+		const nsVector2 mousePosition(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
+		nsPhysicsManager::Get().SceneQueryMousePicking(MainWorld->GetPhysicsScene(), MouseRayHitResult, mousePosition, &MainViewport);
+	}
+
+#ifdef CST_GAME_WITH_EDITOR
 	if (CurrentState == cstEGameState::EDITING)
 	{
 		g_Editor->OnMouseMove(e);
@@ -255,27 +293,23 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 
 	if (CurrentState == cstEGameState::PLAYING)
 	{
-		if (e.ButtonState == nsEButtonState::PRESSED)
+		if (e.ButtonState == nsEButtonState::PRESSED && e.Key == nsEInputKey::MOUSE_RIGHT && FocusedCharacterIndex != -1 && MouseRayHitResult.Actor)
 		{
-			if (e.Key == nsEInputKey::MOUSE_RIGHT && FocusedCharacterIndex != -1)
-			{
-				const nsVector2 mousePosition(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
-				nsVector3 rayStart, rayDirection;
+			cstCharacter* attackTargetCharacter = ns_Cast<cstCharacter>(MouseRayHitResult.Actor);
 
-				if (MainViewport.ProjectToWorld(mousePosition, rayStart, rayDirection))
-				{
-					nsPhysicsHitResult hitResult;
-					if (MainWorld->PhysicsRayCast(hitResult, rayStart, rayDirection, 10000.0f))
-					{
-						PlayerCharacters[FocusedCharacterIndex]->SetMoveTargetPosition(hitResult.WorldPosition);
-					}
-				}
+			if (attackTargetCharacter && attackTargetCharacter->IsAlive())
+			{
+				PlayerCharacters[FocusedCharacterIndex]->Attack(attackTargetCharacter);
+			}
+			else
+			{
+				PlayerCharacters[FocusedCharacterIndex]->Move(MouseRayHitResult.WorldPosition);
 			}
 		}
 	}
 
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	else if (CurrentState == cstEGameState::EDITING)
 	{
 		g_Editor->OnMouseButton(e);
@@ -288,7 +322,7 @@ void cstGame::OnMouseWheel(const nsMouseWheelEventArgs& e) noexcept
 {
 	nsGameApplication::OnMouseWheel(e);
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	if (CurrentState == cstEGameState::EDITING)
 	{
 		g_Editor->OnMouseWheel(e);
@@ -307,7 +341,7 @@ void cstGame::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noexcept
 	}
 
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	if (e.ButtonState == nsEButtonState::RELEASED && e.Key == nsEInputKey::KEYBOARD_F9)
 	{
 		if (CurrentState == cstEGameState::EDITING)
@@ -364,9 +398,13 @@ void cstGame::OnGUI(nsGUIContext& context) noexcept
 	}
 
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	if (CurrentState == cstEGameState::PLAYING)
 	{
+		static nsString debugText;
+		debugText = nsString::Format(TEXT("Hovering: %s"), MouseRayHitResult.Actor ? *MouseRayHitResult.Actor->Name : TEXT("-"));
+		context.AddDrawText(*debugText, debugText.GetLength(), nsPointFloat(32.0f, 32.0f));
+
 		if (bShowDebugFocusedCharacter && FocusedCharacterIndex != -1)
 		{
 			PlayerCharacters[FocusedCharacterIndex]->DebugGUI(context);
@@ -575,18 +613,6 @@ void cstGame::EndState_InGameMenu()
 }
 
 
-void cstGame::BeginState_Cutscene()
-{
-
-}
-
-
-void cstGame::EndState_Cutscene()
-{
-
-}
-
-
 void cstGame::BeginState_PauseMenu()
 {
 
@@ -600,7 +626,7 @@ void cstGame::EndState_PauseMenu()
 
 
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 
 void cstGame::BeginState_Editing()
 {

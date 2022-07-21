@@ -1,35 +1,52 @@
 #include "cstEffect.h"
+#include "cstCharacter.h"
 
 
 
-NS_CLASS_BEGIN(cstEffect, nsObject)
-NS_CLASS_END(cstEffect)
+NS_CLASS_BEGIN(cstEffectExecution, nsObject)
+NS_CLASS_END(cstEffectExecution)
 
-cstEffect::cstEffect()
+cstEffectExecution::cstEffectExecution()
 {
-	Duration = 0.0f;
-	Interval = 0.0f;
-	MaxStack = 1;
-	AffectedCharacter = nullptr;
 	RemainingTime = 0.0f;
+	CurrentStack = 0;
 }
 
 
-cstExecute::EResult cstEffect::CanExecute(float currentTime, const nsObject* sourceObject, const cstExecute::TargetParams& targetParams) const
+bool cstEffectExecution::CanApply(const cstCharacter* character, const cstEffectContext& context) const
 {
-	return cstExecute::RESULT_SUCCESS;
+	const cstTags characterOwningTags = character->GetOwningTags();
+
+	// Must have required tags to apply the effect
+	if ((context.RequiredTags != cstTag::NONE) && !(context.RequiredTags & characterOwningTags))
+	{
+		return false;
+	}
+
+	// Must NOT have ignored tags to apply this effect
+	if ((context.IgnoredTags != cstTag::NONE) && (context.IgnoredTags & characterOwningTags))
+	{
+		return false;
+	}
+
+	return true;
 }
 
 
-cstExecute::EResult cstEffect::Execute(float currentTime, const nsObject* sourceObject, const cstExecute::TargetParams& targetParams)
+bool cstEffectExecution::ApplyEffect(cstCharacter* character, const cstEffectContext& context)
 {
-	const cstExecute::EResult result = CanExecute(currentTime, sourceObject, targetParams);
+	if (CanApply(character, context))
+	{
+		ModifyAttributes(character->GetBaseAttributes(), character->GetCurrentAttributes(), context);
 
-	return result;
+		return true;
+	}
+
+	return false;
 }
 
 
-void cstEffect::UpdateExecution(float deltaTime)
+void cstEffectExecution::UpdateEffect(float deltaTime)
 {
 
 }

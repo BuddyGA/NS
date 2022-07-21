@@ -67,7 +67,7 @@ nsMemory::Block* nsMemory::FindFreeBlock(int requestedSize) const noexcept
 void* nsMemory::AllocateFromBlock(int size, nsName debugName) noexcept
 {
 	const int newBlockSize = sizeof(Block) + size;
-	NS_ValidateV(AllocatedSize + newBlockSize <= TotalSize, TEXT("Memory allocation failed. Not enough memory! [%s][RequestedBlockSize:%u, AllocatedSize: %u, TotalSize: %u]"), *Name.ToString(), newBlockSize, AllocatedSize, TotalSize);
+	NS_ValidateV(AllocatedSize + newBlockSize <= TotalSize, TEXT("Memory allocation failed. Not enough memory! [Memory:%s] [RequestedBlockSize:%u, AllocatedSize: %u, TotalSize: %u]"), *Name.ToString(), newBlockSize, AllocatedSize, TotalSize);
 
 	Block* block = FindFreeBlock(newBlockSize);
 

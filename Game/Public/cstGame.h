@@ -13,10 +13,9 @@ enum class cstEGameState : uint8
 	LOADING,
 	PLAYING,
 	IN_GAME_MENU,
-	CUTSCENE,
 	PAUSE_MENU,
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 	EDITING,
 #endif // NS_GAME_WITH_EDITOR
 };
@@ -39,6 +38,10 @@ public:
 };
 
 
+typedef nsTArrayInline<cstCharacter*, 3> cstPlayerCharacters;
+typedef nsTArrayInline<cstAbility*, cstInputAction::ABILITY_SLOT_MAX_COUNT> cstPlayerAbilitySlots;
+typedef nsTArrayInline<cstItem*, cstInputAction::ITEM_SLOT_MAX_COUNT> cstPlayerItemSlots;
+
 
 
 class cstGame : public nsGameApplication
@@ -54,8 +57,12 @@ private:
 	nsVector2 CameraMoveAxis;
 	bool bCameraPanning;
 
-	nsTArrayInline<cstPlayerCharacter*, 3> PlayerCharacters;
-	nsTArrayInline<cstPlayerCharacter*, 3> SelectedCharacters;
+	cstPlayerCharacters PlayerCharacters;
+	cstPlayerAbilitySlots PlayerAbilitySlots[3];
+	cstPlayerItemSlots PlayerItemSlots[3];
+
+	nsPhysicsHitResult MouseRayHitResult;
+	nsTArrayInline<cstCharacter*, 3> SelectedCharacters;
 	int FocusedCharacterIndex;
 	
 
@@ -92,14 +99,10 @@ private:
 	void BeginState_InGameMenu();
 	void EndState_InGameMenu();
 
-	void BeginState_Cutscene();
-	void EndState_Cutscene();
-
 	void BeginState_PauseMenu();
 	void EndState_PauseMenu();
 
 
-public:
 	NS_INLINE void ChangeState(cstEGameState newState)
 	{
 		if (CurrentState == newState)
@@ -111,7 +114,7 @@ public:
 	}
 
 
-#if CST_GAME_WITH_EDITOR
+#ifdef CST_GAME_WITH_EDITOR
 private:
 	bool bShowDebugFocusedCharacter;
 	bool bDebugDrawBorders;

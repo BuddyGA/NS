@@ -1,20 +1,20 @@
-#include "cstEditor.h"
-#include "cstGame.h"
-#include "nsRenderManager.h"
+#include "Editor/nsEditor.h"
 #include "nsPhysicsManager.h"
+#include "nsRenderManager.h"
 #include "nsRenderComponents.h"
 #include "nsPhysicsComponents.h"
+#include "nsGameApplication.h"
 
 
 
-nsLogCategory EditorLog(TEXT("cstEditorLog"), nsELogVerbosity::LV_DEBUG);
+nsLogCategory nsEditorLog(TEXT("nsEditorLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
 // ================================================================================================================================================================================== //
 // EDITOR - CONTEXT OPTIONS
 // ================================================================================================================================================================================== //
-cstEditorContextMenu::cstEditorContextMenu()
+nsEditorContextMenu::nsEditorContextMenu()
 {
 	Window.Name = "editor_context_menu";
 	Window.BorderWidth = 1.0f;
@@ -45,7 +45,7 @@ cstEditorContextMenu::cstEditorContextMenu()
 }
 
 
-bool cstEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord)
+bool nsEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord)
 {
 	int commitCount = 0;
 
@@ -94,13 +94,13 @@ bool cstEditorContextMenu::DrawGUI(nsGUIContext& context, const nsPointFloat& sc
 // ================================================================================================================================================================================== //
 // EDITOR - MAIN
 // ================================================================================================================================================================================== //
-cstEditor::cstEditor(cstGame* game)
+nsEditor::nsEditor(nsGameApplication* game)
 {
 	Game = game;
 
 	AssetExplorer.ScanAssets();
 
-	ViewMode = cstEEditorViewMode::PERSPECTIVE;
+	ViewMode = nsEEditorViewMode::PERSPECTIVE;
 	FocusActor = nullptr;
 	bShowAssetExplorer = true;
 	bShowActorInspector = true;
@@ -125,7 +125,7 @@ cstEditor::cstEditor(cstGame* game)
 }
 
 
-void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
+void nsEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 {
 	MouseCoord = nsPointFloat(static_cast<float>(e.Position.X), static_cast<float>(e.Position.Y));
 
@@ -145,7 +145,7 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 
 			if (!bIsDraggingAssetSpawned && bValidProjection)
 			{
-				NS_CONSOLE_Log(EditorLog, TEXT("Spawn actor from asset [%s]"), *DragDropAssetInfo.Name.ToString());
+				NS_CONSOLE_Log(nsEditorLog, TEXT("Spawn actor from asset [%s]"), *DragDropAssetInfo.Name.ToString());
 				nsSharedModelAsset ModelAsset = nsAssetManager::Get().LoadModelAsset(DragDropAssetInfo.Name);
 
 				nsActor* newActor = MainWorld->CreateActor(DragDropAssetInfo.Name.ToString(), true, projectedPosition);
@@ -199,7 +199,7 @@ void cstEditor::OnMouseMove(const nsMouseMoveEventArgs& e)
 }
 
 
-void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
+void nsEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 {
 	NS_Assert(MainViewport);
 	NS_Assert(MainWorld);
@@ -231,7 +231,7 @@ void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 		{
 			if (bIsDraggingAsset)
 			{
-				NS_CONSOLE_Debug(EditorLog, TEXT("End drag-drop asset"));
+				NS_CONSOLE_Debug(nsEditorLog, TEXT("End drag-drop asset"));
 				bIsDraggingAsset = false;
 			}
 			else if (!ActorGizmo.IsUpdating() && bSceneViewportHovered)
@@ -254,7 +254,7 @@ void cstEditor::OnMouseButton(const nsMouseButtonEventArgs& e)
 }
 
 
-void cstEditor::OnMouseWheel(const nsMouseWheelEventArgs& e)
+void nsEditor::OnMouseWheel(const nsMouseWheelEventArgs& e)
 {
 	if (bSceneViewportHovered)
 	{
@@ -263,7 +263,7 @@ void cstEditor::OnMouseWheel(const nsMouseWheelEventArgs& e)
 }
 
 
-void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
+void nsEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 {
 	if (e.ButtonState == nsEButtonState::PRESSED)
 	{
@@ -282,22 +282,22 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		else if (e.Key == nsEInputKey::KEYBOARD_F4)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Wireframe;
-			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw wireframe [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? TEXT("ON") : TEXT("OFF"));
+			NS_CONSOLE_Log(nsEditorLog, TEXT("Debug draw wireframe [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Wireframe) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F5)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Collision;
-			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw collision [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? TEXT("ON") : TEXT("OFF"));
+			NS_CONSOLE_Log(nsEditorLog, TEXT("Debug draw collision [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Collision) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F6)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::Skeleton;
-			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw skeleton [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Skeleton) ? TEXT("ON") : TEXT("OFF"));
+			NS_CONSOLE_Log(nsEditorLog, TEXT("Debug draw skeleton [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::Skeleton) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F7)
 		{
 			MainRenderer->DebugDrawFlags ^= nsERenderDebugDraw::NavMesh;
-			NS_CONSOLE_Log(EditorLog, TEXT("Debug draw NavMesh [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::NavMesh) ? TEXT("ON") : TEXT("OFF"));
+			NS_CONSOLE_Log(nsEditorLog, TEXT("Debug draw NavMesh [%s]"), (MainRenderer->DebugDrawFlags & nsERenderDebugDraw::NavMesh) ? TEXT("ON") : TEXT("OFF"));
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F8)
 		{
@@ -339,15 +339,15 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_W)
 			{
-				ActorGizmo.Mode = cstEEditorGizmoTransformMode::TRANSLATE;
+				ActorGizmo.Mode = nsEEditorGizmoTransformMode::TRANSLATE;
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_E)
 			{
-				ActorGizmo.Mode = cstEEditorGizmoTransformMode::ROTATE;
+				ActorGizmo.Mode = nsEEditorGizmoTransformMode::ROTATE;
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_R)
 			{
-				ActorGizmo.Mode = cstEEditorGizmoTransformMode::SCALE;
+				ActorGizmo.Mode = nsEEditorGizmoTransformMode::SCALE;
 			}
 
 			if (e.Key == nsEInputKey::KEYBOARD_SHIFT_LEFT && !bKeyPressed_LeftShift)
@@ -359,7 +359,7 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			{
 				if (e.Key == nsEInputKey::KEYBOARD_SPACEBAR)
 				{
-					NS_CONSOLE_Debug(EditorLog, TEXT("Toggle gizmo options!"));
+					NS_CONSOLE_Debug(nsEditorLog, TEXT("Toggle gizmo options!"));
 					ContextMenuCoord = MouseCoord;
 					bShowContextMenu = !bShowContextMenu;
 				}
@@ -383,61 +383,61 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_0)
 			{
-				if (ViewMode != cstEEditorViewMode::PERSPECTIVE)
+				if (ViewMode != nsEEditorViewMode::PERSPECTIVE)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode perspective"));
-					ViewMode = cstEEditorViewMode::PERSPECTIVE;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode perspective"));
+					ViewMode = nsEEditorViewMode::PERSPECTIVE;
 					MainViewport->SetProjectionMode(false);
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_1)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_FRONT)
+				if (ViewMode != nsEEditorViewMode::ORTHO_FRONT)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-front"));
-					ViewMode = cstEEditorViewMode::ORTHO_FRONT;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-front"));
+					ViewMode = nsEEditorViewMode::ORTHO_FRONT;
 					CameraTransform.Rotation = nsQuaternion::IDENTITY;
 					MainViewport->SetProjectionMode(true);
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_2)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_BACK)
+				if (ViewMode != nsEEditorViewMode::ORTHO_BACK)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-back"));
-					ViewMode = cstEEditorViewMode::ORTHO_BACK;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-back"));
+					ViewMode = nsEEditorViewMode::ORTHO_BACK;
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_3)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_LEFT)
+				if (ViewMode != nsEEditorViewMode::ORTHO_LEFT)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-left"));
-					ViewMode = cstEEditorViewMode::ORTHO_LEFT;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-left"));
+					ViewMode = nsEEditorViewMode::ORTHO_LEFT;
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_4)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_RIGHT)
+				if (ViewMode != nsEEditorViewMode::ORTHO_RIGHT)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-right"));
-					ViewMode = cstEEditorViewMode::ORTHO_RIGHT;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-right"));
+					ViewMode = nsEEditorViewMode::ORTHO_RIGHT;
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_5)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_TOP)
+				if (ViewMode != nsEEditorViewMode::ORTHO_TOP)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-top"));
-					ViewMode = cstEEditorViewMode::ORTHO_TOP;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-top"));
+					ViewMode = nsEEditorViewMode::ORTHO_TOP;
 				}
 			}
 			else if (e.Key == nsEInputKey::KEYBOARD_NUMPAD_6)
 			{
-				if (ViewMode != cstEEditorViewMode::ORTHO_BOTTOM)
+				if (ViewMode != nsEEditorViewMode::ORTHO_BOTTOM)
 				{
-					NS_CONSOLE_Log(EditorLog, TEXT("Set camera view mode orthographic-bottom"));
-					ViewMode = cstEEditorViewMode::ORTHO_BOTTOM;
+					NS_CONSOLE_Log(nsEditorLog, TEXT("Set camera view mode orthographic-bottom"));
+					ViewMode = nsEEditorViewMode::ORTHO_BOTTOM;
 				}
 			}
 		}
@@ -462,11 +462,11 @@ void cstEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 }
 
 
-void cstEditor::SelectFocusActor(nsActor* newActor)
+void nsEditor::SelectFocusActor(nsActor* newActor)
 {
 	if (newActor && newActor != FocusActor)
 	{
-		NS_CONSOLE_Debug(EditorLog, TEXT("Select actor [%s]"), *newActor->Name);
+		NS_CONSOLE_Debug(nsEditorLog, TEXT("Select actor [%s]"), *newActor->Name);
 	}
 
 	FocusActor = newActor;
@@ -474,7 +474,7 @@ void cstEditor::SelectFocusActor(nsActor* newActor)
 }
 
 
-void cstEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
+void nsEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 {
 	if (bIsDraggingAsset)
 	{
@@ -485,11 +485,11 @@ void cstEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 	bIsDraggingAsset = true;
 	bIsDraggingAssetSpawned = false;
 
-	NS_CONSOLE_Debug(EditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name.ToString());
+	NS_CONSOLE_Debug(nsEditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name.ToString());
 }
 
 
-void cstEditor::AddMousePickingForActor(nsActor* actor)
+void nsEditor::AddMousePickingForActor(nsActor* actor)
 {
 	if (actor == nullptr)
 	{
@@ -520,7 +520,7 @@ void cstEditor::AddMousePickingForActor(nsActor* actor)
 }
 
 
-void cstEditor::MoveFocusActorDownToFloor()
+void nsEditor::MoveFocusActorDownToFloor()
 {
 	if (FocusActor == nullptr)
 	{
@@ -530,7 +530,7 @@ void cstEditor::MoveFocusActorDownToFloor()
 	nsCollisionComponent* collisionComp = FocusActor->GetComponent<nsCollisionComponent>();
 	if (collisionComp == nullptr)
 	{
-		NS_CONSOLE_Warning(EditorLog, TEXT("Cannot move actor [%s] down to floor. No collision component!"), *FocusActor->Name);
+		NS_CONSOLE_Warning(nsEditorLog, TEXT("Cannot move actor [%s] down to floor. No collision component!"), *FocusActor->Name);
 		return;
 	}
 
@@ -561,10 +561,10 @@ void cstEditor::MoveFocusActorDownToFloor()
 
 		distance += 100.0f;
 	}
-	
+
 	if (bFoundFloor)
 	{
-		NS_CONSOLE_Log(EditorLog, TEXT("Move actor [%s] down to floor. [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]"),
+		NS_CONSOLE_Log(nsEditorLog, TEXT("Move actor [%s] down to floor. [HitActor: %s, HitPosition: (%f, %f, %f), HitDistance: %f]"),
 			*FocusActor->Name,
 			*hitResult.Actor->Name,
 			hitResult.WorldPosition.X, hitResult.WorldPosition.Y, hitResult.WorldPosition.Z,
@@ -577,12 +577,12 @@ void cstEditor::MoveFocusActorDownToFloor()
 	}
 	else if (!bAlreadyOnFloor)
 	{
-		NS_CONSOLE_Warning(EditorLog, TEXT("Cannot move actor [%s] down to floor. No hit found below!"), *FocusActor->Name);
+		NS_CONSOLE_Warning(nsEditorLog, TEXT("Cannot move actor [%s] down to floor. No hit found below!"), *FocusActor->Name);
 	}
 }
 
 
-void cstEditor::TickUpdate(float deltaTime)
+void nsEditor::TickUpdate(float deltaTime)
 {
 	NS_Assert(Game);
 	NS_Assert(MainViewport);
@@ -590,11 +590,11 @@ void cstEditor::TickUpdate(float deltaTime)
 	nsVector3 moveDirection;
 	moveDirection += CameraTransform.GetAxisRight() * CameraMoveAxis.X;
 
-	if (ViewMode == cstEEditorViewMode::PERSPECTIVE)
+	if (ViewMode == nsEEditorViewMode::PERSPECTIVE)
 	{
 		const nsPointInt windowDimension = Game->GetDimension();
 		MainViewport->SetDimension(static_cast<float>(windowDimension.X), static_cast<float>(windowDimension.Y));
-		
+
 		CameraRotation.X = nsMath::Clamp(CameraRotation.X, -80.0f, 80.0f);
 		CameraTransform.Rotation = nsQuaternion::FromRotation(CameraRotation.X, CameraRotation.Y, 0.0f);
 
@@ -621,7 +621,7 @@ void cstEditor::TickUpdate(float deltaTime)
 
 
 
-void cstEditor::PreRender(nsRenderContextWorld& context)
+void nsEditor::PreRender(nsRenderContextWorld& context)
 {
 	NS_Assert(Game);
 	NS_Assert(MainViewport);
@@ -635,12 +635,12 @@ void cstEditor::PreRender(nsRenderContextWorld& context)
 	if (FocusActor)
 	{
 		const nsTransform transform = bIsLocalCoordSpace ? FocusActor->GetLocalTransform() : FocusActor->GetWorldTransform();
-		ActorGizmo.Render(MainRenderer, MainViewport, transform, bIsLocalCoordSpace, true);
+		ActorGizmo.Render(MainRenderer, MainViewport, FocusActor->GetWorldTransform(), bIsLocalCoordSpace, true);
 	}
 }
 
 
-void cstEditor::DrawGUI(nsGUIContext& context)
+void nsEditor::DrawGUI(nsGUIContext& context)
 {
 	const nsGUIRect canvasRect = context.GetCanvasRect();
 
@@ -684,4 +684,4 @@ void cstEditor::DrawGUI(nsGUIContext& context)
 }
 
 
-cstEditor* g_Editor = nullptr;
+nsEditor* g_Editor = nullptr;

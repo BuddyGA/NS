@@ -200,10 +200,14 @@ copy /y "$(SolutionDir)Externals\PhysX\Lib\debug\PhysXCooking_64.dll" $(OutDir)P
     <ClCompile Include="Private\ThirdParty\spirv_reflect.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Public\Editor\nsEditor.h" />
+    <ClInclude Include="Public\Editor\nsEditorActorAsset.h" />
     <ClInclude Include="Public\Editor\nsEditorActorInspector.h" />
     <ClInclude Include="Public\Editor\nsEditorAssetExplorer.h" />
     <ClInclude Include="Public\Editor\nsEditorTransformGizmo.h" />
+    <ClInclude Include="Public\Editor\nsEditorTypes.h" />
     <ClInclude Include="Public\Editor\nsEditorWorldOutliner.h" />
+    <ClInclude Include="Public\nsActorAsset.h" />
     <ClInclude Include="Public\nsAnimationGraph.h" />
     <ClInclude Include="Public\nsAnimationTypes.h" />
     <ClInclude Include="Public\Editor\nsEditorNavigation.h" />

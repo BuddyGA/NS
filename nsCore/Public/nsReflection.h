@@ -197,11 +197,15 @@ typedef nsTArrayInline<nsProperty*, 32> nsPropertyList;
 
 
 
+class nsObject;
+
+
 class nsClass
 {
 private:
 	nsName Name;
 	const nsClass* ParentClass;
+	nsObject* DefaultObject;
 
 protected:
 	nsPropertyList Properties;
@@ -209,15 +213,16 @@ protected:
 
 
 public:
-	nsClass(nsName name, const nsClass* parentClass) noexcept
+	nsClass(nsName name, const nsClass* parentClass, nsObject* defaultObject) noexcept
 		: Name(name)
 		, ParentClass(parentClass)
+		, DefaultObject(defaultObject)
 		, bIsAbstract(false)
 	{
 	}
 
 
-	NS_NODISCARD_INLINE bool IsSubclassOf(const nsClass* parentClass) const noexcept
+	bool IsSubclassOf(const nsClass* parentClass) const noexcept
 	{
 		if (parentClass == nullptr)
 		{
@@ -245,6 +250,25 @@ public:
 	}
 
 
+	virtual nsObject* CreateInstance(nsMemory& memory) const
+	{
+		return memory.AllocateConstruct<nsObject>();
+	}
+
+
+	virtual void DestroyInstance(nsMemory& memory, nsObject* obj) const
+	{
+		return memory.DeallocateDestruct<nsObject>(obj);
+	}
+
+
+	template<typename T>
+	NS_NODISCARD_INLINE T* CreateInstanceAs(nsMemory& memory) const
+	{
+		return static_cast<T*>(CreateInstance(memory));
+	}
+
+
 	NS_NODISCARD_INLINE const nsPropertyList& GetProperties() const noexcept
 	{
 		return Properties;
@@ -268,17 +292,30 @@ public:
 		return ParentClass;
 	}
 
-};
 
-
-template<typename T>
-class nsTClass : public nsClass
-{
-public:
-	nsTClass(nsName name, const nsClass* parentClass)
-		: nsClass(name, parentClass)
+	NS_NODISCARD_INLINE nsObject* GetDefaultObject() noexcept
 	{
-		bIsAbstract = std::is_abstract<T>::value;
+		return DefaultObject;
+	}
+
+
+	NS_NODISCARD_INLINE const nsObject* GetDefaultObject() const noexcept
+	{
+		return DefaultObject;
+	}
+
+
+	template<typename T>
+	NS_NODISCARD_INLINE T* GetDefaultObjectAs() noexcept
+	{
+		return static_cast<T*>(GetDefaultObject());
+	}
+
+
+	template<typename T>
+	NS_NODISCARD_INLINE const T* GetDefaultObjectAs() const noexcept
+	{
+		return static_cast<const T*>(GetDefaultObject());
 	}
 
 };
@@ -340,6 +377,21 @@ namespace nsReflection
 };
 
 
+
+template<typename T>
+class nsTClass : public nsClass
+{
+public:
+	nsTClass(nsName name, const nsClass* parentClass)
+		: nsClass(name, parentClass, nsReflection::Memory.AllocateConstruct<T>())
+	{
+		bIsAbstract = std::is_abstract<T>::value;
+	}
+
+};
+
+
+
 #define NS_CreateProperty(classType, propertyType, propertyName, bSerializable) nsReflection::CreateProperty(#propertyName, nsReflection::CreateType<propertyType>(), offsetof(classType, propertyName), bSerializable)
 
 
@@ -353,20 +405,25 @@ public:																								\
 	{
 
 
-#define NS_CLASS_BEGIN(classType, parentClassType)													\
-class classType##__Class : public nsTClass<classType>												\
-{																									\
-public:																								\
-	classType##__Class()																			\
-		: nsTClass(#classType, parentClassType::Class)												\
+#define NS_CLASS_BEGIN(classType, parentClassType)																\
+class classType##__Class : public nsTClass<classType>															\
+{																												\
+public:																											\
+	classType##__Class()																						\
+		: nsTClass(#classType, parentClassType::Class)															\
 	{																	
 
-#define NS_CLASS_AddProperty(classType, propertyType, propertyName, isSerializable)					\
-		Properties.Add(NS_CreateProperty(classType, propertyType, propertyName, isSerializable));	
+#define NS_CLASS_AddProperty(classType, propertyType, propertyName, isSerializable) Properties.Add(NS_CreateProperty(classType, propertyType, propertyName, isSerializable));	
 
-#define NS_CLASS_END(classType)																		\
-	}																								\
-};																									\
+#define NS_CLASS_END(classType)																								\
+	}																														\
+	virtual nsObject* CreateInstance(nsMemory& memory) const override { return memory.AllocateConstruct<classType>(); }		\
+	virtual void DestroyInstance(nsMemory& memory, nsObject* obj) const override											\
+	{																														\
+		classType* objThisType = static_cast<classType*>(obj);																\
+		memory.DeallocateDestruct<classType>(objThisType);																	\
+	}																														\
+};																															\
 const nsClass* classType::Class = nsReflection::CreateClass<classType##__Class>();
 
 

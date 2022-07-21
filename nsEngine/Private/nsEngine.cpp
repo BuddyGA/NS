@@ -341,8 +341,9 @@ nsWorld* nsEngine::CreateWorld(nsString name, bool bHasPhysics)
 
 	NS_CONSOLE_Log(EngineLog, TEXT("Create new world [%s]"), *name);
 
-	nsWorld* newWorld = ns_CreateObject<nsWorld>(name, bHasPhysics);
-	newWorld->Initialize();
+	nsWorld* newWorld = ns_CreateObject<nsWorld>();
+	newWorld->Name = name;
+	newWorld->Initialize(bHasPhysics);
 	Worlds.Add(newWorld);
 	nsRenderManager::Get().AddWorldRenderContext(newWorld);
 

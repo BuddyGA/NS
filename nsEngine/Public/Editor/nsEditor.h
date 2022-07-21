@@ -1,16 +1,13 @@
 #pragma once
 
-#include "cstEditorAssetExplorer.h"
-#include "cstEditorActorInspector.h"
-#include "cstEditorWorldOutliner.h"
-#include "cstEditorGizmo.h"
-
-
-class nsRenderer;
+#include "nsEditorAssetExplorer.h"
+#include "nsEditorActorInspector.h"
+#include "nsEditorTransformGizmo.h"
+#include "nsEditorWorldOutliner.h"
 
 
 
-class cstEditorContextMenu
+class nsEditorContextMenu
 {
 private:
 	nsGUIWindow Window;
@@ -20,7 +17,7 @@ private:
 
 
 public:
-	cstEditorContextMenu();
+	nsEditorContextMenu();
 	bool DrawGUI(nsGUIContext& context, const nsPointFloat& screenCoord);
 
 
@@ -39,17 +36,17 @@ public:
 
 
 
-class cstEditor
+class NS_ENGINE_API nsEditor
 {
 private:
-	cstGame* Game;
-	cstEditorAssetExplorer AssetExplorer;
-	cstEditorActorInspector ActorInspector;
-	cstEditorWorldOutliner WorldOutliner;
-	cstEditorGizmoTransform ActorGizmo;
-	cstEditorContextMenu ContextMenu;
+	class nsGameApplication* Game;
+	nsEditorAssetExplorer AssetExplorer;
+	nsEditorActorInspector ActorInspector;
+	nsEditorWorldOutliner WorldOutliner;
+	nsEditorGizmoTransform ActorGizmo;
+	nsEditorContextMenu ContextMenu;
 
-	cstEEditorViewMode ViewMode;
+	nsEEditorViewMode ViewMode;
 	nsPointFloat MouseCoord;
 	nsPointFloat ContextMenuCoord;
 	nsActor* FocusActor;
@@ -78,7 +75,7 @@ public:
 
 
 public:
-	cstEditor(cstGame* game);
+	nsEditor(nsGameApplication* game);
 	void OnMouseMove(const nsMouseMoveEventArgs& e);
 	void OnMouseButton(const nsMouseButtonEventArgs& e);
 	void OnMouseWheel(const nsMouseWheelEventArgs& e);
@@ -96,4 +93,4 @@ public:
 };
 
 
-extern cstEditor* g_Editor;
+extern NS_ENGINE_API nsEditor* g_Editor;

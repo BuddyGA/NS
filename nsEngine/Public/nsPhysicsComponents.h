@@ -41,11 +41,11 @@ protected:
 	void UpdateCollisionActorSimulation();
 	void UpdateCollisionShapeFlags();
 	void UpdateCollisionShapeChannels();
-	virtual void UpdateCollisionShape() = 0;
+	virtual void UpdateCollisionShape() {};
 
 public:
 	void UpdateCollisionVolume();
-	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) = 0;
+	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) { return false; };
 	bool AdjustPositionIfOverlappedWith(nsActor* actorToTest);
 	void SetKinematicTarget(nsTransform transform);
 

@@ -1,8 +1,10 @@
 #include "nsReflection.h"
+#include "nsObject.h"
 
 
 
-nsMemory nsReflection::Memory("reflection", NS_MEMORY_SIZE_KiB(16));
+
+nsMemory nsReflection::Memory("reflection", NS_MEMORY_SIZE_MiB(1));
 
 static nsTArray<const nsClass*> RegisteredClasses;
 

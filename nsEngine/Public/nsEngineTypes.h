@@ -258,3 +258,25 @@ NS_INLINE void ns_DestroyObject(T*& obj) noexcept
 	NS_Validate_IsMainThread();
 	g_EngineDefaultMemory.DeallocateDestruct<T>(obj);
 }
+
+
+NS_NODISCARD_INLINE nsObject* ns_CreateObjectByClass(const nsClass* objClass) noexcept
+{
+	NS_Validate(objClass && objClass->IsSubclassOf(nsObject::Class));
+	return objClass->CreateInstance(g_EngineDefaultMemory);
+}
+
+
+template<typename T>
+NS_NODISCARD_INLINE T* ns_CreateObjectByClass(const nsClass* objClass = nullptr) noexcept
+{
+	static_assert(std::is_base_of<nsObject, T>::value, "ns_CreateObjectByClass type of <T> must be derived from type <nsObject>!");
+	return objClass ? static_cast<T*>(ns_CreateObjectByClass(objClass)) : static_cast<T*>(ns_CreateObjectByClass(T::Class));
+}
+
+
+NS_NODISCARD_INLINE void ns_DestroyObjectByClass(nsObject* obj) noexcept
+{
+	const nsClass* objClass = obj->GetClass();
+	objClass->DestroyInstance(g_EngineDefaultMemory, obj);
+}

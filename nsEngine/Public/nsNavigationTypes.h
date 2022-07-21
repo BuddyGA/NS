@@ -142,7 +142,5 @@ public:
 
 
 
-class dtCrowdAgent;
-class dtNavMeshQuery;
 class nsNavigationContextWorld;
 class nsNavigationAgentComponent;

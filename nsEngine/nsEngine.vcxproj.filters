@@ -263,5 +263,17 @@
     <ClInclude Include="Public\nsAnimationGraph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\nsActorAsset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorActorAsset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
