@@ -10,10 +10,59 @@ enum class cstECharacterState : uint8
 	NONE = 0,
 	IDLE,
 	MOVE,
-	CHASE_TARGET,
+	ATTACK_TARGET,
 	EXECUTE_ABILITY,
+	USE_ITEM,
+	INTERACT,
+	DISABLED,
 	KO,
 };
+
+
+
+enum class cstECharacterCommand : uint8
+{
+	NONE = 0,
+	STOP,
+	MOVE,
+	ATTACK,
+	ABILITY,
+	ITEM,
+	INTERACT
+};
+
+
+
+struct cstCharacterAbility
+{
+	const nsClass* Class;
+	cstAbility* Instance;
+	cstAbilityExecutionTarget ExecutionTarget;
+	int Level;
+
+
+public:
+	cstCharacterAbility()
+	{
+		Class = nullptr;
+		Instance = nullptr;
+		Level = 1;
+	}
+
+
+	NS_NODISCARD_INLINE bool IsValid() const
+	{
+		return Class && Instance;
+	}
+
+
+	NS_INLINE bool operator==(const nsClass* rhs) const
+	{
+		return Class == rhs;
+	}
+
+};
+
 
 
 
@@ -31,18 +80,19 @@ private:
 	nsSharedAnimationAsset AnimIdle0;
 	nsSharedAnimationAsset AnimRunForwardLoop;
 
-	cstAttributes BaseAttributes;
-	cstAttributes CurrentAttributes;
-	nsTArrayInline<cstAbility*, 16> Abilities;
-	nsTArrayInline<cstEffectExecution*, 8> ActiveEffects;
 	cstTags OwningTags;
+	cstAttributes BaseAttributes;
+	cstAttributes TempAttributes;
+	cstAttributes CurrentAttributes;
+	nsTArrayInline<cstEffectExecution*, 8> ActiveEffects;
+	nsTArrayInline<cstCharacterAbility, 16> Abilities;
 	cstWeapon* EquippedWeapon;
 
 	nsVector3 MoveTargetPosition;
 	float MoveDistanceToTarget;
+	int AbilityIndex;
 
-	cstAbilityExecutionTarget ExecutionTarget;
-	cstAbility* ExecutingAbility;
+	cstECharacterCommand Command;
 
 
 public:
@@ -60,19 +110,26 @@ protected:
 
 
 private:
-	void UpdateActiveAbilities(float deltaTime);
+	bool MoveToTargetToExecuteAbility();
 	void UpdateActiveEffects(float deltaTime);
+	void UpdateActiveAbilities(float deltaTime);
 	void UpdateState(float deltaTime);
 	void UpdateAnimation(float deltaTime);
+	cstEffectExecution* FindActiveEffect(cstTags effectTags, cstEffectExecution* effectExecution) const;
 
 public:
 	void EquipWeapon(cstWeapon* weapon);
 	void EquipArmor(cstArmor* armor);
-	void ExecuteAbility(cstAbility* ability, const cstAbilityExecutionTarget& targetParams);
-	void UseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams);
-	void Move(const nsVector3& worldPosition);
-	void Attack(cstCharacter* targetCharacter);
-	void Stop();
+	void AddAbility(const nsClass* abilityClass);
+	void RemoveAbility(const nsClass* abilityClass);
+	void ApplyEffect(cstEffectExecution* effectExecution, const cstEffectContext& effectContext);
+	void RemoveEffect(cstTags effectTags);
+	void CommandStop();
+	void CommandMove(const nsVector3& worldPosition);
+	void CommandAttack(cstCharacter* character);
+	void CommandExecuteAbility(const nsClass* abilityClass, const cstAbilityExecutionTarget& targetParams, int level = 1);
+	void CommandUseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams);
+	void CommandInteract(nsActor* actor);
 
 
 private:
@@ -101,6 +158,24 @@ private:
 
 
 public:
+	NS_NODISCARD_INLINE nsNavigationAgentComponent* GetNavigationAgentComponent() const
+	{
+		return NavigationAgentComponent;
+	}
+
+
+	NS_NODISCARD_INLINE cstCharacterAbility& GetAbility(int index)
+	{
+		return Abilities[index];
+	}
+
+
+	NS_NODISCARD_INLINE const cstCharacterAbility& GetAbility(int index) const
+	{
+		return Abilities[index];
+	}
+
+
 	NS_INLINE void AddOwningTags(cstTags tags)
 	{
 		OwningTags |= tags;
@@ -121,18 +196,6 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE cstAttributes& GetBaseAttributes()
-	{
-		return BaseAttributes;
-	}
-
-
-	NS_NODISCARD_INLINE const cstAttributes& GetBaseAttributes() const
-	{
-		return BaseAttributes;
-	}
-
-
 	NS_NODISCARD_INLINE cstAttributes& GetCurrentAttributes()
 	{
 		return CurrentAttributes;
@@ -145,6 +208,7 @@ public:
 	}
 
 
+	// Check if this character sees other character as ally
 	NS_NODISCARD_INLINE bool IsAlly(const cstCharacter* other) const
 	{
 		const cstTags otherOwningTags = other->OwningTags;
@@ -168,6 +232,7 @@ public:
 	}
 
 
+	// Check if this character sees other character as enemy
 	NS_NODISCARD_INLINE bool IsEnemy(const cstCharacter* other) const
 	{
 		return !IsAlly(other);
@@ -182,7 +247,7 @@ public:
 
 	NS_NODISCARD_INLINE bool CanMove() const
 	{
-		return IsAlive() && !(OwningTags & cstTag::DISABLE_ACTION);
+		return IsAlive() && !(OwningTags & cstTag::CHARACTER_DISABLED);
 	}
 
 

@@ -676,11 +676,26 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE int Find(const T& value) noexcept
+	NS_NODISCARD_INLINE int Find(const T& value) const noexcept
 	{
 		for (int i = 0; i < Count; ++i)
 		{
 			if (Data[i] == value)
+			{
+				return i;
+			}
+		}
+
+		return NS_ARRAY_INDEX_INVALID;
+	}
+
+
+	template<typename U>
+	NS_NODISCARD_INLINE int Find(const U& compareValue) const noexcept
+	{
+		for (int i = 0; i < Count; ++i)
+		{
+			if (Data[i] == compareValue)
 			{
 				return i;
 			}

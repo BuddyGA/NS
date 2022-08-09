@@ -138,6 +138,7 @@ enum class nsEAnimationTransitionMode : uint8
 };
 
 
+
 struct nsAnimationPlayState
 {
 	nsAnimationClipID Clip;
@@ -156,6 +157,7 @@ public:
 	}
 
 };
+
 
 
 struct nsAnimationBlendState

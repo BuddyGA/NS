@@ -42,7 +42,16 @@
     <ClInclude Include="Private\Editor\cstEditorItem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\cstEffect.h">
+    <ClInclude Include="Public\cstAttributesEffect.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstStateMachine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstCharacterStates.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\cstProjectile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +80,13 @@
     <ClCompile Include="cstGame.Editor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\cstEffect.cpp">
+    <ClCompile Include="Private\cstAttributesEffect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstStateMachine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\cstProjectile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

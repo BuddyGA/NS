@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cstEffect.h"
+#include "cstAttributesEffect.h"
 
 
 #define CST_ABILITY_MAX_LEVEL		(3)
@@ -133,6 +133,9 @@ public:
 	// Target type 
 	cstEAbilityTargetType TargetType;
 
+	// Ability tags
+	cstTags AbilityTags;
+
 	// Executor must have this tags to execute this ability
 	cstTags RequiredTags;
 
@@ -145,15 +148,16 @@ public:
 	// Animation to play when execute this ability (random)
 	nsTArrayInline<nsSharedAnimationAsset, 3> Animations;
 
+private:
+	float LastCommitTime;
+	float CastingRemainingTime;
+	float CooldownRemainingTime;
+	cstEffectExecution_Add* EffectExecutionManaCost;
 
 protected:
 	int Level;
 	cstCharacter* ExecutorCharacter;
 	cstAbilityExecutionTarget ExecutionTarget;
-	float LastCommitTime;
-	float CastingRemainingTime;
-	float CooldownRemainingTime;
-	bool bIsActive;
 
 
 public:
@@ -170,19 +174,19 @@ public:
 
 	NS_NODISCARD_INLINE bool IsActive() const
 	{
-		return bIsActive;
+		return CastingRemainingTime > 0.0f || CooldownRemainingTime > 0.0f;
 	}
 
 
-	NS_NODISCARD_INLINE bool CanBeCancelled() const
+	NS_NODISCARD_INLINE bool CanBeCancelled(int level = 1) const
 	{
-		return CastingRemainingTime > Attributes[Level - 1].CastingDuration * 0.5f;
+		return CastingRemainingTime <= 0.0f || CastingRemainingTime > Attributes[level - 1].CastingDuration * 0.5f;
 	}
 
 
-	NS_NODISCARD_INLINE cstCharacter* GetExecutionTargetCharacter() const
+	NS_NODISCARD_INLINE float GetCastingDistance(int level = 1) const
 	{
-		return ExecutionTarget.Character;
+		return Attributes[level - 1].CastingDistance;
 	}
 
 
@@ -198,27 +202,9 @@ public:
 	}
 
 
-	NS_NODISCARD_INLINE float GetCastingDistance() const
-	{
-		return Attributes[Level - 1].CastingDistance;
-	}
-
-
 protected:
 	virtual void StartExecute(float currentTime) {}
 	virtual void StopExecute(bool bWasCancelled) {}
-
-};
-
-
-
-class cstAbility_Attack : public cstAbility
-{
-	NS_DECLARE_OBJECT(cstAbility_Attack)
-
-public:
-	cstAbility_Attack();
-	virtual void StartExecute(float currentTime) override;
 
 };
 
@@ -230,6 +216,18 @@ class cstAbility_Stop : public cstAbility
 
 public:
 	cstAbility_Stop();
+	virtual void StartExecute(float currentTime) override;
+
+};
+
+
+
+class cstAbility_Attack : public cstAbility
+{
+	NS_DECLARE_OBJECT(cstAbility_Attack)
+
+public:
+	cstAbility_Attack();
 	virtual void StartExecute(float currentTime) override;
 
 };

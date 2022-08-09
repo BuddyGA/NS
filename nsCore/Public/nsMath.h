@@ -818,6 +818,14 @@ public:
 		return (b - a).GetMagnitude();
 	}
 
+	NS_NODISCARD static NS_INLINE float DistanceXZ(const nsVector3& a, const nsVector3& b) noexcept
+	{
+		const nsVector3 aXZ(a.X, 0.0f, a.Z);
+		const nsVector3 bXZ(b.X, 0.0f, b.Z);
+
+		return (bXZ - aXZ).GetMagnitude();
+	}
+
 };
 
 

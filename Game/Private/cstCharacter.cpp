@@ -32,7 +32,9 @@ cstCharacter::cstCharacter()
 	EquippedWeapon = nullptr;
 
 	MoveDistanceToTarget = 0.0f;
-	ExecutingAbility = nullptr;
+	AbilityIndex = -1;
+
+	Command = cstECharacterCommand::NONE;
 }
 
 
@@ -80,103 +82,100 @@ void cstCharacter::OnTickUpdate(float deltaTime)
 }
 
 
+bool cstCharacter::MoveToTargetToExecuteAbility()
+{
+	NS_Assert(AbilityIndex >= 0 && AbilityIndex < Abilities.GetCount());
+
+	const cstAbilityExecutionTarget& executionTarget = Abilities[AbilityIndex].ExecutionTarget;
+
+	const nsVector3 targetPosition = executionTarget.Character->GetWorldPosition();
+	cstAbility* ability = Abilities[AbilityIndex].Instance;
+	int level = Abilities[AbilityIndex].Level;
+	MoveDistanceToTarget = nsVector3::DistanceXZ(GetWorldPosition(), targetPosition);
+	
+	if (MoveDistanceToTarget <= ability->GetCastingDistance(level))
+	{
+		NavigationAgentComponent->StopMovement();
+		return true;
+	}
+
+	NavigationAgentComponent->SetNavigationTarget(targetPosition);
+
+	return false;
+}
+
+
+void cstCharacter::UpdateActiveEffects(float deltaTime)
+{
+	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
+	TempAttributes = cstAttributes();
+
+	if (!ActiveEffects.IsEmpty())
+	{
+		for (int i = 0; i < ActiveEffects.GetCount();)
+		{
+			cstEffectExecution* effectExecution = ActiveEffects[i];
+
+			if (effectExecution->IsActive())
+			{
+				if (effectExecution->IsInstant())
+				{
+					effectExecution->UpdateEffect(deltaTime, currentTime, BaseAttributes);
+				}
+				else
+				{
+					effectExecution->UpdateEffect(deltaTime, currentTime, TempAttributes);
+				}
+
+				++i;
+			}
+			else
+			{
+				ActiveEffects.RemoveAt(i);
+			}
+		}
+	}
+
+	CurrentAttributes = BaseAttributes + TempAttributes;
+}
+
+
 void cstCharacter::UpdateActiveAbilities(float deltaTime)
 {
 	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
 
 	for (int i = 0; i < Abilities.GetCount(); ++i)
 	{
-		Abilities[i]->TickUpdate(deltaTime, currentTime);
-	}
-}
-
-
-void cstCharacter::UpdateActiveEffects(float deltaTime)
-{
-	if (ActiveEffects.IsEmpty())
-	{
-		return;
-	}
-
-	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
-
-	for (int i = 0; i < ActiveEffects.GetCount();)
-	{
-		if (ActiveEffects[i]->IsActive())
-		{
-			ActiveEffects[i]->UpdateEffect(deltaTime);
-			++i;
-		}
-		else
-		{
-			ActiveEffects.RemoveAt(i);
-		}
+		NS_Assert(Abilities[0].IsValid());
+		Abilities[i].Instance->TickUpdate(deltaTime, currentTime);
 	}
 }
 
 
 void cstCharacter::UpdateState(float deltaTime)
 {
-	switch (CurrentState)
+	if (CurrentAttributes[cstAttribute::CURRENT_HEALTH] <= 0.0f)
 	{
-		case cstECharacterState::MOVE:
+		PendingChangeState = cstECharacterState::KO;
+	}
+	else if (OwningTags & cstTag::CHARACTER_DISABLED)
+	{
+		PendingChangeState = cstECharacterState::DISABLED;
+	}
+	else
+	{
+		switch (Command)
 		{
-			MoveDistanceToTarget = nsVector3::Distance(GetWorldPosition(), MoveTargetPosition);
-
-			if (MoveDistanceToTarget < 120.0f)
-			{
-				PendingChangeState = cstECharacterState::IDLE;
-			}
-
-			break;
+			case cstECharacterCommand::STOP: PendingChangeState = cstECharacterState::IDLE; break;
+			case cstECharacterCommand::MOVE: PendingChangeState = cstECharacterState::MOVE; break;
+			case cstECharacterCommand::ATTACK: PendingChangeState = cstECharacterState::ATTACK_TARGET; break;
+			case cstECharacterCommand::ABILITY:	PendingChangeState = cstECharacterState::EXECUTE_ABILITY; break;
+			case cstECharacterCommand::ITEM: PendingChangeState = cstECharacterState::USE_ITEM; break;
+			case cstECharacterCommand::INTERACT: PendingChangeState = cstECharacterState::INTERACT; break;
+			default: break;
 		}
 
-
-		case cstECharacterState::CHASE_TARGET:
-		{
-			NS_Assert(ExecutingAbility);
-
-			const nsVector3 targetPosition = ExecutionTarget.Character->GetWorldPosition();
-			const float distanceToTarget = nsVector3::Distance(GetWorldPosition(), targetPosition);
-
-			if (distanceToTarget > ExecutingAbility->GetCastingDistance())
-			{
-				if (CanMove())
-				{
-					NavigationAgentComponent->SetNavigationTarget(targetPosition);
-				}
-			}
-			else
-			{
-				if (ExecutingAbility->Execute(GetWorld()->GetCurrentTimeSeconds(), this, ExecutionTarget) == cstEAbilityExecutionResult::SUCCESS)
-				{
-					Abilities.Add(ExecutingAbility);
-					PendingChangeState = cstECharacterState::EXECUTE_ABILITY;
-				}
-				else
-				{
-					PendingChangeState = cstECharacterState::IDLE;
-				}
-			}
-
-			break;
-		}
-
-
-		case cstECharacterState::EXECUTE_ABILITY:
-		{
-			NS_Assert(ExecutingAbility);
-
-			break;
-		}
-
-
-		case cstECharacterState::KO:
-		{
-			break;
-		}
-
-		default: break;
+		Command = cstECharacterCommand::NONE;
 	}
 
 
@@ -187,66 +186,201 @@ void cstCharacter::UpdateState(float deltaTime)
 		switch (CurrentState)
 		{
 			case cstECharacterState::IDLE:
-			{
-				bCanTransitionState = true;
-				break;
-			}
-
-
 			case cstECharacterState::MOVE:
-			case cstECharacterState::CHASE_TARGET:
 			{
-				NavigationAgentComponent->StopMovement();
 				bCanTransitionState = true;
 				break;
 			}
 
-
+			case cstECharacterState::ATTACK_TARGET:
 			case cstECharacterState::EXECUTE_ABILITY:
 			{
-				NS_Assert(ExecutingAbility);
-
+				NS_Assert(AbilityIndex >= 0 && AbilityIndex < Abilities.GetCount());
+				bCanTransitionState = Abilities[AbilityIndex].Instance->CanBeCancelled(Abilities[AbilityIndex].Level);
 				break;
 			}
 
-
+			case cstECharacterState::USE_ITEM:
+				break;
+			case cstECharacterState::INTERACT:
+				break;
+			case cstECharacterState::DISABLED:
+				break;
 			case cstECharacterState::KO:
-			{
 				break;
-			}
-
-			default: break;
+			default:
+				break;
 		}
 
 
 		if (bCanTransitionState)
 		{
-			if (PendingChangeState == cstECharacterState::MOVE || PendingChangeState == cstECharacterState::CHASE_TARGET)
+			// Exit
+			switch (CurrentState)
 			{
-				if (CanMove())
+				case cstECharacterState::IDLE:
+				{
+					break;
+				}
+
+				case cstECharacterState::MOVE:
+				{
+					if (PendingChangeState != cstECharacterState::MOVE)
+					{
+						NavigationAgentComponent->StopMovement();
+					}
+
+					break;
+				}
+
+				case cstECharacterState::ATTACK_TARGET:
+				{
+					break;
+				}
+
+				case cstECharacterState::EXECUTE_ABILITY:
+				{
+					break;
+				}
+
+				case cstECharacterState::USE_ITEM:
+				{
+					break;
+				}
+
+				case cstECharacterState::INTERACT:
+				{
+					break;
+				}
+
+				case cstECharacterState::DISABLED:
+				case cstECharacterState::KO:
+				{
+					break;
+				}
+
+				default: break;
+			}
+
+
+			CurrentState = PendingChangeState;
+
+
+			// Enter
+			switch (CurrentState)
+			{
+				case cstECharacterState::IDLE:
+				{
+					break;
+				}
+
+				case cstECharacterState::MOVE:
 				{
 					NavigationAgentComponent->SetNavigationTarget(MoveTargetPosition);
+					break;
 				}
-				else
+
+				case cstECharacterState::ATTACK_TARGET:
 				{
-					// Cancel transition state but don't reset PendingChangeState for next frame checking
-					bCanTransitionState = false;
+					break;
 				}
-			}
-			else if (PendingChangeState == cstECharacterState::KO)
-			{
-				NS_CONSOLE_Log(cstCharacterLog, TEXT("Character [%s] KO!"), *Name);
-				// TODO: Play dead animation (non-loop)
-			}
-		}
 
+				case cstECharacterState::EXECUTE_ABILITY:
+				{
+					break;
+				}
 
-		// If transition state is not canceled, change CurrentState and reset PendingChangeState
-		if (bCanTransitionState)
-		{
-			CurrentState = PendingChangeState;
+				case cstECharacterState::USE_ITEM:
+				{
+					break;
+				}
+
+				case cstECharacterState::INTERACT:
+				{
+					break;
+				}
+
+				case cstECharacterState::DISABLED:
+				{
+					break;
+				}
+
+				case cstECharacterState::KO:
+				{
+					break;
+				}
+
+				default: break;
+			}
+
 			PendingChangeState = cstECharacterState::NONE;
 		}
+	}
+
+
+	// Update
+	switch (CurrentState)
+	{
+		case cstECharacterState::IDLE:
+		{
+			// Nothing to do
+			break;
+		}
+
+
+		case cstECharacterState::MOVE:
+		{
+			MoveDistanceToTarget = nsVector3::DistanceXZ(GetWorldPosition(), MoveTargetPosition);
+
+			if (MoveDistanceToTarget < 64.0f)
+			{
+				PendingChangeState = cstECharacterState::IDLE;
+			}
+
+			break;
+		}
+
+
+		case cstECharacterState::ATTACK_TARGET:
+		{
+			if (MoveToTargetToExecuteAbility())
+			{
+				cstAbility* ability = Abilities[0].Instance;
+				const cstAbilityExecutionTarget& executionTarget = Abilities[0].ExecutionTarget;
+				const int level = Abilities[0].Level;
+
+				ability->Execute(GetWorld()->GetCurrentTimeSeconds(), this, executionTarget, level);
+			}
+
+			break;
+		}
+
+
+		case cstECharacterState::EXECUTE_ABILITY:
+		{
+			break;
+		}
+
+
+		case cstECharacterState::USE_ITEM:
+		{
+			break;
+		}
+
+
+		case cstECharacterState::INTERACT:
+		{
+			break;
+		}
+
+
+		case cstECharacterState::DISABLED:
+		case cstECharacterState::KO:
+		{
+			break;
+		}
+
+		default: break;
 	}
 }
 
@@ -266,6 +400,22 @@ void cstCharacter::UpdateAnimation(float deltaTime)
 }
 
 
+cstEffectExecution* cstCharacter::FindActiveEffect(cstTags effectTags, cstEffectExecution* effectExecution) const
+{
+	for (int i = 0; i < ActiveEffects.GetCount(); ++i)
+	{
+		cstEffectExecution* check = ActiveEffects[i];
+
+		if (check->GetEffectTags() == effectTags && check == effectExecution)
+		{
+			return check;
+		}
+	}
+
+	return nullptr;
+}
+
+
 void cstCharacter::EquipWeapon(cstWeapon* weapon)
 {
 	if (EquippedWeapon == weapon)
@@ -275,10 +425,10 @@ void cstCharacter::EquipWeapon(cstWeapon* weapon)
 
 	EquippedWeapon = weapon;
 
-	if (Abilities[0])
+	if (Abilities[0].Instance)
 	{
-		ns_DestroyObjectByClass(Abilities[0]);
-		Abilities[0] = nullptr;
+		ns_DestroyObjectByClass(Abilities[0].Instance);
+		Abilities[0] = cstCharacterAbility();
 	}
 
 	if (EquippedWeapon)
@@ -287,11 +437,13 @@ void cstCharacter::EquipWeapon(cstWeapon* weapon)
 
 		if (EquippedWeapon->AttackAbilityClass)
 		{
-			Abilities[0] = ns_CreateObjectByClass<cstAbility>(EquippedWeapon->AttackAbilityClass);
+			cstCharacterAbility& ability = Abilities[0];
+			ability.Class = EquippedWeapon->AttackAbilityClass;
+			ability.Instance = ns_CreateObjectByClass<cstAbility>(ability.Class);
 		}
 		else
 		{
-			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to create attack ability object from weapon [%s]. AttackAbilityClass is NULL!"), *EquippedWeapon->Name);
+			NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to create attack ability from weapon [%s]. AttackAbilityClass is NULL!"), *EquippedWeapon->Name);
 		}
 	}
 }
@@ -302,21 +454,139 @@ void cstCharacter::EquipArmor(cstArmor* armor)
 }
 
 
-void cstCharacter::ExecuteAbility(cstAbility* ability, const cstAbilityExecutionTarget& targetParams)
+void cstCharacter::AddAbility(const nsClass* abilityClass)
 {
-	if (ability == nullptr)
+	if (abilityClass == nullptr)
 	{
-		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to execute ability. <ability> is NULL!"));
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Fail to add ability. <abilityClass> is NULL!"));
 		return;
 	}
 
-	ExecutionTarget = targetParams;
-	ExecutingAbility = ability;
-	PendingChangeState = cstECharacterState::CHASE_TARGET;
+	NS_Validate(abilityClass->IsSubclassOf(cstAbility::Class));
+
+	if (Abilities.Find(abilityClass) != NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Ignore add ability. Ability type [%s] already exists!"), *abilityClass->GetName().ToString());
+		return;
+	}
+
+	cstCharacterAbility& newAbility = Abilities.Add();
+	newAbility.Class = abilityClass;
+	newAbility.Instance = ns_CreateObjectByClass<cstAbility>(abilityClass);
+	newAbility.ExecutionTarget = cstAbilityExecutionTarget();
+	newAbility.Level = 1;
 }
 
 
-void cstCharacter::UseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams)
+void cstCharacter::RemoveAbility(const nsClass* abilityClass)
+{
+	if (abilityClass == nullptr)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Fail to remove ability. <abilityClass> is NULL!"));
+		return;
+	}
+
+	NS_Validate(abilityClass->IsSubclassOf(cstAbility::Class));
+
+	const int index = Abilities.Find(abilityClass);
+
+	if (index == NS_ARRAY_INDEX_INVALID)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Ignore remove ability. Ability type [%s] not found!"), *abilityClass->GetName().ToString());
+		return;
+	}
+
+	cstCharacterAbility& ability = Abilities[index];
+	NS_Assert(ability.Instance);
+
+	ns_DestroyObjectByClass(ability.Instance);
+	ability.Class = nullptr;
+	ability.Instance = nullptr;
+
+	Abilities.RemoveAt(index);
+}
+
+
+void cstCharacter::ApplyEffect(cstEffectExecution* effectExecution, const cstEffectContext& effectContext)
+{
+	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
+	cstEffectExecution* activeEffect = FindActiveEffect(effectContext.EffectTags, effectExecution);
+
+	if (activeEffect)
+	{
+		activeEffect->ApplyEffect(currentTime, this, effectContext);
+		return;
+	}
+
+	if (effectExecution->ApplyEffect(currentTime, this, effectContext))
+	{
+		ActiveEffects.Add(effectExecution);
+	}
+}
+
+
+void cstCharacter::RemoveEffect(cstTags effectTags)
+{
+	NS_ValidateV(0, TEXT("Not implemented yet!"));
+}
+
+
+void cstCharacter::CommandStop()
+{
+	Command = cstECharacterCommand::STOP;
+}
+
+
+void cstCharacter::CommandMove(const nsVector3& worldPosition)
+{
+	MoveTargetPosition = worldPosition;
+	Command = cstECharacterCommand::MOVE;
+}
+
+
+void cstCharacter::CommandAttack(cstCharacter* character)
+{
+	if (character == nullptr)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Ignore attack command. <character> is NULL!"));
+		return;
+	}
+
+	if (EquippedWeapon == nullptr)
+	{
+		NS_CONSOLE_Log(cstCharacterLog, TEXT("Cannot attack. No weapon equipped!"));
+		return;
+	}
+
+	if (!Abilities[0].IsValid())
+	{
+		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to attack by using weapon [%s]. Abilities[0] (Attack ability) is invalid!"), *EquippedWeapon->Name);
+		return;
+	}
+
+	NS_CONSOLE_Log(cstCharacterLog, TEXT("Character [%s] attacking [%s]"), *Name, *character->Name);
+
+	AbilityIndex = 0;
+	Abilities[AbilityIndex].ExecutionTarget = cstAbilityExecutionTarget(character);
+	Abilities[AbilityIndex].Level = 1;
+	Command = cstECharacterCommand::ATTACK;
+}
+
+
+void cstCharacter::CommandExecuteAbility(const nsClass* abilityClass, const cstAbilityExecutionTarget& targetParams, int level)
+{
+	if (abilityClass == nullptr)
+	{
+		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to execute ability. <abilityClass> is NULL!"));
+		return;
+	}
+
+	NS_Validate(abilityClass->IsSubclassOf(cstAbility::Class));
+
+}
+
+
+void cstCharacter::CommandUseItem(cstItem* item, const cstAbilityExecutionTarget& targetParams)
 {
 	if (item == nullptr)
 	{
@@ -328,55 +598,26 @@ void cstCharacter::UseItem(cstItem* item, const cstAbilityExecutionTarget& targe
 }
 
 
-void cstCharacter::Move(const nsVector3& worldPosition)
+void cstCharacter::CommandInteract(nsActor* actor)
 {
-	MoveTargetPosition = worldPosition;
-	PendingChangeState = cstECharacterState::MOVE;
 }
 
 
-void cstCharacter::Attack(cstCharacter* targetCharacter)
-{
-	if (targetCharacter == nullptr)
-	{
-		NS_CONSOLE_Log(cstCharacterLog, TEXT("Ignore attack command. targetCharacter is NULL!"));
-		return;
-	}
-
-	if (EquippedWeapon == nullptr)
-	{
-		NS_CONSOLE_Log(cstCharacterLog, TEXT("Cannot attack. No weapon equipped!"));
-		return;
-	}
-
-	if (Abilities[0] == nullptr)
-	{
-		NS_CONSOLE_Warning(cstCharacterLog, TEXT("Fail to attack by using weapon [%s]. Abilities[0] (Attack ability) is NULL!"), *EquippedWeapon->Name);
-		return;
-	}
-
-	NS_CONSOLE_Log(cstCharacterLog, TEXT("Character [%s] attacking [%s]"), *Name, *targetCharacter->Name);
-
-	ExecuteAbility(Abilities[0], cstAbilityExecutionTarget(targetCharacter));
-}
-
-
-void cstCharacter::Stop()
-{
-	PendingChangeState = cstECharacterState::IDLE;
-}
 
 
 
 #ifdef CST_GAME_WITH_EDITOR
 
-constexpr const wchar_t* CharacterStateNames[6] =
+constexpr const wchar_t* CharacterStateNames[9] =
 {
 	TEXT("None"),
 	TEXT("Idle"),
 	TEXT("Move"),
-	TEXT("Chase_Target"),
+	TEXT("Attack_Target"),
 	TEXT("Execute_Ability"),
+	TEXT("Use_Item"),
+	TEXT("Interact"),
+	TEXT("Disabled"),
 	TEXT("KO")
 };
 
@@ -397,13 +638,12 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 
 		static nsString debugText;
 
-		debugText = nsString::Format(TEXT("Health: %.3f/%.3f"), BaseAttributes[cstAttribute::CURRENT_HEALTH], BaseAttributes[cstAttribute::MAX_HEALTH]);
-		context.AddControlText(*debugText);
-		debugText = nsString::Format(TEXT("DamageHealth: %.3f"), BaseAttributes[cstAttribute::DAMAGE_HEALTH]);
+		debugText = nsString::Format(TEXT("Health: %.3f/%.3f"), BaseAttributes[cstAttribute::CURRENT_HEALTH], BaseAttributes[cstAttribute::HEALTH]);
 		context.AddControlText(*debugText);
 		debugText = nsString::Format(TEXT("Status: %s"), IsAlive() ? TEXT("-") : TEXT("[KO]"));
 		context.AddControlText(*debugText);
-		debugText = nsString::Format(TEXT("PendingChangeState: %s"), CharacterStateNames[static_cast<uint8>(PendingChangeState)]);
+
+		debugText = nsString::Format(TEXT("\nPendingChangeState: %s"), CharacterStateNames[static_cast<uint8>(PendingChangeState)]);
 		context.AddControlText(*debugText);
 		debugText = nsString::Format(TEXT("CurrentState: %s"), CharacterStateNames[static_cast<uint8>(CurrentState)]);
 		context.AddControlText(*debugText);
@@ -411,29 +651,30 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 		switch (CurrentState)
 		{
 			case cstECharacterState::MOVE:
-			case cstECharacterState::CHASE_TARGET:
 			{
-				if (CurrentState == cstECharacterState::CHASE_TARGET)
-				{
-					debugText = nsString::Format(TEXT("Chase: %s"), *ExecutionTarget.Character->Name);
-					context.AddControlText(*debugText);
-				}
-
+				debugText = nsString::Format(TEXT("Location: %.3f, %.3f, %.3f"), MoveTargetPosition.X, MoveTargetPosition.Y, MoveTargetPosition.Z);
+				context.AddControlText(*debugText);
 				debugText = nsString::Format(TEXT("Distance: %.3f"), MoveDistanceToTarget);
 				context.AddControlText(*debugText);
 
 				break;
 			}
 
+			case cstECharacterState::ATTACK_TARGET:
 			case cstECharacterState::EXECUTE_ABILITY:
 			{
-				if (ExecutingAbility)
+				if (AbilityIndex >= 0 && AbilityIndex < Abilities.GetCount())
 				{
-					debugText = nsString::Format(TEXT("Ability: %s"), *ExecutingAbility->Name);
+					const cstAbilityExecutionTarget& target = Abilities[AbilityIndex].ExecutionTarget;
+					debugText = nsString::Format(TEXT("Target: %s"), target.Character ? *target.Character->Name : TEXT("-"));
 					context.AddControlText(*debugText);
-					debugText = nsString::Format(TEXT("CastingRemainingTime: %.3f"), ExecutingAbility->GetCastingRemainingTime());
+					debugText = nsString::Format(TEXT("Distance: %.3f"), MoveDistanceToTarget);
 					context.AddControlText(*debugText);
-					debugText = nsString::Format(TEXT("CooldownRemainingTime: %.3f"), ExecutingAbility->GetCooldownRemainingTime());
+
+					cstAbility* ability = Abilities[AbilityIndex].Instance;
+					debugText = nsString::Format(TEXT("Ability: %s"), *ability->Name);
+					context.AddControlText(*debugText);
+					debugText = nsString::Format(TEXT("Casting: [Distance: %.3f] [RemainingTime: %.3f]"), ability->GetCastingDistance(Abilities[AbilityIndex].Level), ability->GetCastingRemainingTime());
 					context.AddControlText(*debugText);
 				}
 
@@ -443,13 +684,13 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 			default: break;
 		}
 
-		debugText = TEXT("\nActive Abilities:");
+		debugText = TEXT("\nAbilities:");
 		context.AddControlText(*debugText);
 
 		for (int i = 0; i < Abilities.GetCount(); ++i)
 		{
-			cstAbility* ability = Abilities[i];
-			debugText = nsString::Format(TEXT("Ability: %s, CooldownRemainingTime: %.3f"), *ability->Name, ability->GetCooldownRemainingTime());
+			cstAbility* ability = Abilities[i].Instance;
+			debugText = nsString::Format(TEXT("%s: [%s] [Cooldown: %.3f]"), *ability->Name, ability->IsActive() ? TEXT("Active") : TEXT("Inactive"), ability->GetCooldownRemainingTime());
 			context.AddControlText(*debugText);
 		}
 	}

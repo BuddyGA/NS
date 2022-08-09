@@ -2,14 +2,14 @@
 
 
 
-cstInputSettings::cstInputSettings()
+cstInputManager::cstInputManager()
 {
-	Reset();
+	ResetBindings();
 	DoubleClickTimeSeconds = 0.25f;
 }
 
 
-void cstInputSettings::DetectActionBindingConflict()
+void cstInputManager::DetectActionBindingConflict()
 {
 	for (int i = 0; i < cstInputAction::MAX_COUNT; ++i)
 	{
@@ -39,7 +39,7 @@ void cstInputSettings::DetectActionBindingConflict()
 }
 
 
-void cstInputSettings::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
+void cstInputManager::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
 {
 	const bool bIsButtonPressed = (e.ButtonState == nsEButtonState::PRESSED);
 	
@@ -74,7 +74,7 @@ void cstInputSettings::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
 }
 
 
-void cstInputSettings::Reset()
+void cstInputManager::ResetBindings()
 {
 	ComparisonActionBinding = cstInputBinding();
 
@@ -131,17 +131,17 @@ void cstInputSettings::Reset()
 }
 
 
-void cstInputSettings::Save()
+void cstInputManager::SaveBindings()
 {
 }
 
 
-void cstInputSettings::Load()
+void cstInputManager::LoadBindings()
 {
 }
 
 
-void cstInputSettings::AssignInputActionBinding(cstInputAction::EType inputActionType, cstInputBinding newBinding)
+void cstInputManager::AssignInputActionBinding(cstInputAction::EType inputActionType, cstInputBinding newBinding)
 {
 
 }

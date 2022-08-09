@@ -87,8 +87,11 @@ void nsNavigationAgentComponent::Internal_SyncWithDetourCrowdAgent(float deltaTi
 
 	if (speed > 10.0f)
 	{
+		nsVector3 velocityXZ = currentVelocity - nsVector3::Project(currentVelocity, nsVector3::UP);
+		velocityXZ.Normalize();
+
 		const nsQuaternion actorRotation = nsQuaternion::FromVectors(nsVector3::FORWARD, newTransform.GetAxisForward());
-		const nsQuaternion newRotation = nsQuaternion::FromVectors(nsVector3::FORWARD, currentVelocity.GetNormalized());
+		const nsQuaternion newRotation = nsQuaternion::FromVectors(nsVector3::FORWARD, velocityXZ);
 		newTransform.Rotation = nsQuaternion::Slerp(actorRotation, newRotation, deltaTime);
 	}
 

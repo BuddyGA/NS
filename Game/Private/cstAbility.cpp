@@ -10,33 +10,44 @@ cstAbility::cstAbility()
 {
 	ActionType = cstEAbilityActionType::CLICK_SHORTCUT_ONLY;
 	TargetType = cstEAbilityTargetType::SELF_ONLY;
+	AbilityTags = cstTag::NONE;
 	RequiredTags = cstTag::NONE;
 	IgnoredTags = cstTag::NONE;
 
-	Level = 1;
-	ExecutorCharacter = nullptr;
 	LastCommitTime = 0.0f;
 	CastingRemainingTime = 0.0f;
 	CooldownRemainingTime = 0.0f;
-	bIsActive = false;
+	EffectExecutionManaCost = nullptr;
+
+	Level = 1;
+	ExecutorCharacter = nullptr;
 }
 
 
 void cstAbility::CommitAbility(float currentTime)
 {
-	const cstAbilityAttributes& attributes = Attributes[Level - 1];
-
 	LastCommitTime = currentTime;
-	CastingRemainingTime = attributes.CastingDuration;
+	const cstAttributes& executorAttributes = ExecutorCharacter->GetCurrentAttributes();
+	const cstAbilityAttributes& abilityAttributes = Attributes[Level - 1];
 
+	// Apply mana cost
+	if (abilityAttributes.ManaCost > 0.0f)
+	{
+		const float totalManaCost = nsMath::Max(abilityAttributes.ManaCost - (abilityAttributes.ManaCost * executorAttributes[cstAttribute::ABILITY_MANA_COST_REDUCTION]), 0.0f);
 
-	// TODO: Apply mana cost
-	
+		cstEffectContext effectContext;
+		effectContext.AddAttributeModification(cstAttribute::CURRENT_MANA, -totalManaCost);
+
+		if (EffectExecutionManaCost == nullptr)
+		{
+			EffectExecutionManaCost = ns_CreateObjectByClass<cstEffectExecution_Add>(cstEffectExecution_Add::Class);
+		}
+
+		ExecutionTarget.Character->ApplyEffect(EffectExecutionManaCost, effectContext);
+	}
 
 	// Apply cooldown
-	const cstAttributes& executorAttributes = ExecutorCharacter->GetBaseAttributes();
-	CooldownRemainingTime = attributes.CooldownDuration - (attributes.CooldownDuration * executorAttributes[cstAttribute::CURRENT_ABILITY_COOLDOWN_REDUCTION]);
-	CooldownRemainingTime = nsMath::Max(CooldownRemainingTime, 0.0f);
+	CooldownRemainingTime = nsMath::Max(abilityAttributes.CooldownDuration - (abilityAttributes.CooldownDuration * executorAttributes[cstAttribute::ABILITY_COOLDOWN_REDUCTION]), 0.0f);
 }
 
 
@@ -136,7 +147,7 @@ cstEAbilityExecutionResult cstAbility::CanExecute(float currentTime, cstCharacte
 
 void cstAbility::TickUpdate(float deltaTime, float currentTime)
 {
-	if (!bIsActive)
+	if (!IsActive())
 	{
 		return;
 	}
@@ -144,22 +155,23 @@ void cstAbility::TickUpdate(float deltaTime, float currentTime)
 	if (CastingRemainingTime > 0.0f)
 	{
 		CastingRemainingTime = nsMath::Max(CastingRemainingTime - deltaTime, 0.0f);
+
+		if (CastingRemainingTime <= 0.0f)
+		{
+			CommitAbility(currentTime);
+			StartExecute(currentTime);
+		}
 	}
 	else if (CooldownRemainingTime > 0.0f)
 	{
 		CooldownRemainingTime = nsMath::Max(CooldownRemainingTime - deltaTime, 0.0f);
 	}
-	else
-	{
-		StopExecute(false);
-		bIsActive = false;
-	}
 }
 
 
-cstEAbilityExecutionResult cstAbility::Execute(float currentTime, cstCharacter* executorCharacter, const cstAbilityExecutionTarget& target, int level)
+cstEAbilityExecutionResult cstAbility::Execute(float currentTime, cstCharacter* character, const cstAbilityExecutionTarget& target, int level)
 {
-	const cstEAbilityExecutionResult result = CanExecute(currentTime, executorCharacter, target);
+	const cstEAbilityExecutionResult result = CanExecute(currentTime, character, target);
 
 	if (result == cstEAbilityExecutionResult::SUCCESS)
 	{
@@ -167,12 +179,29 @@ cstEAbilityExecutionResult cstAbility::Execute(float currentTime, cstCharacter* 
 		const int levelIndex = Level - 1;
 		NS_Assert(levelIndex >= 0 && levelIndex < CST_ABILITY_MAX_LEVEL);
 
-		ExecutorCharacter = executorCharacter;
+		ExecutorCharacter = character;
 		ExecutionTarget = target;
-		StartExecute(currentTime);
+		CastingRemainingTime = Attributes[levelIndex].CastingDuration;
 	}
 
 	return result;
+}
+
+
+
+
+NS_CLASS_BEGIN(cstAbility_Stop, cstAbility)
+NS_CLASS_END(cstAbility_Stop)
+
+cstAbility_Stop::cstAbility_Stop()
+{
+	Name = TEXT("Ability_Stop");
+}
+
+
+void cstAbility_Stop::StartExecute(float currentTime)
+{
+	ExecutionTarget.Character->CommandStop();
 }
 
 
@@ -191,33 +220,14 @@ cstAbility_Attack::cstAbility_Attack()
 	attributes.CastingDistance = 150.0f;
 	attributes.CastingDuration = 1.0f;
 	attributes.CooldownDuration = 5.0f;
-
-	cstEffectContext& effect = attributes.Effect;
-	effect.ModifiedAttributes[cstAttribute::CURRENT_HEALTH] = -15.0f;
+	attributes.Effect.AddAttributeModification(cstAttribute::CURRENT_HEALTH, -15.0f);
 }
 
 
 void cstAbility_Attack::StartExecute(float currentTime)
 {
-	CommitAbility(currentTime);
-
 	// TODO: Play animation
 
-}
-
-
-
-
-NS_CLASS_BEGIN(cstAbility_Stop, cstAbility)
-NS_CLASS_END(cstAbility_Stop)
-
-cstAbility_Stop::cstAbility_Stop()
-{
-	Name = TEXT("Ability_Stop");
-}
-
-
-void cstAbility_Stop::StartExecute(float currentTime)
-{
-	ExecutionTarget.Character->Stop();
+	cstEffectExecution_Add* effectExecution = ns_GetDefaultObjectAs<cstEffectExecution_Add>(cstEffectExecution_Add::Class);
+	ExecutionTarget.Character->ApplyEffect(effectExecution, Attributes[Level - 1].Effect);
 }

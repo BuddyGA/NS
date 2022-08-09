@@ -151,7 +151,7 @@ NS_DELEGATE_ThreeParams(cstInputActionBindingPressedDelegate, cstInputAction::ET
 NS_DELEGATE_TwoParams(cstInputActionBindingConflictedDelegate, cstInputAction::EType, firstInputActionType, cstInputAction::EType, secondInputActionType)
 
 
-class cstInputSettings
+class cstInputManager
 {
 private:
 	cstInputBinding ComparisonActionBinding;
@@ -164,16 +164,16 @@ public:
 
 
 public:
-	cstInputSettings();
+	cstInputManager();
 
 private:
 	void DetectActionBindingConflict();
 
 public:
 	void KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e);
-	void Reset();
-	void Save();
-	void Load();
+	void ResetBindings();
+	void SaveBindings();
+	void LoadBindings();
 	void AssignInputActionBinding(cstInputAction::EType inputActionType, cstInputBinding newBinding);
 
 };

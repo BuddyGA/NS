@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cstEffect.h"
+#include "cstAttributesEffect.h"
 
 
 

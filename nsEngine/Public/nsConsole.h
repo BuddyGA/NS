@@ -33,6 +33,7 @@ public:
 	void AddLogEntry(const nsString& log, nsColor color);
 	void ExecuteCommand(const nsString& textCommand);
 
+
 	template<typename...TVarArgs>
 	NS_INLINE void AddLogEntryWithCategory(const nsLogCategory& category, nsELogVerbosity verbosity, const wchar_t* format, TVarArgs... args)
 	{

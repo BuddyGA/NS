@@ -31,9 +31,9 @@ public:
 
 public:
 	cstGameplaySettings();
-	void Reset();
-	void Save();
-	void Load();
+	void ResetSettings();
+	void SaveSettings();
+	void LoadSettings();
 
 };
 
@@ -48,7 +48,7 @@ class cstGame : public nsGameApplication
 {
 private:
 	cstGameplaySettings GameplaySettings;
-	cstInputSettings InputSettings;
+	cstInputManager InputManager;
 
 	cstEGameState PendingChangeState;
 	cstEGameState CurrentState;

@@ -314,6 +314,48 @@ void nsCollisionComponent::SetKinematicTarget(nsTransform transform)
 
 
 // ================================================================================================================================== //
+// SPHERE COLLISION COMPONENT
+// ================================================================================================================================== //
+NS_CLASS_BEGIN(nsSphereCollisionComponent, nsCollisionComponent)
+NS_CLASS_END(nsSphereCollisionComponent)
+
+nsSphereCollisionComponent::nsSphereCollisionComponent()
+{
+	Radius = 100.0f;
+}
+
+
+void nsSphereCollisionComponent::UpdateCollisionShape()
+{
+	if (PhysicsShape == nullptr)
+	{
+		PhysicsShape = PxRigidActorExt::createExclusiveShape(*PhysicsActor, PxSphereGeometry(Radius), *PhysicsMaterial);
+	}
+	else
+	{
+		PhysicsShape->setGeometry(PxSphereGeometry(Radius));
+	}
+}
+
+
+bool nsSphereCollisionComponent::SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params)
+{
+	if (PhysicsShape == nullptr)
+	{
+		return false;
+	}
+
+	PxSphereGeometry sphereGeometry;
+	PhysicsShape->getSphereGeometry(sphereGeometry);
+	const PxTransform sphereGlobalPose = PxShapeExt::getGlobalPose(*PhysicsShape, *PhysicsActor);
+
+	return nsPhysX::SceneQuerySweep(GetWorld()->GetPhysicsScene(), hitResult, PxSphereGeometry(Radius), sphereGlobalPose, NS_ToPxVec3(direction), distance, params);
+}
+
+
+
+
+// ================================================================================================================================== //
 // BOX COLLISION COMPONENT
 // ================================================================================================================================== //
 NS_CLASS_BEGIN(nsBoxCollisionComponent, nsCollisionComponent)

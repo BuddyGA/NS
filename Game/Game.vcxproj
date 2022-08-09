@@ -158,19 +158,24 @@
     <ClInclude Include="Private\Editor\cstEditorItem.h" />
     <ClInclude Include="Public\cstAbility.h" />
     <ClInclude Include="Public\cstCharacter.h" />
-    <ClInclude Include="Public\cstEffect.h" />
+    <ClInclude Include="Public\cstAttributesEffect.h" />
+    <ClInclude Include="Public\cstCharacterStates.h" />
     <ClInclude Include="Public\cstGame.h" />
     <ClInclude Include="Public\cstInput.h" />
+    <ClInclude Include="Public\cstProjectile.h" />
+    <ClInclude Include="Public\cstStateMachine.h" />
     <ClInclude Include="Public\cstTypes.h" />
     <ClInclude Include="Public\cstItem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cstGame.Runtime.cpp" />
     <ClCompile Include="Private\cstAbility.cpp" />
-    <ClCompile Include="Private\cstEffect.cpp" />
+    <ClCompile Include="Private\cstAttributesEffect.cpp" />
     <ClCompile Include="Private\cstCharacter.cpp" />
     <ClCompile Include="cstGame.Editor.cpp" />
     <ClCompile Include="Private\cstInput.cpp" />
+    <ClCompile Include="Private\cstProjectile.cpp" />
+    <ClCompile Include="Private\cstStateMachine.cpp" />
     <ClCompile Include="Private\cstTypes.cpp" />
     <ClCompile Include="Private\cstItem.cpp" />
     <ClCompile Include="Private\cstGame.cpp" />

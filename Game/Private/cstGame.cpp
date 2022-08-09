@@ -13,24 +13,24 @@
 
 cstGameplaySettings::cstGameplaySettings()
 {
-	Reset();
+	ResetSettings();
 }
 
 
-void cstGameplaySettings::Reset()
+void cstGameplaySettings::ResetSettings()
 {
 	CameraDistance = 1000.0f;
 	CameraMoveSpeed = 1000.0f;
 }
 
 
-void cstGameplaySettings::Save()
+void cstGameplaySettings::SaveSettings()
 {
 
 }
 
 
-void cstGameplaySettings::Load()
+void cstGameplaySettings::LoadSettings()
 {
 
 }
@@ -64,11 +64,11 @@ void cstGame::Initialize() noexcept
 {
 	nsGameApplication::Initialize();
 
-	GameplaySettings.Load();
+	GameplaySettings.LoadSettings();
 
-	InputSettings.Load();
-	InputSettings.ActionBindingPressedDelegate.Bind(this, &cstGame::OnInputActionBindingPressed);
-	InputSettings.ActionBindingConflictedDelegate.Bind(this, &cstGame::OnInputActionBindingConflicted);
+	InputManager.LoadBindings();
+	InputManager.ActionBindingPressedDelegate.Bind(this, &cstGame::OnInputActionBindingPressed);
+	InputManager.ActionBindingConflictedDelegate.Bind(this, &cstGame::OnInputActionBindingConflicted);
 
 	cstCharacter* playerChar0 = MainWorld->CreateActor<cstCharacter>("player_char_0", false, nsVector3(0.0f, 100.0f, -300.0f));
 	{
@@ -94,7 +94,7 @@ void cstGame::Initialize() noexcept
 
 	// ========= DUMMY ENEMIES ========= //
 	{
-		cstCharacter* enemyChar0 = MainWorld->CreateActor<cstCharacter>("enemy_char_0", false, nsVector3(0.0f, 100.0f, -800.0f));
+		cstCharacter* enemyChar0 = MainWorld->CreateActor<cstCharacter>("enemy_char_0", false, nsVector3(330.0f, 100.0f, -300.0f));
 		enemyChar0->AddOwningTags(cstTag::Character_Enemy);
 		MainWorld->AddActorToLevel(enemyChar0);
 		PlayerCharacters.Add(enemyChar0);
@@ -299,11 +299,11 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 
 			if (attackTargetCharacter && attackTargetCharacter->IsAlive())
 			{
-				PlayerCharacters[FocusedCharacterIndex]->Attack(attackTargetCharacter);
+				PlayerCharacters[FocusedCharacterIndex]->CommandAttack(attackTargetCharacter);
 			}
 			else
 			{
-				PlayerCharacters[FocusedCharacterIndex]->Move(MouseRayHitResult.WorldPosition);
+				PlayerCharacters[FocusedCharacterIndex]->CommandMove(MouseRayHitResult.WorldPosition);
 			}
 		}
 	}
@@ -337,7 +337,7 @@ void cstGame::OnKeyboardButton(const nsKeyboardButtonEventArgs& e) noexcept
 
 	if (CurrentState == cstEGameState::PLAYING)
 	{
-		InputSettings.KeyboardButtonEvent(e);
+		InputManager.KeyboardButtonEvent(e);
 	}
 
 

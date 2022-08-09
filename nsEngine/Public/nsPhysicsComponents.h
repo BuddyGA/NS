@@ -149,6 +149,31 @@ public:
 
 
 // ================================================================================================================================== //
+// SPHERE COLLISION COMPONENT
+// ================================================================================================================================== //
+class NS_ENGINE_API nsSphereCollisionComponent : public nsCollisionComponent
+{
+	NS_DECLARE_OBJECT(nsSphereCollisionComponent)
+
+public:
+	float Radius;
+
+
+public:
+	nsSphereCollisionComponent();
+
+protected:
+	virtual void UpdateCollisionShape() override;
+
+public:
+	virtual bool SweepTest(nsPhysicsHitResult& hitResult, const nsVector3& direction, float distance, const nsPhysicsQueryParams& params = nsPhysicsQueryParams()) override;
+
+};
+
+
+
+
+// ================================================================================================================================== //
 // BOX COLLISION COMPONENT
 // ================================================================================================================================== //
 class NS_ENGINE_API nsBoxCollisionComponent : public nsCollisionComponent
