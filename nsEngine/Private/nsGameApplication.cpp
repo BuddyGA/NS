@@ -53,7 +53,6 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 		bShowFPS = !bShowFPS;
 	}
 
-
 #ifndef __NS_ENGINE_SHIPPING__
 	if (command == TEXT("class") && paramCount > 0)
 	{

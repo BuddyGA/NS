@@ -25,10 +25,6 @@
 #include "Private/nsAssetImporter.cpp"
 #include "Private/nsViewport.cpp"
 #include "Private/nsPhysics.cpp"
-#include "Private/nsActor.cpp"
-#include "Private/nsActorComponents.cpp"
-#include "Private/nsLevel.cpp"
-#include "Private/nsWorld.cpp"
 #include "Private/nsEngine.cpp"
 #include "Private/nsGameApplication.cpp"
 */
