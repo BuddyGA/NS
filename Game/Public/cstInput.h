@@ -8,93 +8,93 @@ namespace cstInputAction
 {
 	enum EType : uint8
 	{
-		CAMERA_PANNING = 0,
+		CAMERA_PANNING = 0,			// Default: Spacebar
 
-		MENU_INVENTORY,
-		MENU_CHARACTER,
-		MENU_ABILITY,
-		MENU_PAUSE,
+		MENU_INVENTORY,				// Default: I
+		MENU_CHARACTER,				// Default: K
+		MENU_ABILITY,				// Default: L
+		MENU_PAUSE,					// Default: ESCAPE
 
-		CHARACTER_0,
-		CHARACTER_1,
-		CHARACTER_2,
-		CHARACTER_TOGGLE_FOCUS,
-		CHARACTER_SELECT_ALL,
+		CHARACTER_0,				// Default: 1
+		CHARACTER_1,				// Default: 2
+		CHARACTER_2,				// Default: 3
+		CHARACTER_TOGGLE_FOCUS,		// Default: TAB
+		CHARACTER_SELECT_ALL,		// Default: LeftCtrl + A
 
-		ABILITY_SLOT_ATTACK,
-		ABILITY_SLOT_STOP,
-		ABILITY_SLOT_0,
-		ABILITY_SLOT_1,
-		ABILITY_SLOT_2,
-		ABILITY_SLOT_3,
-		ABILITY_SLOT_4,
-		ABILITY_SLOT_5,
-		ABILITY_SLOT_6,
-		ABILITY_SLOT_7,
+		ABILITY_SLOT_STOP,			// Default: S
+		ABILITY_SLOT_ATTACK,		// Default: A
+		ABILITY_SLOT_0,				// Default: Q
+		ABILITY_SLOT_1,				// Default: W
+		ABILITY_SLOT_2,				// Default: E
+		ABILITY_SLOT_3,				// Default: R
+		ABILITY_SLOT_4,				// Default: T
+		ABILITY_SLOT_5,				// Default: D
+		ABILITY_SLOT_6,				// Default: F
+		ABILITY_SLOT_7,				// Default: G
 
-		ITEM_SLOT_0,
-		ITEM_SLOT_1,
-		ITEM_SLOT_2,
-		ITEM_SLOT_3,
-		ITEM_SLOT_4,
-		ITEM_SLOT_5,
-		ITEM_SLOT_6,
-		ITEM_SLOT_7,
+		ITEM_SLOT_0,				// Default: LeftAlt + Q
+		ITEM_SLOT_1,				// Default: LeftAlt + W
+		ITEM_SLOT_2,				// Default: LeftAlt + E
+		ITEM_SLOT_3,				// Default: LeftAlt + R
+		ITEM_SLOT_4,				// Default: LeftAlt + A
+		ITEM_SLOT_5,				// Default: LeftAlt + S
+		ITEM_SLOT_6,				// Default: LeftAlt + D
+		ITEM_SLOT_7,				// Default: LeftAlt + F
 
-		PRESETS_ABILITY_0,
-		PRESETS_ABILITY_1,
+		PRESETS_ABILITY_0,			// Default: F1
+		PRESETS_ABILITY_1,			// Default: F2
 
-		PRESETS_ITEM_0,
-		PRESETS_ITEM_1,
+		PRESETS_ITEM_0,				// Default: F3
+		PRESETS_ITEM_1,				// Default: F4
 
 		MAX_COUNT
 	};
 
 	constexpr const wchar_t* NAMES[MAX_COUNT] =
 	{
-		TEXT("Camera_Panning"),
-		TEXT("Menu_Inventory"),
-		TEXT("Menu_Character"),
-		TEXT("Menu_Ability"),
-		TEXT("Menu_Pause"),
+		TEXT("CameraPanning"),
+		TEXT("MenuInventory"),
+		TEXT("MenuCharacter"),
+		TEXT("MenuAbility"),
+		TEXT("MenuPause"),
 		TEXT("Character_0"),
 		TEXT("Character_1"),
 		TEXT("Character_2"),
-		TEXT("Character_Toggle_Focus"),
-		TEXT("Character_Select_All"),
-		TEXT("Ability_Attack"),
-		TEXT("Ability_Stop"),
-		TEXT("Ability_Slot_0"),
-		TEXT("Ability_Slot_1"),
-		TEXT("Ability_Slot_2"),
-		TEXT("Ability_Slot_3"),
-		TEXT("Ability_Slot_4"),
-		TEXT("Ability_Slot_5"),
-		TEXT("Ability_Slot_6"),
-		TEXT("Ability_Slot_7"),
-		TEXT("Item_Slot_0"),
-		TEXT("Item_Slot_1"),
-		TEXT("Item_Slot_2"),
-		TEXT("Item_Slot_3"),
-		TEXT("Item_Slot_4"),
-		TEXT("Item_Slot_5"),
-		TEXT("Item_Slot_6"),
-		TEXT("Item_Slot_7"),
-		TEXT("Presets_Ability_0"),
-		TEXT("Presets_Ability_1"),
-		TEXT("Presets_Item_0"),
-		TEXT("Presets_Item_1")
+		TEXT("CharacterToggleFocus"),
+		TEXT("CharacterSelectAll"),
+		TEXT("AbilitySlotStop"),
+		TEXT("AbilitySlotAttack"),
+		TEXT("AbilitySlot_0"),
+		TEXT("AbilitySlot_1"),
+		TEXT("AbilitySlot_2"),
+		TEXT("AbilitySlot_3"),
+		TEXT("AbilitySlot_4"),
+		TEXT("AbilitySlot_5"),
+		TEXT("AbilitySlot_6"),
+		TEXT("AbilitySlot_7"),
+		TEXT("ItemSlot_0"),
+		TEXT("ItemSlot_1"),
+		TEXT("ItemSlot_2"),
+		TEXT("ItemSlot_3"),
+		TEXT("ItemSlot_4"),
+		TEXT("ItemSlot_5"),
+		TEXT("ItemSlot_6"),
+		TEXT("ItemSlot_7"),
+		TEXT("PresetsAbility_0"),
+		TEXT("PresetsAbility_1"),
+		TEXT("PresetsItem_0"),
+		TEXT("PresetsItem_1")
 	};
 
 	constexpr int MENU_MAX_COUNT = (MENU_PAUSE - MENU_INVENTORY + 1);
 	constexpr int CHARACTER_MAX_COUNT = (CHARACTER_SELECT_ALL - CHARACTER_0 + 1);
-	constexpr int ABILITY_SLOT_MAX_COUNT = (ABILITY_SLOT_7 - ABILITY_SLOT_ATTACK + 1);
+	constexpr int ABILITY_SLOT_MAX_COUNT = (ABILITY_SLOT_7 - ABILITY_SLOT_STOP + 1);
 	constexpr int ITEM_SLOT_MAX_COUNT = (ITEM_SLOT_7 - ITEM_SLOT_0 + 1);
 
 
 	NS_NODISCARD_INLINE int GetAbilitySlotIndex(EType inputType)
 	{
-		NS_Assert(inputType >= cstInputAction::ABILITY_SLOT_ATTACK && inputType <= cstInputAction::ABILITY_SLOT_7);
+		NS_Assert(inputType >= cstInputAction::ABILITY_SLOT_STOP && inputType <= cstInputAction::ABILITY_SLOT_7);
 		return cstInputAction::ABILITY_SLOT_MAX_COUNT - (cstInputAction::ABILITY_SLOT_7 - inputType);
 	}
 
@@ -154,7 +154,7 @@ NS_DELEGATE_TwoParams(cstInputActionBindingConflictedDelegate, cstInputAction::E
 class cstInputManager
 {
 private:
-	cstInputBinding ComparisonActionBinding;
+	cstInputBinding CurrentInputAction;
 	nsTArrayInline<cstInputBinding, cstInputAction::MAX_COUNT> ActionBindings;
 
 public:

@@ -486,7 +486,7 @@ void cstGame::OnInputActionBindingPressed(cstInputAction::EType inputActionType,
 		{
 			const wchar_t* inputActionName = cstInputAction::NAMES[inputActionType];
 
-			if (inputActionType >= cstInputAction::ABILITY_SLOT_ATTACK && inputActionType <= cstInputAction::ABILITY_SLOT_7)
+			if (inputActionType >= cstInputAction::ABILITY_SLOT_STOP && inputActionType <= cstInputAction::ABILITY_SLOT_7)
 			{
 				if (bIsDoubleClick)
 				{

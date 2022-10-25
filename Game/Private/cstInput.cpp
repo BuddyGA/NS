@@ -45,17 +45,17 @@ void cstInputManager::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
 	
 	switch (e.Key)
 	{
-		case nsEInputKey::KEYBOARD_ALT_LEFT: ComparisonActionBinding.bAltLeft= bIsButtonPressed; break;
-		case nsEInputKey::KEYBOARD_ALT_RIGHT: ComparisonActionBinding.bAltRight = bIsButtonPressed; break;
-		case nsEInputKey::KEYBOARD_CTRL_LEFT: ComparisonActionBinding.bCtrlLeft = bIsButtonPressed; break;
-		case nsEInputKey::KEYBOARD_CTRL_RIGHT: ComparisonActionBinding.bCtrlRight = bIsButtonPressed; break;
-		case nsEInputKey::KEYBOARD_SHIFT_LEFT: ComparisonActionBinding.bShiftLeft = bIsButtonPressed; break;
-		case nsEInputKey::KEYBOARD_SHIFT_RIGHT: ComparisonActionBinding.bShiftRight = bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_ALT_LEFT: CurrentInputAction.bAltLeft= bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_ALT_RIGHT: CurrentInputAction.bAltRight = bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_CTRL_LEFT: CurrentInputAction.bCtrlLeft = bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_CTRL_RIGHT: CurrentInputAction.bCtrlRight = bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_SHIFT_LEFT: CurrentInputAction.bShiftLeft = bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_SHIFT_RIGHT: CurrentInputAction.bShiftRight = bIsButtonPressed; break;
 		default: break;
 	}
 
-	ComparisonActionBinding.Key = e.Key;
-	const int index = ActionBindings.Find(ComparisonActionBinding);
+	CurrentInputAction.Key = e.Key;
+	const int index = ActionBindings.Find(CurrentInputAction);
 
 	if (index != NS_ARRAY_INDEX_INVALID)
 	{
@@ -70,32 +70,33 @@ void cstInputManager::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
 		}
 	}
 
-	ComparisonActionBinding.Key = nsEInputKey::NONE;
+	CurrentInputAction.Key = nsEInputKey::NONE;
 }
 
 
 void cstInputManager::ResetBindings()
 {
-	ComparisonActionBinding = cstInputBinding();
+	CurrentInputAction = cstInputBinding();
 
 	ActionBindings.Resize(cstInputAction::MAX_COUNT);
 
 	ActionBindings[cstInputAction::CAMERA_PANNING].Key = nsEInputKey::KEYBOARD_SPACEBAR;
 
 	ActionBindings[cstInputAction::MENU_INVENTORY].Key = nsEInputKey::KEYBOARD_I;
-	ActionBindings[cstInputAction::MENU_CHARACTER].Key = nsEInputKey::KEYBOARD_J;
-	ActionBindings[cstInputAction::MENU_ABILITY].Key = nsEInputKey::KEYBOARD_K;
+	ActionBindings[cstInputAction::MENU_CHARACTER].Key = nsEInputKey::KEYBOARD_K;
+	ActionBindings[cstInputAction::MENU_ABILITY].Key = nsEInputKey::KEYBOARD_L;
 	ActionBindings[cstInputAction::MENU_PAUSE].Key = nsEInputKey::KEYBOARD_ESCAPE;
 
 	ActionBindings[cstInputAction::CHARACTER_0].Key = nsEInputKey::KEYBOARD_1;
 	ActionBindings[cstInputAction::CHARACTER_1].Key = nsEInputKey::KEYBOARD_2;
 	ActionBindings[cstInputAction::CHARACTER_2].Key = nsEInputKey::KEYBOARD_3;
 	ActionBindings[cstInputAction::CHARACTER_TOGGLE_FOCUS].Key = nsEInputKey::KEYBOARD_TAB;
+
 	ActionBindings[cstInputAction::CHARACTER_SELECT_ALL].Key = nsEInputKey::KEYBOARD_A;
 	ActionBindings[cstInputAction::CHARACTER_SELECT_ALL].bCtrlLeft = true;
 
-	ActionBindings[cstInputAction::ABILITY_SLOT_ATTACK].Key = nsEInputKey::KEYBOARD_A;
 	ActionBindings[cstInputAction::ABILITY_SLOT_STOP].Key = nsEInputKey::KEYBOARD_S;
+	ActionBindings[cstInputAction::ABILITY_SLOT_ATTACK].Key = nsEInputKey::KEYBOARD_A;
 	ActionBindings[cstInputAction::ABILITY_SLOT_0].Key = nsEInputKey::KEYBOARD_Q;
 	ActionBindings[cstInputAction::ABILITY_SLOT_1].Key = nsEInputKey::KEYBOARD_W;
 	ActionBindings[cstInputAction::ABILITY_SLOT_2].Key = nsEInputKey::KEYBOARD_E;

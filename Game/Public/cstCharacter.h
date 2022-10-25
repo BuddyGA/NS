@@ -241,7 +241,7 @@ public:
 
 	NS_NODISCARD_INLINE bool IsAlive() const
 	{
-		return BaseAttributes[cstAttribute::CURRENT_HEALTH] > 0.0f;
+		return BaseAttributes[cstAttribute::CURRENT_HP] > 0.0f;
 	}
 
 

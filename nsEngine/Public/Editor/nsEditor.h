@@ -57,7 +57,7 @@ private:
 	bool bShowContextMenu;
 	bool bIsLocalCoordSpace;
 	bool bSceneViewportHovered;
-	bool bIsAnyControlFocused;
+	bool bIsFocusingOnGUI;
 	bool bIsDraggingAsset;
 	bool bIsDraggingAssetSpawned;
 	bool bKeyPressed_LeftShift;

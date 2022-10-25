@@ -258,10 +258,11 @@ public:
 		StateTransitions.Add(transition);
 		
 		nsAlgorithm::Sort(StateTransitions.GetData(), StateTransitions.GetCount(),
-		[](cstIStateTransition* first, cstIStateTransition* second)
-		{
-			return first->Priority < second->Priority;
-		});
+			[](cstIStateTransition* first, cstIStateTransition* second)
+			{
+				return first->Priority < second->Priority;
+			}
+		);
 
 		return transition;
 	}

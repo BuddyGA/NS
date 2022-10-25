@@ -143,6 +143,7 @@ cstEffectExecution_Add::cstEffectExecution_Add()
 {
 }
 
+
 void cstEffectExecution_Add::ModifyAttributes(cstAttributes& outputAttributes, const nsTArrayInline<cstEffectAttributeModification, cstAttribute::MAX_COUNT>& attributeModifications)
 {
 	for (int i = 0; i < attributeModifications.GetCount(); ++i)

@@ -47,7 +47,8 @@ enum class cstEAbilityExecutionResult : uint8
 	CASTING,
 	EXECUTING,
 	COOLDOWN,
-	NOT_ENOUGH_MANA,
+	NOT_ENOUGH_HP,
+	NOT_ENOUGH_MP,
 	INVALID_EXECUTOR,
 	INVALID_TARGET_ANY,
 	INVALID_TARGET_SELF,
@@ -100,8 +101,11 @@ struct cstAbilityAttributes
 	// AoE radius
 	float AreaEffectRadius;
 
-	// Mana cost effect 
-	float ManaCost;
+	// HP cost
+	float CostHP;
+
+	// MP cost 
+	float CostMP;
 
 	// Effect to target
 	cstEffectContext Effect;
@@ -115,7 +119,8 @@ public:
 		ChannelingDuration = 0.0f;
 		CooldownDuration = 0.0f;
 		AreaEffectRadius = 0.0f;
-		ManaCost = 0.0f;
+		CostHP = 0.0f;
+		CostMP = 0.0f;
 	}
 
 };
@@ -152,7 +157,6 @@ private:
 	float LastCommitTime;
 	float CastingRemainingTime;
 	float CooldownRemainingTime;
-	cstEffectExecution_Add* EffectExecutionManaCost;
 
 protected:
 	int Level;
@@ -163,7 +167,9 @@ protected:
 public:
 	cstAbility();
 
-protected:
+private:
+	float CountTotalCostHP(const cstAttributes& charAttributes, int level) const;
+	float CountTotalCostMP(const cstAttributes& charAttributes, int level) const;
 	void CommitAbility(float currentTime);
 
 public:

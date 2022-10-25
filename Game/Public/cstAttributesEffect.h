@@ -8,52 +8,54 @@ namespace cstAttribute
 {
 	enum EType : uint8
 	{
-		STR = 0,									// Strength (PATK)
-		VIT,										// Vitality (Health, PDEF)
-		INT,										// Intelligence (Mana, MATK)
-		MEN,										// Mentality (MDEF, CSPD)
-		DEX,										// Dexterity (ASPD)
-		AGI,										// Agility (MSPD)
-		CRT,										// Physical/Magical critical rate (%)
-		HEALTH,										// Maximum health
-		MANA,										// Maximum mana
-		PATK,										// Physical attack
-		PDEF,										// Physical defense
-		MATK,										// Magical attack
-		MDEF,										// Magical defense
-		ASPD,										// Attack speed
-		CSPD,										// Casting speed
-		MSPD,										// Movement speed
-		RESIST_ELEMENT_FIRE,						// Fire element resistance
-		RESIST_ELEMENT_WATER,						// Water element resistance
-		RESIST_ELEMENT_WIND,						// Wind element resistance
-		RESIST_ELEMENT_EARTH,						// Earth element resistance
-		RESIST_ELEMENT_LIGHT,						// Light element resistance
-		RESIST_ELEMENT_DARK,						// Dark element resistance
-		RESIST_STATUS_POISON,						// Poison status resistance
-		RESIST_STATUS_BURN,							// Burn status resistance
-		RESIST_STATUS_FREEZE,						// Freeze status resistance
-		RESIST_STATUS_STUN,							// Stun status resistance
-		RESIST_STATUS_SLOW,							// Slow status resistance
-		RESIST_STATUS_SILENCE,						// Silence status resistance
-		RESIST_STATUS_BLIND,						// Blind status resistance
-		RESIST_STATUS_HATE,							// Hate status resistance
+		STR = 0,								// Strength (PATK)
+		VIT,									// Vitality (HP, PDEF)
+		INT,									// Intelligence (MP, MATK)
+		MEN,									// Mentality (MDEF, CSPD)
+		DEX,									// Dexterity (ASPD)
+		AGI,									// Agility (MSPD)
+		CRT,									// Physical/Magical critical rate (%)
 
-		CURRENT_HEALTH,								// Current health
-		CURRENT_HEALTH_REGEN,						// Current health regeneration per second
-		CURRENT_MANA,								// Current mana
-		CURRENT_MANA_REGEN,							// Current mana regeneration per second
-		CURRENT_STATUS_POISON,						// Current status meter: Poison 
-		CURRENT_STATUS_BURN,						// Current status meter: Burn 
-		CURRENT_STATUS_FREEZE,						// Current status meter: Freeze
-		CURRENT_STATUS_STUN,						// Current status meter: Stun
-		CURRENT_STATUS_SLOW,						// Current status meter: Slow
-		CURRENT_STATUS_SILENCE,						// Current status meter: Silence
-		CURRENT_STATUS_BLIND,						// Current status meter: Blind
-		CURRENT_STATUS_HATE,						// Current status meter: Hate
+		HP,										// Maximum health point
+		MP,										// Maximum mana point
+		PATK,									// Physical attack
+		PDEF,									// Physical defense
+		MATK,									// Magical attack
+		MDEF,									// Magical defense
+		ASPD,									// Attack speed
+		CSPD,									// Casting speed
+		MSPD,									// Movement speed
+		RESIST_ELEMENT_FIRE,					// Fire element resistance
+		RESIST_ELEMENT_WATER,					// Water element resistance
+		RESIST_ELEMENT_WIND,					// Wind element resistance
+		RESIST_ELEMENT_EARTH,					// Earth element resistance
+		RESIST_ELEMENT_LIGHT,					// Light element resistance
+		RESIST_ELEMENT_DARK,					// Dark element resistance
+		RESIST_STATUS_POISON,					// Poison status resistance
+		RESIST_STATUS_BURN,						// Burn status resistance
+		RESIST_STATUS_FREEZE,					// Freeze status resistance
+		RESIST_STATUS_STUN,						// Stun status resistance
+		RESIST_STATUS_SLOW,						// Slow status resistance
+		RESIST_STATUS_SILENCE,					// Silence status resistance
+		RESIST_STATUS_BLIND,					// Blind status resistance
+		RESIST_STATUS_HATE,						// Hate status resistance
 
-		ABILITY_MANA_COST_REDUCTION,				// Ability mana cost reduction (%)
-		ABILITY_COOLDOWN_REDUCTION,					// Ability cooldown reduction (%)
+		CURRENT_HP,								// Current health point
+		CURRENT_HP_REGEN,						// Current health point regeneration per second
+		CURRENT_MP,								// Current mana point
+		CURRENT_MP_REGEN,						// Current mana point regeneration per second
+		CURRENT_STATUS_POISON,					// Current status meter: Poison 
+		CURRENT_STATUS_BURN,					// Current status meter: Burn 
+		CURRENT_STATUS_FREEZE,					// Current status meter: Freeze
+		CURRENT_STATUS_STUN,					// Current status meter: Stun
+		CURRENT_STATUS_SLOW,					// Current status meter: Slow
+		CURRENT_STATUS_SILENCE,					// Current status meter: Silence
+		CURRENT_STATUS_BLIND,					// Current status meter: Blind
+		CURRENT_STATUS_HATE,					// Current status meter: Hate
+
+		ABILITY_HP_COST_REDUCTION,				// Ability hp cost reduction (%)
+		ABILITY_MP_COST_REDUCTION,				// Ability mp cost reduction (%)
+		ABILITY_COOLDOWN_REDUCTION,				// Ability cooldown reduction (%)
 
 		MAX_COUNT
 	};
@@ -102,8 +104,8 @@ public:
 		attributes[cstAttribute::DEX]						= 5.0f;
 		attributes[cstAttribute::AGI]						= 5.0f;
 		attributes[cstAttribute::CRT]						= 5.0f;
-		attributes[cstAttribute::HEALTH]					= 100.0f;
-		attributes[cstAttribute::MANA]						= 100.0f;
+		attributes[cstAttribute::HP]						= 100.0f;
+		attributes[cstAttribute::MP]						= 100.0f;
 		attributes[cstAttribute::PATK]						= 10.0f;
 		attributes[cstAttribute::PDEF]						= 5.0f;
 		attributes[cstAttribute::MATK]						= 10.0f;
@@ -125,19 +127,14 @@ public:
 		attributes[cstAttribute::RESIST_STATUS_SILENCE]		= 50.0f;
 		attributes[cstAttribute::RESIST_STATUS_BLIND]		= 50.0f;
 		attributes[cstAttribute::RESIST_STATUS_HATE]		= 50.0f;
-		attributes[cstAttribute::CURRENT_HEALTH]			= attributes[cstAttribute::HEALTH];
-		attributes[cstAttribute::CURRENT_MANA]				= attributes[cstAttribute::MANA];
+		attributes[cstAttribute::CURRENT_HP]				= attributes[cstAttribute::HP];
+		attributes[cstAttribute::CURRENT_MP]				= attributes[cstAttribute::MP];
 
 		return attributes;
 	}
 
 };
 
-
-
-
-#define CST_EFFECT_INFINITE_DURATION	(999999.0f)
-#define CST_EFFECT_MAX_STACK			(8)
 
 
 struct cstEffectAttributeModification
@@ -241,6 +238,7 @@ public:
 	bool CanApply(const cstCharacter* character, const cstEffectContext& context) const;
 	bool ApplyEffect(float currentTime, cstCharacter* character, const cstEffectContext& context);
 	void UpdateEffect(float deltaTime, float currentTime, cstAttributes& outputAttributes);
+	virtual bool CanModifyAttributes(const cstAttributes& attributes, const nsTArrayInline<cstEffectAttributeModification, cstAttribute::MAX_COUNT>& attributeModifications) const { return true; }
 
 protected:
 	virtual void ModifyAttributes(cstAttributes& outputAttributes, const nsTArrayInline<cstEffectAttributeModification, cstAttribute::MAX_COUNT>& attributeModifications) {}

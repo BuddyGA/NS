@@ -2,10 +2,6 @@
 
 
 
-nsMemory g_StateMachineMemory(nsName::Format("state_machine"), NS_MEMORY_SIZE_KiB(16), 4);
-
-
-
 cstStateMachine::cstStateMachine(nsName name)
 {
 	Name = name;

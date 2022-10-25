@@ -110,29 +110,26 @@ void cstCharacter::UpdateActiveEffects(float deltaTime)
 	const float currentTime = GetWorld()->GetCurrentTimeSeconds();
 	TempAttributes = cstAttributes();
 
-	if (!ActiveEffects.IsEmpty())
+	for (int i = 0; i < ActiveEffects.GetCount();)
 	{
-		for (int i = 0; i < ActiveEffects.GetCount();)
+		cstEffectExecution* effectExecution = ActiveEffects[i];
+
+		if (effectExecution->IsActive())
 		{
-			cstEffectExecution* effectExecution = ActiveEffects[i];
-
-			if (effectExecution->IsActive())
+			if (effectExecution->IsInstant())
 			{
-				if (effectExecution->IsInstant())
-				{
-					effectExecution->UpdateEffect(deltaTime, currentTime, BaseAttributes);
-				}
-				else
-				{
-					effectExecution->UpdateEffect(deltaTime, currentTime, TempAttributes);
-				}
-
-				++i;
+				effectExecution->UpdateEffect(deltaTime, currentTime, BaseAttributes);
 			}
 			else
 			{
-				ActiveEffects.RemoveAt(i);
+				effectExecution->UpdateEffect(deltaTime, currentTime, TempAttributes);
 			}
+
+			++i;
+		}
+		else
+		{
+			ActiveEffects.RemoveAt(i);
 		}
 	}
 
@@ -154,7 +151,7 @@ void cstCharacter::UpdateActiveAbilities(float deltaTime)
 
 void cstCharacter::UpdateState(float deltaTime)
 {
-	if (CurrentAttributes[cstAttribute::CURRENT_HEALTH] <= 0.0f)
+	if (CurrentAttributes[cstAttribute::CURRENT_HP] <= 0.0f)
 	{
 		PendingChangeState = cstECharacterState::KO;
 	}
@@ -613,9 +610,9 @@ constexpr const wchar_t* CharacterStateNames[9] =
 	TEXT("None"),
 	TEXT("Idle"),
 	TEXT("Move"),
-	TEXT("Attack_Target"),
-	TEXT("Execute_Ability"),
-	TEXT("Use_Item"),
+	TEXT("AttackTarget"),
+	TEXT("ExecuteAbility"),
+	TEXT("UseItem"),
 	TEXT("Interact"),
 	TEXT("Disabled"),
 	TEXT("KO")
@@ -638,7 +635,7 @@ void cstCharacter::DebugGUI(nsGUIContext& context)
 
 		static nsString debugText;
 
-		debugText = nsString::Format(TEXT("Health: %.3f/%.3f"), BaseAttributes[cstAttribute::CURRENT_HEALTH], BaseAttributes[cstAttribute::HEALTH]);
+		debugText = nsString::Format(TEXT("Health: %.3f/%.3f"), BaseAttributes[cstAttribute::CURRENT_HP], BaseAttributes[cstAttribute::HP]);
 		context.AddControlText(*debugText);
 		debugText = nsString::Format(TEXT("Status: %s"), IsAlive() ? TEXT("-") : TEXT("[KO]"));
 		context.AddControlText(*debugText);

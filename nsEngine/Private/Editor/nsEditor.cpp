@@ -108,7 +108,7 @@ nsEditor::nsEditor(nsGameApplication* game)
 	bShowContextMenu = false;
 	bIsLocalCoordSpace = false;
 	bSceneViewportHovered = false;
-	bIsAnyControlFocused = false;
+	bIsFocusingOnGUI = false;
 	bIsDraggingAsset = false;
 	bIsDraggingAssetSpawned = false;
 	bKeyPressed_LeftShift = false;
@@ -366,7 +366,7 @@ void nsEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 			}
 		}
 
-		if (!bIsAnyControlFocused)
+		if (!bIsFocusingOnGUI)
 		{
 			if (e.Key == nsEInputKey::KEYBOARD_ESCAPE)
 			{
@@ -647,7 +647,7 @@ void nsEditor::DrawGUI(nsGUIContext& context)
 	context.BeginRegion("editor_scene_viewport", nsGUIRect(0.0f, 0.0f, canvasRect.GetWidth(), canvasRect.GetHeight()), nsPointFloat(), nsEGUIElementLayout::NONE, nsEGUIScrollOption::None, false, "editor_scene_viewport");
 	{
 		bSceneViewportHovered = context.IsCurrentRegionHovered();
-		bIsAnyControlFocused = context.IsAnyControlFocused();
+		bIsFocusingOnGUI = context.IsAnyControlFocused();
 
 		if (bShowAssetExplorer)
 		{

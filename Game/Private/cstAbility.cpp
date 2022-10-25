@@ -17,10 +17,25 @@ cstAbility::cstAbility()
 	LastCommitTime = 0.0f;
 	CastingRemainingTime = 0.0f;
 	CooldownRemainingTime = 0.0f;
-	EffectExecutionManaCost = nullptr;
 
 	Level = 1;
 	ExecutorCharacter = nullptr;
+}
+
+
+float cstAbility::CountTotalCostHP(const cstAttributes& charAttributes, int level) const
+{
+	const cstAbilityAttributes& abilityAttributes = Attributes[level - 1];
+
+	return nsMath::Max(abilityAttributes.CostHP - (abilityAttributes.CostHP * charAttributes[cstAttribute::ABILITY_HP_COST_REDUCTION]), 0.0f);
+}
+
+
+float cstAbility::CountTotalCostMP(const cstAttributes& charAttributes, int level) const
+{
+	const cstAbilityAttributes& abilityAttributes = Attributes[level - 1];
+
+	return nsMath::Max(abilityAttributes.CostMP - (abilityAttributes.CostMP * charAttributes[cstAttribute::ABILITY_MP_COST_REDUCTION]), 0.0f);
 }
 
 
@@ -30,20 +45,14 @@ void cstAbility::CommitAbility(float currentTime)
 	const cstAttributes& executorAttributes = ExecutorCharacter->GetCurrentAttributes();
 	const cstAbilityAttributes& abilityAttributes = Attributes[Level - 1];
 
-	// Apply mana cost
-	if (abilityAttributes.ManaCost > 0.0f)
+	// Apply HP, MP cost
+	if (abilityAttributes.CostHP > 0.0f || abilityAttributes.CostMP > 0.0f)
 	{
-		const float totalManaCost = nsMath::Max(abilityAttributes.ManaCost - (abilityAttributes.ManaCost * executorAttributes[cstAttribute::ABILITY_MANA_COST_REDUCTION]), 0.0f);
-
 		cstEffectContext effectContext;
-		effectContext.AddAttributeModification(cstAttribute::CURRENT_MANA, -totalManaCost);
+		effectContext.AddAttributeModification(cstAttribute::CURRENT_HP, -CountTotalCostHP(executorAttributes, Level));
+		effectContext.AddAttributeModification(cstAttribute::CURRENT_MP, -CountTotalCostMP(executorAttributes, Level));
 
-		if (EffectExecutionManaCost == nullptr)
-		{
-			EffectExecutionManaCost = ns_CreateObjectByClass<cstEffectExecution_Add>(cstEffectExecution_Add::Class);
-		}
-
-		ExecutionTarget.Character->ApplyEffect(EffectExecutionManaCost, effectContext);
+		ExecutionTarget.Character->ApplyEffect(ns_GetDefaultObjectAs<cstEffectExecution_Add>(cstEffectExecution_Add::Class), effectContext);
 	}
 
 	// Apply cooldown
@@ -120,9 +129,14 @@ cstEAbilityExecutionResult cstAbility::CanExecute(float currentTime, cstCharacte
 
 	const cstAttributes& charAttributes = character->GetCurrentAttributes();
 
-	if (charAttributes[cstAttribute::CURRENT_MANA] < Attributes[levelIndex].ManaCost)
+	if (charAttributes[cstAttribute::CURRENT_HP] < CountTotalCostHP(charAttributes, level))
 	{
-		return cstEAbilityExecutionResult::NOT_ENOUGH_MANA;
+		return cstEAbilityExecutionResult::NOT_ENOUGH_HP;
+	}
+
+	if (charAttributes[cstAttribute::CURRENT_MP] < CountTotalCostMP(charAttributes, level))
+	{
+		return cstEAbilityExecutionResult::NOT_ENOUGH_MP;
 	}
 
 
@@ -196,6 +210,8 @@ NS_CLASS_END(cstAbility_Stop)
 cstAbility_Stop::cstAbility_Stop()
 {
 	Name = TEXT("Ability_Stop");
+	ActionType = cstEAbilityActionType::CLICK_SHORTCUT_ONLY;
+	TargetType = cstEAbilityTargetType::SELF_ONLY;
 }
 
 
@@ -220,7 +236,7 @@ cstAbility_Attack::cstAbility_Attack()
 	attributes.CastingDistance = 150.0f;
 	attributes.CastingDuration = 1.0f;
 	attributes.CooldownDuration = 5.0f;
-	attributes.Effect.AddAttributeModification(cstAttribute::CURRENT_HEALTH, -15.0f);
+	attributes.Effect.AddAttributeModification(cstAttribute::CURRENT_HP, -15.0f);
 }
 
 
