@@ -338,32 +338,9 @@ private:
 
 public:
 	nsGUIConsoleWindow() noexcept;
+	void Open() noexcept;
+	void Close() noexcept;
 	void Draw(nsGUIContext& context) noexcept;
-
-
-	NS_INLINE void Open() noexcept
-	{
-		if (ConsoleFont == nsFontID::INVALID)
-		{
-			ConsoleFont = nsFontManager::CreateFontTTF(TEXT("../../../Assets/Fonts/ShareTechMono_Regular.ttf"), 15.0f);
-		}
-
-		if (!bOpened)
-		{
-			bOpened = true;
-			bJustOpened = true;
-		}
-	}
-
-
-	NS_INLINE void Close() noexcept
-	{
-		if (bOpened)
-		{
-			bOpened = false;
-			bJustClosed = true;
-		}
-	}
 
 
 	NS_INLINE void Toggle() noexcept

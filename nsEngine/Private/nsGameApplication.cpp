@@ -22,7 +22,6 @@ void nsGameApplication::Initialize() noexcept
 	NS_CONSOLE_RegisterCommand(TEXT("fps"));
 
 #ifndef __NS_ENGINE_SHIPPING__
-	NS_CONSOLE_RegisterCommand(TEXT("class"));
 	NS_CONSOLE_RegisterCommand(TEXT("gui"));
 #endif // __NS_ENGINE_SHIPPING__
 
@@ -54,29 +53,7 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 	}
 
 #ifndef __NS_ENGINE_SHIPPING__
-	if (command == TEXT("class") && paramCount > 0)
-	{
-		const nsTArray<const nsClass*> classes = nsReflection::FindAllClasses(*params[0]);
-
-		if (classes.GetCount() > 0)
-		{
-			nsString stringMessage = nsString::Format(TEXT("Class list [Count: %i]\n"), classes.GetCount());
-			nsString classNameString;
-
-			for (int i = 0; i < classes.GetCount(); ++i)
-			{
-				classNameString = *classes[i]->GetName();
-				stringMessage += nsString::Format(TEXT("%s\n"), *classNameString);
-			}
-
-			NS_CONSOLE_Log(nsTempLog, TEXT("%s"), *stringMessage);
-		}
-		else
-		{
-			NS_CONSOLE_Log(nsTempLog, TEXT("Class not found!"));
-		}
-	}
-	else if (command == TEXT("gui") && paramCount > 0)
+	if (command == TEXT("gui") && paramCount > 0)
 	{
 		if (params[0] == TEXT("debugrect"))
 		{
@@ -92,17 +69,6 @@ void nsGameApplication::HandleConsoleCommand(const nsString& command, const nsSt
 
 
 void nsGameApplication::TickUpdate(float deltaTime) noexcept 
-{
-
-}
-
-
-void nsGameApplication::PhysicsTickUpdate(float deltaTime) noexcept
-{
-}
-
-
-void nsGameApplication::PostPhysicsTickUpdate() noexcept
 {
 
 }

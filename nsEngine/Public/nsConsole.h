@@ -53,6 +53,10 @@ public:
 		{
 			color = nsColor::RED;
 		}
+		else if (verbosity == nsELogVerbosity::LV_DEBUG)
+		{
+			color = nsColor::GREEN;
+		}
 
 		AddLogEntry(output, color);
 	}

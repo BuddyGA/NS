@@ -23,18 +23,16 @@ nsActor* nsEditorWorldOutliner::DrawGUI(nsGUIContext& context, nsWorld* world, n
 
 	nsGUIRect rect;
 	rect.Left = canvasRect.Right - 280.0f;
-	rect.Top = canvasRect.Top + canvasRect.GetHeight() * 0.5f;
+	rect.Top = 22.0f;
 	rect.Right = canvasRect.Right - 10.0f;
-	rect.Bottom = canvasRect.Bottom - 10.0f;
+	rect.Bottom = canvasRect.Top + canvasRect.GetHeight() * 0.49f;
 
 	Window.SetRect(rect);
 
 	Window.BeginDraw(context);
 	{
-		static const char* _idActorList = "actor_list";
-
 		const nsGUIRect contentRect = Window.GetContentRect();
-		context.BeginRegion(_idActorList, contentRect, nsPointFloat(4.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::Scrollable_Y, false, "world_outliner_actor_list");
+		context.BeginRegion("actor_list", contentRect, nsPointFloat(4.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::Scrollable_Y, false, "world_outliner_actor_list");
 
 		if (world)
 		{

@@ -140,7 +140,7 @@ private:
 
 	nsTArray<nsMaterialID> DrawBindMaterials;
 	nsTArray<nsMeshBindingInfo> DrawBindMeshes;
-	nsTArray<nsAnimationInstanceID> DrawBindAnimationInstances;
+	//nsTArray<nsAnimationInstanceID> DrawBindAnimationInstances;
 	nsTArray<nsRenderDrawCallPerMaterial> DrawCallMeshes;
 	nsRenderDrawCallPrimitiveBatch DrawCallPrimitiveBatchMesh;
 	nsRenderDrawCallPrimitiveBatch DrawCallPrimitiveBatchLine;

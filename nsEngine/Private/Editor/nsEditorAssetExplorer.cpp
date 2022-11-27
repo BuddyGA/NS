@@ -154,7 +154,7 @@ void nsEditorAssetExplorer::DrawGUI(nsGUIContext& context)
 	Window.BeginDraw(context);
 	{
 		const nsGUIRect contentRect = Window.GetContentRect();
-		context.BeginRegion(nullptr, contentRect, nsPointFloat(2.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::None, false, "asset_expl_content_region");
+		context.BeginRegion(nullptr, contentRect, nsPointFloat(2.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::None, false, "ed_asset_expl_content_region");
 		{
 			// Import asset button
 			nsGUIButton importButton;
@@ -165,15 +165,11 @@ void nsEditorAssetExplorer::DrawGUI(nsGUIContext& context)
 
 			if (importButton.Draw(context))
 			{
-				// Can only open file dialog if we're not importing asset
-				if (ImportAssetSourceFile.IsEmpty())
-				{
-					ImportAssetSourceFile = nsFileSystem::OpenFileDialog_ImportAsset();
-				}
+				const nsString importAssetSourceFile = nsFileSystem::OpenFileDialog_ImportAsset();
 
-				if (!ImportAssetSourceFile.IsEmpty())
+				if (!importAssetSourceFile.IsEmpty())
 				{
-					NS_CONSOLE_Log(nsEditorLog, TEXT("Importing asset from source file [%s]"), *ImportAssetSourceFile);
+					g_Editor->ImportingAsset(importAssetSourceFile);
 				}
 			}
 

@@ -11,7 +11,6 @@ private:
 	nsEditorAssetFolder GameAssetFolder;
 	const nsEditorAssetFolder* SelectedAssetFolder;
 	const nsAssetInfo* SelectedAsset;
-	nsString ImportAssetSourceFile;
 
 
 public:
@@ -23,10 +22,10 @@ private:
 public:
 	void ScanAssets();
 
-
 private:
 	nsGUIWindow Window;
 	nsGUITable Table;
+
 
 private:
 	void DrawAssetFolder(nsGUIContext& context, float indent, const nsEditorAssetFolder& assetFolder);

@@ -116,7 +116,7 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 
 	DrawBindMaterials.Clear();
 	DrawBindMeshes.Clear();
-	DrawBindAnimationInstances.Clear();
+	//DrawBindAnimationInstances.Clear();
 	DrawCallMeshes.Clear();
 	DrawCallPrimitiveBatchMesh.Reset();
 	DrawCallPrimitiveBatchLine.Reset();
@@ -166,7 +166,7 @@ void nsRenderContextWorld::UpdateResourcesAndBuildDrawCalls(int frameIndex) noex
 
 		if (it->AnimationInstance != nsAnimationInstanceID::INVALID)
 		{
-			DrawBindAnimationInstances.AddUnique(it->AnimationInstance);
+			//DrawBindAnimationInstances.AddUnique(it->AnimationInstance);
 			instance.BoneTransformIndex = nsAnimationManager::Get().GetInstanceBoneTransformIndex(it->AnimationInstance);
 		}
 	}

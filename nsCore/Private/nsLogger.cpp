@@ -3,7 +3,7 @@
 
 
 nsLogCategory nsTempLog(TEXT("nsTempLog"), nsELogVerbosity::LV_DEBUG);
-nsLogCategory nsSystemLog(TEXT("nsSystemLog"), nsELogVerbosity::LV_INFO);
+nsLogCategory nsSystemLog(TEXT("nsSystemLog"), nsELogVerbosity::LV_DEBUG);
 
 
 
@@ -58,6 +58,10 @@ void nsLogger::OutputLog(const nsString& message, nsELogVerbosity verbosity) noe
 	else if (verbosity == nsELogVerbosity::LV_ERROR)
 	{
 		outputColorMasks = nsEPlatformConsoleOutputColor::Red;
+	}
+	else if (verbosity == nsELogVerbosity::LV_DEBUG)
+	{
+		outputColorMasks = nsEPlatformConsoleOutputColor::Green;
 	}
 
 	const nsString outputMessage = nsString::Format(TEXT("%s\n"), *message);

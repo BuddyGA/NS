@@ -273,11 +273,11 @@ void nsEditor::OnKeyboardButton(const nsKeyboardButtonEventArgs& e)
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F2)
 		{
-			bShowActorInspector = !bShowActorInspector;
+			bShowWorldOutliner = !bShowWorldOutliner;
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F3)
 		{
-			bShowWorldOutliner = !bShowWorldOutliner;
+			bShowActorInspector = !bShowActorInspector;
 		}
 		else if (e.Key == nsEInputKey::KEYBOARD_F4)
 		{
@@ -466,7 +466,7 @@ void nsEditor::SelectFocusActor(nsActor* newActor)
 {
 	if (newActor && newActor != FocusActor)
 	{
-		NS_CONSOLE_Debug(nsEditorLog, TEXT("Select actor [%s]"), *newActor->Name);
+		NS_CONSOLE_Log(nsEditorLog, TEXT("Select actor [%s]"), *newActor->Name);
 	}
 
 	FocusActor = newActor;
@@ -485,7 +485,7 @@ void nsEditor::BeginDragDropAsset(const nsAssetInfo& assetInfo)
 	bIsDraggingAsset = true;
 	bIsDraggingAssetSpawned = false;
 
-	NS_CONSOLE_Debug(nsEditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name.ToString());
+	NS_CONSOLE_Log(nsEditorLog, TEXT("Begin drag-drop asset [%s]"), *assetInfo.Name.ToString());
 }
 
 
@@ -582,6 +582,12 @@ void nsEditor::MoveFocusActorDownToFloor()
 }
 
 
+void nsEditor::ImportingAsset(const nsString& sourceFile)
+{
+	AssetImporter.ImportAssetFromFile(sourceFile);
+}
+
+
 void nsEditor::TickUpdate(float deltaTime)
 {
 	NS_Assert(Game);
@@ -617,8 +623,6 @@ void nsEditor::TickUpdate(float deltaTime)
 
 	CameraScrollValue = 0.0f;
 }
-
-
 
 
 void nsEditor::PreRender(nsRenderContextWorld& context)
@@ -672,6 +676,8 @@ void nsEditor::DrawGUI(nsGUIContext& context)
 		}
 	}
 	context.EndRegion();
+
+	AssetImporter.DrawGUI(context);
 
 	/*
 	static nsString _viewportInfoText;

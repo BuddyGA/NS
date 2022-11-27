@@ -124,6 +124,7 @@ private:
 	nsMeshID DefaultWall;
 	nsMeshID DefaultBox;
 	nsMeshID DefaultPlatform;
+	nsMeshID DefaultSphere;
 
 
 public:

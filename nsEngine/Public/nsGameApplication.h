@@ -28,8 +28,6 @@ public:
 	virtual void Shutdown() noexcept;
 	virtual void HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount) noexcept;
 	virtual void TickUpdate(float deltaTime) noexcept;
-	virtual void PhysicsTickUpdate(float deltaTime) noexcept;
-	virtual void PostPhysicsTickUpdate() noexcept;
 	virtual void PreRender() noexcept;
 	void DrawGUI() noexcept;
 

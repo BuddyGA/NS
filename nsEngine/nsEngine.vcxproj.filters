@@ -275,5 +275,8 @@
     <ClInclude Include="Public\Editor\nsEditorActorAsset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Public\Editor\nsEditorAssetImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

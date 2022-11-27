@@ -297,7 +297,7 @@ namespace nsPlatform
 {
 	extern NS_CORE_API void Initialize() noexcept;
 	extern NS_CORE_API void Shutdown() noexcept;
-	NS_NODISCARD extern const wchar_t* GetDirectoryPath() noexcept;
+	NS_NODISCARD extern NS_CORE_API const wchar_t* GetDirectoryPath() noexcept;
 
 	extern NS_CORE_API void ConsoleOutput(const wchar_t* message, nsPlatformConsoleTextColorMasks colorMasks = 0) noexcept;
 	extern NS_CORE_API void ConsoleOutputFormat(nsPlatformConsoleTextColorMasks colorMasks, const wchar_t* format, ...) noexcept;

@@ -66,6 +66,7 @@ void nsEngine::Initialize()
 
 
 #ifndef __NS_ENGINE_SHIPPING__
+	NS_CONSOLE_RegisterCommand(TEXT("class"));
 	NS_CONSOLE_RegisterCommand(TEXT("navigation"));
 #endif // !__NS_ENGINE_SHIPPING__
 
@@ -74,9 +75,30 @@ void nsEngine::Initialize()
 
 void nsEngine::HandleConsoleCommand(const nsString& command, const nsString* params, int paramCount)
 {
-
 #ifndef __NS_ENGINE_SHIPPING__
-	if (command == "navigation" && paramCount > 0)
+	if (command == TEXT("class") && paramCount > 0)
+	{
+		const nsTArray<const nsClass*> classes = nsReflection::FindAllClasses(*params[0]);
+
+		if (classes.GetCount() > 0)
+		{
+			nsString stringMessage = nsString::Format(TEXT("Class list [Count: %i]\n"), classes.GetCount());
+			nsString classNameString;
+
+			for (int i = 0; i < classes.GetCount(); ++i)
+			{
+				classNameString = *classes[i]->GetName();
+				stringMessage += nsString::Format(TEXT("%s\n"), *classNameString);
+			}
+
+			NS_CONSOLE_Log(nsTempLog, TEXT("%s"), *stringMessage);
+		}
+		else
+		{
+			NS_CONSOLE_Log(nsTempLog, TEXT("Class not found!"));
+		}
+	}
+	else if (command == "navigation" && paramCount > 0)
 	{
 		const nsString& param0 = params[0];
 
@@ -86,7 +108,6 @@ void nsEngine::HandleConsoleCommand(const nsString& command, const nsString* par
 		}
 	}
 #endif // !__NS_ENGINE_SHIPPING__
-
 }
 
 
@@ -230,11 +251,6 @@ void nsEngine::MainLoop()
 
 	// Physics update
 	{
-		if (Game)
-		{
-			Game->PhysicsTickUpdate(PhysicsTimeSteps);
-		}
-
 		for (int i = 0; i < Worlds.GetCount(); ++i)
 		{
 			Worlds[i]->DispatchPhysicsTickUpdate(PhysicsTimeSteps);
@@ -246,11 +262,6 @@ void nsEngine::MainLoop()
 
 	// Post physics update
 	{
-		if (Game)
-		{
-			Game->PostPhysicsTickUpdate();
-		}
-
 		for (int i = 0; i < Worlds.GetCount(); ++i)
 		{
 			Worlds[i]->DispatchPostPhysicsTickUpdate();

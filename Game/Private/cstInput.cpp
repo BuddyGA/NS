@@ -45,7 +45,7 @@ void cstInputManager::KeyboardButtonEvent(const nsKeyboardButtonEventArgs& e)
 	
 	switch (e.Key)
 	{
-		case nsEInputKey::KEYBOARD_ALT_LEFT: CurrentInputAction.bAltLeft= bIsButtonPressed; break;
+		case nsEInputKey::KEYBOARD_ALT_LEFT: CurrentInputAction.bAltLeft = bIsButtonPressed; break;
 		case nsEInputKey::KEYBOARD_ALT_RIGHT: CurrentInputAction.bAltRight = bIsButtonPressed; break;
 		case nsEInputKey::KEYBOARD_CTRL_LEFT: CurrentInputAction.bCtrlLeft = bIsButtonPressed; break;
 		case nsEInputKey::KEYBOARD_CTRL_RIGHT: CurrentInputAction.bCtrlRight = bIsButtonPressed; break;
@@ -108,23 +108,31 @@ void cstInputManager::ResetBindings()
 
 	ActionBindings[cstInputAction::ITEM_SLOT_0].Key = nsEInputKey::KEYBOARD_Q;
 	ActionBindings[cstInputAction::ITEM_SLOT_0].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_1].Key = nsEInputKey::KEYBOARD_W;
 	ActionBindings[cstInputAction::ITEM_SLOT_1].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_2].Key = nsEInputKey::KEYBOARD_E;
 	ActionBindings[cstInputAction::ITEM_SLOT_2].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_3].Key = nsEInputKey::KEYBOARD_R;
 	ActionBindings[cstInputAction::ITEM_SLOT_3].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_4].Key = nsEInputKey::KEYBOARD_A;
 	ActionBindings[cstInputAction::ITEM_SLOT_4].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_5].Key = nsEInputKey::KEYBOARD_S;
 	ActionBindings[cstInputAction::ITEM_SLOT_5].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_6].Key = nsEInputKey::KEYBOARD_D;
 	ActionBindings[cstInputAction::ITEM_SLOT_6].bAltLeft = true;
+
 	ActionBindings[cstInputAction::ITEM_SLOT_7].Key = nsEInputKey::KEYBOARD_F;
 	ActionBindings[cstInputAction::ITEM_SLOT_7].bAltLeft = true;
 
 	ActionBindings[cstInputAction::PRESETS_ABILITY_0].Key = nsEInputKey::KEYBOARD_F1;
 	ActionBindings[cstInputAction::PRESETS_ABILITY_1].Key = nsEInputKey::KEYBOARD_F2;
+
 	ActionBindings[cstInputAction::PRESETS_ITEM_0].Key = nsEInputKey::KEYBOARD_F3;
 	ActionBindings[cstInputAction::PRESETS_ITEM_1].Key = nsEInputKey::KEYBOARD_F4;
 

@@ -217,14 +217,14 @@ namespace nsMath
 	template<typename T>
 	NS_NODISCARD_INLINE T Floor(T value) noexcept
 	{
-		return floorf(value);
+		return static_cast<T>(floorf(value));
 	}
 
 
 	template<typename T>
 	NS_NODISCARD_INLINE T Ceil(T value) noexcept
 	{
-		return ceilf(value);
+		return static_cast<T>(ceilf(value));
 	}
 
 };

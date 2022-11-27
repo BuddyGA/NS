@@ -94,50 +94,32 @@ void nsAnimationManager::UpdateAnimationPoses(float deltaTime)
 			nsAnimationSkeletonData::Bone& bone = animInstanceData.BoneTransforms[j];
 			bone.bUpdated = false;
 
-			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& pChannels = clipData.KeyFrames[j].PositionChannels;
-
-			for (int p = 0; p < pChannels.GetCount() - 1; ++p)
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& positionChannels = clipData.KeyFrames[j].PositionChannels;
+			for (int p = 0; p < positionChannels.GetCount() - 1; ++p)
 			{
-				if (state.Timestamp >= pChannels[p].Timestamp && state.Timestamp <= pChannels[p + 1].Timestamp)
+				if (state.Timestamp >= positionChannels[p].Timestamp && state.Timestamp <= positionChannels[p + 1].Timestamp)
 				{
-					bone.LocalTransform.Position = nsVector3::Lerp(
-						pChannels[p].Value, 
-						pChannels[p + 1].Value,
-						(state.Timestamp - pChannels[p].Timestamp) / (pChannels[p + 1].Timestamp - pChannels[p].Timestamp)
-					);
-
+					bone.LocalTransform.Position = nsVector3::Lerp(positionChannels[p].Value, positionChannels[p + 1].Value, (state.Timestamp - positionChannels[p].Timestamp) / (positionChannels[p + 1].Timestamp - positionChannels[p].Timestamp));
 					break;
 				}
 			}
 
-
-			const nsTArray<nsAnimationKeyFrame::TChannel<nsQuaternion>>& rChannels = clipData.KeyFrames[j].RotationChannels;
-			for (int r = 0; r < rChannels.GetCount() - 1; ++r)
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsQuaternion>>& rotationChannels = clipData.KeyFrames[j].RotationChannels;
+			for (int r = 0; r < rotationChannels.GetCount() - 1; ++r)
 			{
-				if (state.Timestamp >= rChannels[r].Timestamp && state.Timestamp <= rChannels[r + 1].Timestamp)
+				if (state.Timestamp >= rotationChannels[r].Timestamp && state.Timestamp <= rotationChannels[r + 1].Timestamp)
 				{
-					bone.LocalTransform.Rotation = nsQuaternion::Slerp(
-						rChannels[r].Value, 
-						rChannels[r + 1].Value, 
-						(state.Timestamp - rChannels[r].Timestamp) / (rChannels[r + 1].Timestamp - rChannels[r].Timestamp)
-					);
-
+					bone.LocalTransform.Rotation = nsQuaternion::Slerp(rotationChannels[r].Value, rotationChannels[r + 1].Value, (state.Timestamp - rotationChannels[r].Timestamp) / (rotationChannels[r + 1].Timestamp - rotationChannels[r].Timestamp));
 					break;
 				}
 			}
 
-
-			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& sChannels = clipData.KeyFrames[j].ScaleChannels;
-			for (int s = 0; s < sChannels.GetCount() - 1; ++s)
+			const nsTArray<nsAnimationKeyFrame::TChannel<nsVector3>>& scaleChannels = clipData.KeyFrames[j].ScaleChannels;
+			for (int s = 0; s < scaleChannels.GetCount() - 1; ++s)
 			{
-				if (state.Timestamp >= sChannels[s].Timestamp && state.Timestamp <= sChannels[s + 1].Timestamp)
+				if (state.Timestamp >= scaleChannels[s].Timestamp && state.Timestamp <= scaleChannels[s + 1].Timestamp)
 				{
-					bone.LocalTransform.Scale = nsVector3::Lerp(
-						sChannels[s].Value, 
-						sChannels[s + 1].Value, 
-						(state.Timestamp - sChannels[s].Timestamp) / (sChannels[s + 1].Timestamp - sChannels[s].Timestamp)
-					);
-
+					bone.LocalTransform.Scale = nsVector3::Lerp(scaleChannels[s].Value, scaleChannels[s + 1].Value, (state.Timestamp - scaleChannels[s].Timestamp) / (scaleChannels[s + 1].Timestamp - scaleChannels[s].Timestamp));
 					break;
 				}
 			}

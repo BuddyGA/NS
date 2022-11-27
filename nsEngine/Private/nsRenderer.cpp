@@ -206,7 +206,7 @@ void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 	nsTextureManager& textureManager = nsTextureManager::Get();
 	nsMaterialManager& materialManager = nsMaterialManager::Get();
 
-	// Bind vertex buffers. [0]: Position, [1]: Attribute
+	// Bind vertex buffers. [0]: Position, [1]: Attribute, [2]: Skin
 	VkBuffer vertexBuffers[3] = 
 	{ 
 		meshManager.GetVertexPositionBuffer()->GetVkBuffer(), 
@@ -256,8 +256,7 @@ void nsRenderer::RenderPassForward_Mesh(VkCommandBuffer commandBuffer)
 
 			for (int k = 0; k < drawInstances.GetCount(); ++k)
 			{
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &drawInstances[k].WorldTransform);
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(nsMatrix4), sizeof(int), &drawInstances[k].BoneTransformIndex);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsRenderDrawCallPerInstance), &drawInstances[k]);
 				vkCmdDrawIndexed(commandBuffer, meshDrawData.IndexCount, 1, meshDrawData.BaseIndex, meshDrawData.IndexVertexOffset, 0);
 			}
 		}
@@ -360,8 +359,7 @@ void nsRenderer::RenderPassForward_Wireframe(VkCommandBuffer commandBuffer)
 
 			for (int k = 0; k < drawInstances.GetCount(); ++k)
 			{
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsMatrix4), &drawInstances[k].WorldTransform);
-				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(nsMatrix4), sizeof(int), &drawInstances[k].BoneTransformIndex);
+				vkCmdPushConstants(commandBuffer, defaultShaderResourceLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(nsRenderDrawCallPerInstance), &drawInstances[k]);
 				vkCmdDrawIndexed(commandBuffer, meshDrawData.IndexCount, 1, meshDrawData.BaseIndex, meshDrawData.IndexVertexOffset, 0);
 			}
 		}

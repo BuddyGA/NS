@@ -308,7 +308,6 @@ void cstGame::OnMouseButton(const nsMouseButtonEventArgs& e) noexcept
 		}
 	}
 
-
 #ifdef CST_GAME_WITH_EDITOR
 	else if (CurrentState == cstEGameState::EDITING)
 	{

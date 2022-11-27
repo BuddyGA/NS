@@ -35,19 +35,17 @@ void nsEditorActorInspector::DrawGUI(nsGUIContext& context)
 
 	nsGUIRect rect;
 	rect.Left = canvasRect.Right - 280.0f;
-	rect.Top = 22.0f;
+	rect.Top = canvasRect.Top + canvasRect.GetHeight() * 0.5f;
 	rect.Right = canvasRect.Right - 10.0f;
-	rect.Bottom = canvasRect.Top + canvasRect.GetHeight() * 0.49f;
+	rect.Bottom = canvasRect.Bottom - 10.0f;
 
 	Window.SetRect(rect);
 
 	Window.BeginDraw(context);
 	{
-		static const char* _idActorProperties = "actor_properties";
-
 		const nsGUIRect contentRect = Window.GetContentRect();
 
-		context.BeginRegion(_idActorProperties, contentRect, nsPointFloat(2.0f, 4.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::Scrollable_Y, false, "actor_properties");
+		context.BeginRegion("actor_properties", contentRect, nsPointFloat(2.0f, 4.0f), nsEGUIElementLayout::VERTICAL, nsEGUIScrollOption::Scrollable_Y, false, "actor_properties");
 
 		if (InspectActor)
 		{

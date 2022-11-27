@@ -73,6 +73,12 @@ void nsMeshManager::Initialize() noexcept
 		nsGeometryFactory::AddMeshBox(lod0.Positions, lod0.Attributes, lod0.Indices, nsVector3(-256.0f, -8.0f, -128.0f), nsVector3(256.0f, 8.0f, 128.0f), nsVector2(4.0f));
 	}
 
+	// Sphere
+	{
+		DefaultSphere = CreateMesh("mesh_default_sphere");
+
+	}
+
 	bInitialized = true;
 }
 
@@ -278,7 +284,7 @@ void nsMeshManager::UpdateRenderResources() noexcept
 			}
 			else
 			{
-				NS_LogWarning(MeshLog, TEXT("Binding mesh [%s] as skinned mesh, but that mesh has emtpy vertex skin data!"), *MeshNames[id]);
+				NS_LogWarning(MeshLog, TEXT("Binding mesh [%s] as skinned mesh, but that mesh has empty vertex skin data!"), *MeshNames[id]);
 			}
 		}
 

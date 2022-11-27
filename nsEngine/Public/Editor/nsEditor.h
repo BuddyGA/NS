@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nsEditorAssetExplorer.h"
+#include "nsEditorAssetImporter.h"
 #include "nsEditorActorInspector.h"
 #include "nsEditorTransformGizmo.h"
 #include "nsEditorWorldOutliner.h"
@@ -41,6 +42,7 @@ class NS_ENGINE_API nsEditor
 private:
 	class nsGameApplication* Game;
 	nsEditorAssetExplorer AssetExplorer;
+	nsEditorAssetImporter AssetImporter;
 	nsEditorActorInspector ActorInspector;
 	nsEditorWorldOutliner WorldOutliner;
 	nsEditorGizmoTransform ActorGizmo;
@@ -85,6 +87,7 @@ public:
 	void BeginDragDropAsset(const nsAssetInfo& assetInfo);
 	void AddMousePickingForActor(nsActor* actor);
 	void MoveFocusActorDownToFloor();
+	void ImportingAsset(const nsString& sourceFile);
 
 	void TickUpdate(float deltaTime);
 	void PreRender(nsRenderContextWorld& context);

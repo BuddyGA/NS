@@ -66,10 +66,12 @@ namespace cstTag
 		Immune_Physical			= (1 << 14),
 		Immune_Magical			= (1 << 15),
 
-		Weapon_Dual_Dagger		= (1 << 16),
-		Weapon_Sword_Shield		= (1 << 17),
-		Weapon_Greatsword		= (1 << 18),
+		Weapon_MagicGloves		= (1 << 16),
+		Weapon_SwordShield		= (1 << 17),
+		Weapon_DualDagger		= (1 << 18),
 		Weapon_Staff			= (1 << 19),
+		Weapon_Greatsword		= (1 << 20),
+		Weapon_Bow				= (1 << 21),
 
 		CHARACTER_DISABLED		= Status_Freeze | Status_Stun | Status_Hate | Status_KO
 	};

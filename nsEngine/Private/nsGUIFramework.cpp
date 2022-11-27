@@ -1054,6 +1054,32 @@ nsGUIConsoleWindow::nsGUIConsoleWindow() noexcept
 }
 
 
+void nsGUIConsoleWindow::Open() noexcept
+{
+	if (ConsoleFont == nsFontID::INVALID)
+	{
+		const nsString file = nsString::Format(TEXT("%s/../../../Assets/Fonts/ShareTechMono_Regular.ttf"), nsPlatform::GetDirectoryPath());
+		ConsoleFont = nsFontManager::CreateFontTTF(file, 15.0f);
+	}
+
+	if (!bOpened)
+	{
+		bOpened = true;
+		bJustOpened = true;
+	}
+}
+
+
+void nsGUIConsoleWindow::Close() noexcept
+{
+	if (bOpened)
+	{
+		bOpened = false;
+		bJustClosed = true;
+	}
+}
+
+
 void nsGUIConsoleWindow::Draw(nsGUIContext& context) noexcept
 {
 	if (bOpened)
